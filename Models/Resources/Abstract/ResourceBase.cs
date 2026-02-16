@@ -2,7 +2,7 @@
 
 namespace Models.Resources;
 
-public class ResourceBase<T>
+public class ResourceBase
 {
     public string Id { get; set; } = Guid.NewGuid().ToString();
     public string EntityId { get; set; }
@@ -12,5 +12,4 @@ public class ResourceBase<T>
     public DateTime CreatedAt { get; set; } 
     public DateTime? UpdatedAt { get; set; } 
     public bool IsDeleted { get; set; }
-    public T Data { get; set; }
 }
