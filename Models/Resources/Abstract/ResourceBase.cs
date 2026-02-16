@@ -12,5 +12,5 @@ public class ResourceBase<T>
     public DateTime CreatedAt { get; set; } 
     public DateTime? UpdatedAt { get; set; } 
     public bool IsDeleted { get; set; }
-    public required T Data { get; set; }
+    public T Data { get; set; }
 }
