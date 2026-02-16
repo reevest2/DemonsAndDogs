@@ -6,23 +6,21 @@ using Newtonsoft.Json;
 
 namespace DataAccess;
 
-public class DemonsAndDogsContext : IdentityDbContext<IdentityUser, IdentityRole, string>
+public class DemonsAndDogsContext(DbContextOptions<DemonsAndDogsContext> options)
+    : IdentityDbContext<IdentityUser, IdentityRole, string>(options)
 {
-    public DemonsAndDogsContext(DbContextOptions<DemonsAndDogsContext> options) : base(options) { }
-
-
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+    }
 
-        void AddResourceConversion<TResource>() where TResource : ResourceBase
-        {
-            modelBuilder
-                .Entity<Resource<TResource>>()
-                .Property(r => r.Data)
-                .HasConversion(
-                    v => JsonConvert.SerializeObject(v),
-                    v => JsonConvert.DeserializeObject<TResource>(v));
-        }
+    private static void AddResourceConversion<TResource>(ModelBuilder modelBuilder) where TResource : ResourceBase
+    {
+        modelBuilder
+            .Entity<Resource<TResource>>()
+            .Property(r => r.Data)
+            .HasConversion(
+                v => JsonConvert.SerializeObject(v),
+                v => JsonConvert.DeserializeObject<TResource>(v)!);
     }
 }
