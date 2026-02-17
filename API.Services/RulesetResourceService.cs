@@ -1,6 +1,15 @@
-﻿namespace API.Services;
+﻿using API.Services.Abstraction;
+using DataAccess.Abstraction;
+using Microsoft.Extensions.Logging;
+using Models.Character;
+using Models.Resources;
 
-public class RulesetResourceService
+namespace API.Services;
+
+public class RulesetResourceService : IResourceService.ResourceService<RulesetResource>, IRulesetResourceService
 {
-    
+    public RulesetResourceService(IResourceRepository.IResourceRepository<RulesetResource>resourceRepository, ILogger<TestResourceService> logger) 
+        : base(resourceRepository, logger)
+    {
+    }
 }

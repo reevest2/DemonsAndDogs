@@ -1,6 +1,8 @@
-﻿namespace API.Services.Abstraction;
+﻿using Models.Resources;
 
-public interface IRulesetResourceService
+namespace API.Services.Abstraction;
+
+public interface IRulesetResourceService : IResourceService.IResourceService<RulesetResource>
 {
     
 }
