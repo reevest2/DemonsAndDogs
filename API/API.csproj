@@ -18,6 +18,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\API.Configuration\API.Configuration.csproj" />
+      <ProjectReference Include="..\AppConstants\AppConstants.csproj" />
       <ProjectReference Include="..\DataAccess\DataAccess.csproj" />
     </ItemGroup>
 

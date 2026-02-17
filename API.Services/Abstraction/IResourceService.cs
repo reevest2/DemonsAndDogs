@@ -20,7 +20,7 @@ public interface IResourceService
         Task Delete(string ownerId, string resourceId, bool hardDelete = false);
     }
     
-    public abstract class ResourceService<TResource> : IResourceService<TResource> where TResource : ResourceBase
+    public abstract class ResourceService<TResource> : IResourceService<TResource>
     {
         protected readonly IResourceRepository.IResourceRepository<TResource> _resourceRepository;
         protected readonly ILogger _logger;
@@ -43,7 +43,8 @@ public interface IResourceService
 
         public virtual async Task<TResource> GetFirstByOwner(string ownerId)
         {
-            return (await _resourceRepository.GetListByOwnerAsync(ownerId))?.FirstOrDefault();
+            var list = await _resourceRepository.GetListByOwnerAsync(ownerId);
+            return list.FirstOrDefault();
         }
         
         public virtual async Task<List<TResource>> GetAllByOwnerId(string ownerId)
@@ -63,14 +64,13 @@ public interface IResourceService
 
         public virtual async Task<TResource> Create(string ownerId, TResource resource)
         {
-            resource.OwnerId = ownerId;
-            return await _resourceRepository.CreateResourceAsync(resource);
+            return await _resourceRepository.CreateResourceAsync(resource, ownerId, null, null);
         }
 
         public virtual async Task<TResource> Update(string ownerId, string resourceId, TResource resource)
         {
             var storedResource = await _resourceRepository.GetByIdAsync(resourceId);
-            return await _resourceRepository.UpdateResourceAsync(resource);
+            return await _resourceRepository.UpdateResourceAsync(resourceId, resource);
         }
 
         public virtual async Task Delete(string ownerId, string resourceId, bool hardDelete = false)
@@ -78,12 +78,11 @@ public interface IResourceService
             var storedResource = await _resourceRepository.GetByIdAsync(resourceId);
             if (hardDelete)
             {
-                await _resourceRepository.DeleteResourceAsync(storedResource);
+                await _resourceRepository.DeleteResourceAsync(resourceId);
             }
             else
             {
-                storedResource.IsDeleted = true;
-                await _resourceRepository.UpdateResourceAsync(storedResource);
+                await _resourceRepository.UpdateResourceAsync(resourceId, storedResource, true);
             }
         }
     }

@@ -1,6 +1,9 @@
 using API.Configuration;
 using DataAccess;
 using Microsoft.EntityFrameworkCore;
+using AppConstants;
+using Npgsql;
+using DbContext = DataAccess.DbContext;
 
 namespace API;
 
@@ -17,8 +20,14 @@ public class Program
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen();
         
-        builder.Services.AddDbContext<DemonsAndDogsContext>(options =>
-            options.UseNpgsql(builder.Configuration.GetConnectionString(ConfigurationConstants.Default)));
+        var cs = builder.Configuration.GetConnectionString(AppConstants.Configuration.Default);
+        var dataSourceBuilder = new NpgsqlDataSourceBuilder(cs);
+        dataSourceBuilder.EnableDynamicJson();
+        var dataSource = dataSourceBuilder.Build();
+        builder.Services.AddDbContext<DbContext>(options =>
+            options.UseNpgsql(dataSource));
+        builder.Services.ConfigureRepositories();
+        builder.Services.ConfigureServices();
 
         var app = builder.Build();
 

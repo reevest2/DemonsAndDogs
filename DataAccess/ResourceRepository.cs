@@ -5,7 +5,7 @@ using Models.Resources;
 
 namespace DataAccess;
 
-     public class ResourceRepository<TResource> : IResourceRepository.IResourceRepository<TResource> where TResource : ResourceBase
+     public class ResourceRepository<TResource> : IResourceRepository.IResourceRepository<TResource>
     {
         protected readonly DbContext _context;
 
@@ -14,8 +14,7 @@ namespace DataAccess;
             _context = context;
         }
 
-        public DbSet<TResource> GetDbSet() => _context.Set<TResource>();
-        
+        public DbSet<Resource<TResource>> GetDbSet() => _context.Set<Resource<TResource>>();
         public IQueryable<Resource<TResource>> GetQuery() => _context.Set<Resource<TResource>>().AsQueryable();
 
         public virtual async Task<List<TResource>> GetAllAsync(params Expression<Func<Resource<TResource>, bool>>[] filters)
@@ -102,69 +101,51 @@ namespace DataAccess;
             return resource.Data;
         }
 
-        public virtual async Task<TResource> CreateResourceAsync(TResource data)
+        public virtual async Task<TResource> CreateResourceAsync(TResource data, string ownerId, string subjectId, string entityId)
         {
             var timestamp = DateTime.UtcNow;
-            data.CreatedAt = timestamp;
-            data.UpdatedAt = timestamp;
-            if (string.IsNullOrWhiteSpace(data.Id) || data.Id == "string")
-                data.Id = Guid.NewGuid().ToString();
-            data.Version = 1;
+
             var resource = new Resource<TResource>
             {
-                Data = data,
-                OwnerId = data.OwnerId,
-                SubjectId = data.SubjectId,
-                UpdatedAt = data.UpdatedAt,
-                CreatedAt = data.CreatedAt,
-                Version = data.Version,
-                Id = data.Id
+                Id = Guid.NewGuid().ToString(),
+                EntityId = entityId,
+                OwnerId = ownerId,
+                SubjectId = subjectId,
+                CreatedAt = timestamp,
+                UpdatedAt = timestamp,
+                Version = 1,
+                IsDeleted = false,
+                Data = data
             };
 
             await _context.Set<Resource<TResource>>().AddAsync(resource);
             await _context.SaveChangesAsync();
-            resource = await _context.Set<Resource<TResource>>().FindAsync(data.Id);
             return resource.Data;
         }
-
-        public virtual async Task<TResource> UpdateResourceAsync(TResource data)
+        public virtual async Task<TResource> UpdateResourceAsync(string id, TResource data, bool isDeleted)
         {
-            try
-            {
-                var timestamp = DateTime.UtcNow;
-                data.UpdatedAt = timestamp;
-                var storedResource = await _context.Set<Resource<TResource>>().FindAsync(data.Id);
-                if (data.Version != storedResource.Version)
-                {
-                    throw new NotImplementedException();
-                }
-                data.Version += 1;
-                storedResource.Version = data.Version;
-                storedResource.UpdatedAt = data.UpdatedAt;
-                storedResource.Data = data;
-                storedResource.IsDeleted = data.IsDeleted;
-                _context.Set<Resource<TResource>>().Update(storedResource);
-                await _context.SaveChangesAsync();
-            }
-            catch(DbUpdateConcurrencyException ex)
-            {
-                throw new NotImplementedException(ex.Message);
-            }
-            var resource = await _context.Set<Resource<TResource>>().FindAsync(data.Id);
-            return resource.Data;
+            var storedResource = await _context.Set<Resource<TResource>>().FindAsync(id);
+            if (storedResource == null || storedResource.IsDeleted)
+                throw new NotImplementedException();
+
+            storedResource.Version += 1;
+            storedResource.UpdatedAt = DateTime.UtcNow;
+            storedResource.Data = data;
+            storedResource.IsDeleted = isDeleted;
+
+            _context.Set<Resource<TResource>>().Update(storedResource);
+            await _context.SaveChangesAsync();
+            return storedResource.Data;
         }
         
-        public virtual async Task DeleteResourceAsync(TResource data)
+        public virtual async Task DeleteResourceAsync(string id)
         {
-            try
-            {
-                var storedResource = await _context.Set<Resource<TResource>>().FindAsync(data.Id);
-                _context.Set<Resource<TResource>>().Remove(storedResource);
-                await _context.SaveChangesAsync();
-            }
-            catch(DbUpdateConcurrencyException ex)
-            {
-                throw new NotImplementedException(ex.Message);
-            }
+            var storedResource = await _context.Set<Resource<TResource>>().FindAsync(id);
+            if (storedResource == null)
+                return;
+
+            _context.Set<Resource<TResource>>().Remove(storedResource);
+            await _context.SaveChangesAsync();
         }
+
     }

@@ -6,9 +6,9 @@ namespace DataAccess.Abstraction;
 
 public interface IResourceRepository
 {
-    public interface IResourceRepository<T> where T : ResourceBase
+    public interface IResourceRepository<T>
     {
-        DbSet<T> GetDbSet();
+        DbSet<Resource<T>> GetDbSet();
         IQueryable<Resource<T>> GetQuery();
         Task<List<T>> GetAllAsync(params Expression<Func<Resource<T>, bool>>[] filters);
         Task<T> GetByIdAsync(string id);
@@ -18,8 +18,8 @@ public interface IResourceRepository
         Task<int> GetCountByOwnerAsync(string ownerId, bool includeDeleted = false);
         Task<List<T>> GetBySubjectId(string subjectId);
         Task<T> GetByOwnerIdAndSubjectId(string ownerId, string subjectId);
-        Task<T> CreateResourceAsync(T data);
-        Task<T> UpdateResourceAsync(T data);
-        Task DeleteResourceAsync(T data);
+        Task<T> CreateResourceAsync(T data, string ownerId, string subjectId, string entityId);
+        Task<T> UpdateResourceAsync(string id, T data, bool isDeleted = false);
+        Task DeleteResourceAsync(string id);
     }
 }
