@@ -14,6 +14,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "API.Configuration", "API.Co
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AppConstants", "AppConstants\AppConstants.csproj", "{3499C5B8-0050-486F-ACF6-D6A7076012FD}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UIComponents", "UIComponents\UIComponents.csproj", "{1DFEA14A-FBD4-4574-9AAE-4D64B1DBBB6C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mediator", "Mediator\Mediator.csproj", "{221A5EEF-3FF4-4ED7-B9BC-0BEB130A02FB}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -48,5 +52,13 @@ Global
 		{3499C5B8-0050-486F-ACF6-D6A7076012FD}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3499C5B8-0050-486F-ACF6-D6A7076012FD}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3499C5B8-0050-486F-ACF6-D6A7076012FD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1DFEA14A-FBD4-4574-9AAE-4D64B1DBBB6C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1DFEA14A-FBD4-4574-9AAE-4D64B1DBBB6C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1DFEA14A-FBD4-4574-9AAE-4D64B1DBBB6C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1DFEA14A-FBD4-4574-9AAE-4D64B1DBBB6C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{221A5EEF-3FF4-4ED7-B9BC-0BEB130A02FB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{221A5EEF-3FF4-4ED7-B9BC-0BEB130A02FB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{221A5EEF-3FF4-4ED7-B9BC-0BEB130A02FB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{221A5EEF-3FF4-4ED7-B9BC-0BEB130A02FB}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

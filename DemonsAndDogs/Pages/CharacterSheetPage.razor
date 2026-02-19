@@ -1,8 +1,11 @@
 ﻿@page "/characterSheet/{ResourceId?}"
-@inject ICharacterResourceService CharacterService
+@inject IMediator Mediator
 @inject NavigationManager NavigationManager
 @using API.Services.Abstraction
+@using DemonsAndDogs.Mediator.Records
+@using MediatR
 @using Models.Character
+@using UIComponents.CharacterSheet
 
 <h3>Character Sheet</h3>
 
@@ -28,10 +31,10 @@
     {
         if (!string.IsNullOrWhiteSpace(ResourceId))
         {
-            var resource = await CharacterService.GetById(string.Empty, ResourceId);
+            var resource = await Mediator.Send(new GetCharacterResourcesQuery());
             if (resource != null)
             {
-                model = resource;
+                model = resource.First();
             }
         }
     }
@@ -40,11 +43,11 @@
     {
         if (string.IsNullOrWhiteSpace(ResourceId))
         {
-            var created = await CharacterService.Create(string.Empty, model);
+            var created = await Mediator.Send(new CreateCharacterResourceCommand(model));
         }
         else
         {
-            await CharacterService.Update(string.Empty, ResourceId, model);
+            await Mediator.Send(new UpdateCharacterResourceCommand(ResourceId,model));
         }
         NavigationManager.NavigateTo("/characterSheets");
     }
