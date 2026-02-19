@@ -16,7 +16,7 @@ public class DbContext(DbContextOptions<DbContext> options)
         base.OnModelCreating(modelBuilder);
         ConfigureResource<TestResource>(modelBuilder, AppConstants.ResourceTableNames.TestResources);
         ConfigureResource<CharacterResource>(modelBuilder, AppConstants.ResourceTableNames.CharacterResources);
-        ConfigureResource<RulesetResource>(modelBuilder, AppConstants.ResourceTableNames.CharacterResources);
+        ConfigureResource<RulesetResource>(modelBuilder, AppConstants.ResourceTableNames.RulesetResources);
     }
     
     public DbSet<Resource<TestResource>> TestResources { get; set; }
