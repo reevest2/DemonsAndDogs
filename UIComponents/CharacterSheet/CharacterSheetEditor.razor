@@ -1,5 +1,28 @@
-﻿<h3>CharacterSheetEditor</h3>
+﻿@using Models.Character
+
+<div>
+    <h4>Sections</h4>
+    @foreach (var section in Model.CharacterSheet.Sections)
+    {
+        <SectionEditor Section="section" OnRemove="RemoveSection" />
+    }
+    <button type="button" class="btn btn-outline-primary" @onclick="AddSection">Add Section</button>
+</div>
 
 @code {
-    
+    /// <summary>
+    /// Gets or sets the character resource model to edit.
+    /// </summary>
+    [Parameter] public CharacterResource Model { get; set; }
+
+    private void AddSection()
+    {
+        Model.CharacterSheet.Sections.Add(new CharacterSheetSection());
+    }
+
+    private async Task RemoveSection(CharacterSheetSection section)
+    {
+        Model.CharacterSheet.Sections.Remove(section);
+        await Task.CompletedTask;
+    }
 }

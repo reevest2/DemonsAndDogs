@@ -1,6 +1,51 @@
-﻿@page "/characterSheet"
-<h3>characterSheet</h3>
+﻿@page "/characterSheet/{ResourceId?}"
+@inject ICharacterResourceService CharacterService
+@inject NavigationManager NavigationManager
+@using API.Services.Abstraction
+@using Models.Character
+
+<h3>Character Sheet</h3>
+
+@* Use the CharacterSheetEditor from the Razor class library. Import its namespace via the @using directive below. *@
+
+<EditForm Model="model" OnValidSubmit="Save">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+    <CharacterSheetEditor Model="model" />
+    <button type="submit" class="btn btn-success mt-3">Save</button>
+</EditForm>
 
 @code {
+    [Parameter] public string ResourceId { get; set; }
     
+    private CharacterResource model = new CharacterResource
+    {
+        Thumbnail = new ThumbnailMetadata(),
+        CharacterSheet = new CharacterSheet()
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!string.IsNullOrWhiteSpace(ResourceId))
+        {
+            var resource = await CharacterService.GetById(string.Empty, ResourceId);
+            if (resource != null)
+            {
+                model = resource;
+            }
+        }
+    }
+
+    private async Task Save()
+    {
+        if (string.IsNullOrWhiteSpace(ResourceId))
+        {
+            var created = await CharacterService.Create(string.Empty, model);
+        }
+        else
+        {
+            await CharacterService.Update(string.Empty, ResourceId, model);
+        }
+        NavigationManager.NavigateTo("/characterSheets");
+    }
 }

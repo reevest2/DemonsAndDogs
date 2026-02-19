@@ -7,7 +7,7 @@ namespace API.Services;
 
 public class CharacterResourceService : IResourceService.ResourceService<CharacterResource>, ICharacterResourceService
 {
-    public CharacterResourceService(IResourceRepository.IResourceRepository<CharacterResource> resourceRepository, ILogger<TestResourceService> logger) 
+    public CharacterResourceService(IResourceRepository.IResourceRepository<CharacterResource> resourceRepository, ILogger<CharacterResourceService> logger) 
         : base(resourceRepository, logger)
     {
     }
