@@ -1,0 +1,57 @@
+﻿@using Microsoft.AspNetCore.Components
+@using Models.Resources
+@using Radzen.Blazor
+@using UIComponents.CharacterSheet
+@using UIComponents.ResourceGrid
+
+<RadzenTabs>
+    <RadzenTabsItem Text="Editor">
+        @if (editorComponentType != null)
+        {
+            <DynamicComponent Type="@editorComponentType" Parameters="editorParameters" />
+        }
+    </RadzenTabsItem>
+
+    <RadzenTabsItem Text="Resources">
+        @if (gridComponentType != null)
+        {
+            <DynamicComponent Type="@gridComponentType" Parameters="gridParameters" />
+        }
+    </RadzenTabsItem>
+</RadzenTabs>
+
+@code {
+    [Parameter] public string ResourceName { get; set; }
+    [Parameter] public Dictionary<string, (Type editor, Type grid)> Registry { get; set; } 
+
+    private Type editorComponentType;
+    private Type gridComponentType;
+
+    private IDictionary<string, object> editorParameters;
+    private IDictionary<string, object> gridParameters;
+    
+
+    protected override void OnParametersSet()
+    {
+        if (ResourceName != null && Registry.TryGetValue(ResourceName, out var config))
+        {
+            editorComponentType = config.editor;
+            gridComponentType = config.grid;
+
+            editorParameters = new Dictionary<string, object>
+            {
+                ["ResourceName"] = ResourceName
+            };
+
+            gridParameters = new Dictionary<string, object>
+            {
+                ["ResourceName"] = ResourceName
+            };
+        }
+        else
+        {
+            editorComponentType = null;
+            gridComponentType = null;
+        }
+    }
+}
