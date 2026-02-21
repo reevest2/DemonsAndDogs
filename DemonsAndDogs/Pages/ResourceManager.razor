@@ -1,6 +1,8 @@
-﻿@page "/ResourceManager"
-<h3>ResourceManager</h3>
+﻿@page "/{resourceName}/Manager"
+@using UIComponents.PageComponents
+
+<ResourceManagementPage ResourceName="@resourceName" />
 
 @code {
-    
+    [Parameter] public string resourceName { get; set; }
 }

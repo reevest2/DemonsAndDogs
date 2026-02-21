@@ -1,7 +1,7 @@
 ﻿using MediatR;
-using Models.Character;
+using Models.Resources;
 
-namespace DemonsAndDogs.Mediator.Records;
+namespace Mediator.Mediator.Records;
 
 public record GetCharacterResourceQuery(string ResourceId) : IRequest<CharacterResource?>;
 public record GetCharacterResourcesQuery() : IRequest<List<CharacterResource>>;

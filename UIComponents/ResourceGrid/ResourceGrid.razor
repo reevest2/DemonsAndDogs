@@ -1,5 +1,33 @@
-﻿<h3>ResourceGrid</h3>
+﻿@typeparam TResource
+@using Models.Resources
+@using Models.Resources.Abstract
+@using Radzen.Blazor
+
+<RadzenDataGrid TItem="Resource<TResource>" Data="@Items" ColumnWidth="200px">
+    <Columns>
+        <RadzenDataGridColumn TItem="Resource<TResource>" Property="Id" Title="Id" />
+        <RadzenDataGridColumn TItem="Resource<TResource>" Property="OwnerId" Title="OwnerId" />
+        <RadzenDataGridColumn TItem="Resource<TResource>" Property="SubjectId" Title="SubjectId" />
+        <RadzenDataGridColumn TItem="Resource<TResource>" Property="Version" Title="Version" />
+        <RadzenDataGridColumn TItem="Resource<TResource>" Property="CreatedAt" Title="CreatedAt" FormatString="{0:G}" />
+        <RadzenDataGridColumn TItem="Resource<TResource>" Property="UpdatedAt" Title="UpdatedAt" FormatString="{0:G}" />
+        @{
+            var dataProperties = typeof(TResource).GetProperties();
+        }
+        @foreach (var prop in dataProperties)
+        {
+            var localProp = prop;
+            <RadzenDataGridColumn TItem="Resource<TResource>" Title="@localProp.Name">
+                <Template Context="row">
+                    @localProp.GetValue(row.Data)
+                </Template>
+            </RadzenDataGridColumn>
+        }
+        <RadzenDataGridColumn TItem="Resource<TResource>" Property="IsDeleted" Title="IsDeleted" />
+    </Columns>
+</RadzenDataGrid>
 
 @code {
-    
+    [Parameter]
+    public IEnumerable<Resource<TResource>> Items { get; set; }
 }

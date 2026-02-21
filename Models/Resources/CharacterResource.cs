@@ -1,4 +1,6 @@
-﻿namespace Models.Character;
+﻿using Models.Character;
+
+namespace Models.Resources;
 
 public class CharacterResource
 {

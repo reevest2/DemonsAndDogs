@@ -1,6 +1,6 @@
 ﻿namespace AppConstants;
 
-public static class ResourceTableNames
+public static class ResourceKeys
 {
     public const string TestResources = "TestResources";
     public const string CharacterResources = "CharacterResources";

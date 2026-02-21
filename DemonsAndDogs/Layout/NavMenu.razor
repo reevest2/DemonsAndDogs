@@ -1,4 +1,7 @@
-﻿<div class="top-row ps-3 navbar navbar-dark">
+﻿@using UIComponents.ResourceRegistry
+@inject IResourceManagerRegistry Registry
+
+<div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
         <a class="navbar-brand" href="">DemonsAndDogs</a>
         <button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
@@ -11,19 +14,18 @@
     <nav class="flex-column">
         <div class="nav-item px-3">
             <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
+                <span class="bi bi-house-door-fill-nav-menu"></span> Home
             </NavLink>
         </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="characterSheet">
-                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Character Sheet
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="ruleset">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Ruleset
-            </NavLink>
-        </div>
+
+        @foreach (var resource in Registry.GetRegisteredResources())
+        {
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="@($"/{resource}/manager")">
+                    @FormatName(resource)
+                </NavLink>
+            </div>
+        }
     </nav>
 </div>
 
@@ -37,4 +39,12 @@
         collapseNavMenu = !collapseNavMenu;
     }
 
+    private string FormatName(string key)
+    {
+        if (string.IsNullOrWhiteSpace(key))
+            return key;
+
+        var name = key.Replace("resource", "", StringComparison.OrdinalIgnoreCase);
+        return char.ToUpper(name[0]) + name.Substring(1);
+    }
 }

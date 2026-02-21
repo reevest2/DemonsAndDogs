@@ -1,6 +1,4 @@
-﻿using Models.Resources;
-
-namespace Models;
+﻿namespace Models.Resources;
 
 public class TestResource
 {

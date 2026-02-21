@@ -1,6 +1,7 @@
 ﻿using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
 using Models.Resources;
+using Models.Resources.Abstract;
 
 namespace DataAccess.Abstraction;
 

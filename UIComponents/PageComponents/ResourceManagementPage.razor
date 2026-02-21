@@ -1,14 +1,30 @@
-﻿@using Microsoft.AspNetCore.Components
-@using Models.Resources
+﻿@using Models.Resources
+@using Models.Resources.Abstract
 @using Radzen.Blazor
-@using UIComponents.CharacterSheet
-@using UIComponents.ResourceGrid
+@using UIComponents.ResourceRegistry
 
 <RadzenTabs>
     <RadzenTabsItem Text="Editor">
         @if (editorComponentType != null)
         {
-            <DynamicComponent Type="@editorComponentType" Parameters="editorParameters" />
+            <ErrorBoundary @ref="editorBoundary" OnError="OnEditorError">
+                <ChildContent>
+                    <DynamicComponent Type="@editorComponentType" Parameters="editorParameters" />
+                </ChildContent>
+                <ErrorContent>
+                    <div class="p-3">
+                        <div>Editor crashed.</div>
+                        @if (!string.IsNullOrWhiteSpace(editorError))
+                        {
+                            <pre>@editorError</pre>
+                        }
+                    </div>
+                </ErrorContent>
+            </ErrorBoundary>
+        }
+        else
+        {
+            <div class="p-3">EditorType is null for: @ResourceName</div>
         }
     </RadzenTabsItem>
 
@@ -17,41 +33,58 @@
         {
             <DynamicComponent Type="@gridComponentType" Parameters="gridParameters" />
         }
+        else
+        {
+            <div class="p-3">GridType is null for: @ResourceName</div>
+        }
     </RadzenTabsItem>
 </RadzenTabs>
 
 @code {
     [Parameter] public string ResourceName { get; set; }
-    [Parameter] public Dictionary<string, (Type editor, Type grid)> Registry { get; set; } 
+    [Inject] public IResourceManagerRegistry Registry { get; set; }
 
     private Type editorComponentType;
     private Type gridComponentType;
 
-    private IDictionary<string, object> editorParameters;
-    private IDictionary<string, object> gridParameters;
-    
+    private IDictionary<string, object> editorParameters = new Dictionary<string, object>();
+    private IDictionary<string, object> gridParameters = new Dictionary<string, object>();
+
+    private ErrorBoundary editorBoundary;
+    private string editorError;
 
     protected override void OnParametersSet()
     {
-        if (ResourceName != null && Registry.TryGetValue(ResourceName, out var config))
+        if (Registry != null && Registry.TryGet(ResourceName, out var config))
         {
-            editorComponentType = config.editor;
-            gridComponentType = config.grid;
+            editorComponentType = config.Editor;
+            gridComponentType = config.Grid;
 
             editorParameters = new Dictionary<string, object>
             {
-                ["ResourceName"] = ResourceName
+                ["Model"] = config.CreateModel()
             };
 
             gridParameters = new Dictionary<string, object>
             {
-                ["ResourceName"] = ResourceName
+                ["Items"] = Array.Empty<Resource<CharacterResource>>()
             };
+
+            editorError = null;
+            editorBoundary?.Recover();
         }
         else
         {
             editorComponentType = null;
             gridComponentType = null;
+            editorParameters = new Dictionary<string, object>();
+            gridParameters = new Dictionary<string, object>();
         }
+    }
+
+    private Task OnEditorError(Exception ex)
+    {
+        editorError = ex.ToString();
+        return Task.CompletedTask;
     }
 }

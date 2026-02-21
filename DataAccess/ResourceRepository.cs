@@ -2,6 +2,7 @@
 using DataAccess.Abstraction;
 using Microsoft.EntityFrameworkCore;
 using Models.Resources;
+using Models.Resources.Abstract;
 
 namespace DataAccess;
 

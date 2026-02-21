@@ -2,6 +2,7 @@
 using API.Services.Abstraction;
 using Microsoft.AspNetCore.Mvc;
 using Models.Character;
+using Models.Resources;
 
 namespace API.Controllers;
 

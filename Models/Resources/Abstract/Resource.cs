@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
 
-namespace Models.Resources;
+namespace Models.Resources.Abstract;
 
 public class Resource<T>
 {

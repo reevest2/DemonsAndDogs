@@ -2,6 +2,7 @@
 using DataAccess.Abstraction;
 using Microsoft.Extensions.Logging;
 using Models.Character;
+using Models.Resources;
 
 namespace API.Services;
 

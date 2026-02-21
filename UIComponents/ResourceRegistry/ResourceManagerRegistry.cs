@@ -1,25 +1,52 @@
 ﻿using AppConstants;
+using Models.Character;
 using Models.Resources;
+using Models.Resources.Abstract;
 using UIComponents.CharacterSheet;
 using UIComponents.ResourceGrid;
+using UIComponents.ResourceRegistry;
 
-namespace API.Services.ResourceRegistry;
+namespace UIComponents.ResourceRegistry;
 
 public interface IResourceManagerRegistry
 {
-    bool TryGet(string resourceName, out (Type editor, Type grid) config);
-
+    bool TryGet(string resourceName, out ResourceManagerConfig config);
+    IReadOnlyCollection<string> GetRegisteredResources();
 }
 
+public sealed record ResourceManagerConfig(
+    Type Editor,
+    Type Grid,
+    Func<object> CreateModel,
+    Func<object> CreateGridItems
+);
+
+/// <summary>
+/// Registry for ResourceManagementPage component. The page displays an editor and a grid.
+/// </summary>
 public sealed class ResourceManagerRegistry : IResourceManagerRegistry
 {
-    private static readonly Dictionary<string, (Type editor, Type grid)> Registry =
+    /// <summary>
+    /// Key Should be the Resource Name from ResourceKeys. Then add an editor and a grid.
+    /// </summary>
+    private static readonly Dictionary<string, ResourceManagerConfig> Map =
         new(StringComparer.OrdinalIgnoreCase)
         {
-            [ResourceKeys.CharacterResources] = (typeof(CharacterSheetEditor), typeof(ResourceGrid<CharacterResource>))
+            [ResourceKeys.CharacterResources] = new ResourceManagerConfig(
+                typeof(CharacterSheetEditor),
+                typeof(ResourceGrid<CharacterResource>),
+                () => new CharacterResource
+                {
+                    CharacterSheet = new Models.Character.CharacterSheet
+                    {
+                        Sections = new List<CharacterSheetSection>()
+                    }
+                },
+                () => Array.Empty<Resource<CharacterResource>>()
+            )
         };
 
-    public bool TryGet(string resourceName, out (Type editor, Type grid) config)
+    public bool TryGet(string resourceName, out ResourceManagerConfig config)
     {
         if (resourceName == null)
         {
@@ -27,6 +54,9 @@ public sealed class ResourceManagerRegistry : IResourceManagerRegistry
             return false;
         }
 
-        return Registry.TryGetValue(resourceName, out config);
+        return Map.TryGetValue(resourceName, out config);
     }
+
+    public IReadOnlyCollection<string> GetRegisteredResources()
+        => Map.Keys.ToList();
 }

@@ -1,4 +1,4 @@
-﻿namespace UIComponents.Abstract;
+﻿namespace Models.Resources.Abstract;
 
 public interface IResourceDefinition {
     string Key { get; }

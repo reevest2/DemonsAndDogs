@@ -1,4 +1,4 @@
-﻿namespace Models.RuleSet;
+﻿namespace Models.RuleSet.CharacterSheet;
 
 public class CharacterSheetDefinition
 {

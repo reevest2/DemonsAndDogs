@@ -1,4 +1,5 @@
 ﻿using Models.Character;
+using Models.Resources;
 
 namespace API.Services.Abstraction;
 

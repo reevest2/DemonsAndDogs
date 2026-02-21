@@ -1,8 +1,9 @@
 ﻿using System.Net;
 using System.Net.Http.Json;
-using DemonsAndDogs.Mediator.Records;
+using Mediator.Mediator.Records;
 using MediatR;
 using Models.Character;
+using Models.Resources;
 
 namespace Mediator.Mediator.Handlers;
 

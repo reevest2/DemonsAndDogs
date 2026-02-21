@@ -1,3 +1,3 @@
 ﻿namespace Models.PageWrappers;
 
-public record BreadcrumbItem();
+public record BreadcrumbItem(string Text, string Path);

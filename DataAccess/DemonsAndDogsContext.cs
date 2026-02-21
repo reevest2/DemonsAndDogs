@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Models;
 using Models.Character;
 using Models.Resources;
+using Models.Resources.Abstract;
 using Newtonsoft.Json;
 
 namespace DataAccess;
@@ -14,9 +15,9 @@ public class DbContext(DbContextOptions<DbContext> options)
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
-        ConfigureResource<TestResource>(modelBuilder, AppConstants.ResourceTableNames.TestResources);
-        ConfigureResource<CharacterResource>(modelBuilder, AppConstants.ResourceTableNames.CharacterResources);
-        ConfigureResource<RulesetResource>(modelBuilder, AppConstants.ResourceTableNames.RulesetResources);
+        ConfigureResource<TestResource>(modelBuilder, AppConstants.ResourceKeys.TestResources);
+        ConfigureResource<CharacterResource>(modelBuilder, AppConstants.ResourceKeys.CharacterResources);
+        ConfigureResource<RulesetResource>(modelBuilder, AppConstants.ResourceKeys.RulesetResources);
     }
     
     public DbSet<Resource<TestResource>> TestResources { get; set; }
