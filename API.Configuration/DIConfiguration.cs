@@ -20,6 +20,7 @@ public static class DIConfiguration
     {
         services.AddScoped<IResourceRepository.IResourceRepository<TestResource>, ResourceRepository<TestResource>>();
         services.AddScoped<IResourceRepository.IResourceRepository<CharacterResource>, ResourceRepository<CharacterResource>>();
+        services.AddScoped<IResourceRepository.IResourceRepository<CharacterTemplateData>, ResourceRepository<CharacterTemplateData>>();
         services.AddScoped<IResourceRepository.IResourceRepository<RulesetResource>, ResourceRepository<RulesetResource>>();
     }
 
@@ -27,6 +28,7 @@ public static class DIConfiguration
     {
         services.AddScoped<ITestResourceService, TestResourceService>();
         services.AddScoped<ICharacterResourceService, CharacterResourceService>();
+        services.AddScoped<ICharacterTemplateResourceService, CharacterTemplateResourceService>();
         services.AddScoped<IRulesetResourceService, RulesetResourceService>();
     }
 }

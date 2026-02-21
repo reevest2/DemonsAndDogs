@@ -18,11 +18,13 @@ public class DbContext(DbContextOptions<DbContext> options)
         ConfigureResource<TestResource>(modelBuilder, AppConstants.ResourceKeys.TestResources);
         ConfigureResource<CharacterResource>(modelBuilder, AppConstants.ResourceKeys.CharacterResources);
         ConfigureResource<RulesetResource>(modelBuilder, AppConstants.ResourceKeys.RulesetResources);
+        ConfigureResource<CharacterResource>(modelBuilder, AppConstants.ResourceKeys.CharacterTemplateResources);
     }
     
     public DbSet<Resource<TestResource>> TestResources { get; set; }
     public DbSet<Resource<CharacterResource>> CharacterResources { get; set; }
     public DbSet<Resource<RulesetResource>> RulesetResources { get; set; }
+    public DbSet<Resource<CharacterTemplateData>> CharacterTemplateResources { get; set; }
 
     private static void ConfigureResource<T>(ModelBuilder modelBuilder, string tableName)
     {
