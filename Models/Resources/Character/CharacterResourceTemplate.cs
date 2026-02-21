@@ -56,7 +56,7 @@ public class CharacterTemplateOption
 public class CharacterData
 {
     public string TemplateResourceId { get; set; }
-    public int TemplateVersion { get; set; }
+    public string TemplateVersion { get; set; }
 
     public ThumbnailMetadata Thumbnail { get; set; }
 

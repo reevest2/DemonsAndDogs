@@ -6,9 +6,9 @@ using Models.Resources;
 
 namespace API.Services;
 
-public class CharacterResourceService : IResourceService.ResourceService<CharacterResource>, ICharacterResourceService
+public class CharacterResourceService : IResourceService.ResourceService<CharacterData>, ICharacterResourceService
 {
-    public CharacterResourceService(IResourceRepository.IResourceRepository<CharacterResource> resourceRepository, ILogger<CharacterResourceService> logger) 
+    public CharacterResourceService(IResourceRepository.IResourceRepository<CharacterData> resourceRepository, ILogger<CharacterResourceService> logger) 
         : base(resourceRepository, logger)
     {
     }

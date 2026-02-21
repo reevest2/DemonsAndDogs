@@ -5,7 +5,7 @@ using Models.Resources;
 
 [Route("api/[controller]")]
 public class CharacterResourcesController(ICharacterResourceService service)
-    : ResourceControllerBase<CharacterResource, ICharacterResourceService>(service)
+    : ResourceControllerBase<CharacterData, ICharacterResourceService>(service)
 {
     
 }

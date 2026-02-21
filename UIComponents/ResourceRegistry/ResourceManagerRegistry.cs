@@ -1,8 +1,8 @@
-﻿using AppConstants;
+﻿using System.Text.Json;
+using AppConstants;
 using Models.Character;
 using Models.Resources;
 using Models.Resources.Abstract;
-using UIComponents.CharacterSheet;
 using UIComponents.ResourceGrid;
 using UIComponents.ResourceRegistry;
 
@@ -26,29 +26,38 @@ public sealed record ResourceManagerConfig(
 /// </summary>
 public sealed class ResourceManagerRegistry : IResourceManagerRegistry
 {
-    /// <summary>
-    /// Key Should be the Resource Name from ResourceKeys. Then add an editor and a grid.
-    /// </summary>
     private static readonly Dictionary<string, ResourceManagerConfig> Map =
         new(StringComparer.OrdinalIgnoreCase)
         {
             [ResourceKeys.CharacterResources] = new ResourceManagerConfig(
-                typeof(CharacterSheetEditor),
-                typeof(ResourceGrid<CharacterResource>),
-                () => new CharacterResource
+                typeof(CharacterEditor),
+                typeof(ResourceGrid<CharacterData>),
+                () => new CharacterData
                 {
-                    CharacterSheet = new Models.Character.CharacterSheet
-                    {
-                        Sections = new List<CharacterSheetSection>()
-                    }
+                    Thumbnail = new ThumbnailMetadata(),
+                    Values = new Dictionary<string, JsonElement>()
+                    
                 },
-                () => Array.Empty<Resource<CharacterResource>>()
+                () => Array.Empty<Resource<CharacterData>>()
+            ),
+
+            [ResourceKeys.CharacterTemplateResources] = new ResourceManagerConfig(
+                typeof(CharacterTemplateEditor),
+                typeof(ResourceGrid<CharacterTemplateData>),
+                () => new CharacterTemplateData
+                {
+                    Name = "New Template",
+                    Description = "",
+                    Thumbnail = new ThumbnailMetadata(),
+                    Sections = new List<CharacterTemplateSection>()
+                },
+                () => Array.Empty<Resource<CharacterTemplateData>>()
             )
         };
 
     public bool TryGet(string resourceName, out ResourceManagerConfig config)
     {
-        if (resourceName == null)
+        if (string.IsNullOrWhiteSpace(resourceName))
         {
             config = default;
             return false;

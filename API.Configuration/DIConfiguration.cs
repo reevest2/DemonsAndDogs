@@ -19,7 +19,7 @@ public static class DIConfiguration
     public static void ConfigureRepositories(this IServiceCollection services)
     {
         services.AddScoped<IResourceRepository.IResourceRepository<TestResource>, ResourceRepository<TestResource>>();
-        services.AddScoped<IResourceRepository.IResourceRepository<CharacterResource>, ResourceRepository<CharacterResource>>();
+        services.AddScoped<IResourceRepository.IResourceRepository<CharacterData>, ResourceRepository<CharacterData>>();
         services.AddScoped<IResourceRepository.IResourceRepository<CharacterTemplateData>, ResourceRepository<CharacterTemplateData>>();
         services.AddScoped<IResourceRepository.IResourceRepository<RulesetResource>, ResourceRepository<RulesetResource>>();
     }

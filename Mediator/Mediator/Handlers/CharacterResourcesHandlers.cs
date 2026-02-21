@@ -8,45 +8,45 @@ using Models.Resources;
 namespace Mediator.Mediator.Handlers;
 
 public class GetCharacterResourceHandler(HttpClient http)
-    : IRequestHandler<GetCharacterResourceQuery, CharacterResource?>
+    : IRequestHandler<GetCharacterResourceQuery, CharacterData?>
 {
-    public async Task<CharacterResource?> Handle(GetCharacterResourceQuery request, CancellationToken ct)
+    public async Task<CharacterData?> Handle(GetCharacterResourceQuery request, CancellationToken ct)
     {
         var res = await http.GetAsync($"api/characterresources/{request.ResourceId}", ct);
         if (res.StatusCode == HttpStatusCode.NotFound) return null;
         res.EnsureSuccessStatusCode();
-        return await res.Content.ReadFromJsonAsync<CharacterResource>(cancellationToken: ct);
+        return await res.Content.ReadFromJsonAsync<CharacterData>(cancellationToken: ct);
     }
 }
 
 public class GetCharacterResourcesHandler(HttpClient http)
-    : IRequestHandler<GetCharacterResourcesQuery, List<CharacterResource>>
+    : IRequestHandler<GetCharacterResourcesQuery, List<CharacterData>>
 {
-    public async Task<List<CharacterResource>> Handle(GetCharacterResourcesQuery request, CancellationToken ct)
+    public async Task<List<CharacterData>> Handle(GetCharacterResourcesQuery request, CancellationToken ct)
     {
-        return await http.GetFromJsonAsync<List<CharacterResource>>("api/characterresources", ct) ?? new();
+        return await http.GetFromJsonAsync<List<CharacterData>>("api/characterresources", ct) ?? new();
     }
 }
 
 public class CreateCharacterResourceHandler(HttpClient http)
-    : IRequestHandler<CreateCharacterResourceCommand, CharacterResource>
+    : IRequestHandler<CreateCharacterResourceCommand, CharacterData>
 {
-    public async Task<CharacterResource> Handle(CreateCharacterResourceCommand request, CancellationToken ct)
+    public async Task<CharacterData> Handle(CreateCharacterResourceCommand request, CancellationToken ct)
     {
         var res = await http.PostAsJsonAsync("api/characterresources", request.Resource, ct);
         res.EnsureSuccessStatusCode();
-        return (await res.Content.ReadFromJsonAsync<CharacterResource>(cancellationToken: ct))!;
+        return (await res.Content.ReadFromJsonAsync<CharacterData>(cancellationToken: ct))!;
     }
 }
 
 public class UpdateCharacterResourceHandler(HttpClient http)
-    : IRequestHandler<UpdateCharacterResourceCommand, CharacterResource>
+    : IRequestHandler<UpdateCharacterResourceCommand, CharacterData>
 {
-    public async Task<CharacterResource> Handle(UpdateCharacterResourceCommand request, CancellationToken ct)
+    public async Task<CharacterData> Handle(UpdateCharacterResourceCommand request, CancellationToken ct)
     {
         var res = await http.PutAsJsonAsync($"api/characterresources/{request.ResourceId}", request.Resource, ct);
         res.EnsureSuccessStatusCode();
-        return (await res.Content.ReadFromJsonAsync<CharacterResource>(cancellationToken: ct))!;
+        return (await res.Content.ReadFromJsonAsync<CharacterData>(cancellationToken: ct))!;
     }
 }
 
