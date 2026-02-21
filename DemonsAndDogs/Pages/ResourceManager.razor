@@ -1,8 +1,16 @@
 ﻿@page "/{resourceName}/Manager"
+@using Mediator.Mediator.Records
+@using MediatR
 @using UIComponents.PageComponents
 
-<ResourceManagementPage ResourceName="@resourceName" />
+<ResourceManagementPage ResourceName="@resourceName" OnSave="@Save" />
 
 @code {
     [Parameter] public string resourceName { get; set; }
+    [Inject] IMediator Mediator { get; set; }
+    
+    async Task Save(object model)
+    {
+        await Mediator.Send(new SaveResourceCommand(resourceName, model));
+    }
 }

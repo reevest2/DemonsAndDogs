@@ -17,6 +17,7 @@
 
 @code {
     [Parameter] public string ResourceName { get; set; }
+    [Parameter] public EventCallback<object> OnSave { get; set; }
     [Inject] public IResourceManagerRegistry Registry { get; set; }
 
     private Type editorComponentType;
@@ -37,7 +38,8 @@
 
             editorParameters = new Dictionary<string, object>
             {
-                ["Model"] = config.CreateModel()
+                ["Model"] = config.CreateModel(),
+                ["OnSave"] = OnSave
             };
 
             gridParameters = new Dictionary<string, object>

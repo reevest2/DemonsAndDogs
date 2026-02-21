@@ -59,3 +59,56 @@ public class DeleteCharacterResourceHandler(HttpClient http)
         res.EnsureSuccessStatusCode();
     }
 }
+
+public class GetCharacterTemplateResourceHandler(HttpClient http)
+    : IRequestHandler<GetCharacterTemplateResourceQuery, CharacterTemplateData?>
+{
+    public async Task<CharacterTemplateData?> Handle(GetCharacterTemplateResourceQuery request, CancellationToken ct)
+    {
+        var res = await http.GetAsync($"api/charactertemplateresources/{request.ResourceId}", ct);
+        if (res.StatusCode == HttpStatusCode.NotFound) return null;
+        res.EnsureSuccessStatusCode();
+        return await res.Content.ReadFromJsonAsync<CharacterTemplateData>(cancellationToken: ct);
+    }
+}
+
+public class GetCharacterTemplateResourcesHandler(HttpClient http)
+    : IRequestHandler<GetCharacterTemplateResourcesQuery, List<CharacterTemplateData>>
+{
+    public async Task<List<CharacterTemplateData>> Handle(GetCharacterTemplateResourcesQuery request, CancellationToken ct)
+    {
+        return await http.GetFromJsonAsync<List<CharacterTemplateData>>("api/charactertemplateresources", ct) ?? new();
+    }
+}
+
+public class CreateCharacterTemplateResourceHandler(HttpClient http)
+    : IRequestHandler<CreateCharacterTemplateResourceCommand, CharacterTemplateData>
+{
+    public async Task<CharacterTemplateData> Handle(CreateCharacterTemplateResourceCommand request, CancellationToken ct)
+    {
+        var res = await http.PostAsJsonAsync("api/charactertemplateresources", request.Resource, ct);
+        res.EnsureSuccessStatusCode();
+        return (await res.Content.ReadFromJsonAsync<CharacterTemplateData>(cancellationToken: ct))!;
+    }
+}
+
+public class UpdateCharacterTemplateResourceHandler(HttpClient http)
+    : IRequestHandler<UpdateCharacterTemplateResourceCommand, CharacterTemplateData>
+{
+    public async Task<CharacterTemplateData> Handle(UpdateCharacterTemplateResourceCommand request, CancellationToken ct)
+    {
+        var res = await http.PutAsJsonAsync($"api/charactertemplateresources/{request.ResourceId}", request.Resource, ct);
+        res.EnsureSuccessStatusCode();
+        return (await res.Content.ReadFromJsonAsync<CharacterTemplateData>(cancellationToken: ct))!;
+    }
+}
+
+public class DeleteCharacterTemplateResourceHandler(HttpClient http)
+    : IRequestHandler<DeleteCharacterTemplateResourceCommand>
+{
+    public async Task Handle(DeleteCharacterTemplateResourceCommand request, CancellationToken ct)
+    {
+        var res = await http.DeleteAsync($"api/charactertemplateresources/{request.ResourceId}", ct);
+        res.EnsureSuccessStatusCode();
+    }
+}
