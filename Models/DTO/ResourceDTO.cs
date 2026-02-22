@@ -1,6 +1,8 @@
-﻿namespace Models.DTO;
+﻿using System.Text.Json;
 
-public record ResourceListItemDto(
+namespace Models.DTO;
+
+public record ResourceDto(
     string Id,
     string? EntityId,
     string? OwnerId,
@@ -11,7 +13,8 @@ public record ResourceListItemDto(
     bool IsDeleted,
     string ResourceTypeKey,
     string? ResourceName,
-    string? ResourceDescription
+    string? ResourceDescription,
+    JsonElement? Data
 );
 
 public record PagedResult<T>(IReadOnlyList<T> Items, int TotalCount);

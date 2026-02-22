@@ -25,7 +25,7 @@ public interface IResourceService
   public abstract class ResourceService<TResource>(
     IResourceRepository<TResource> resourceRepository,
     ILogger logger)
-    : IResourceService.IResourceService<TResource>
+    : IResourceService.IResourceService<TResource> where TResource : ResourceBase
   {
     protected readonly IResourceRepository<TResource> _resourceRepository = resourceRepository;
     protected readonly ILogger _logger = logger;

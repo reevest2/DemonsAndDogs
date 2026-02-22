@@ -9,10 +9,10 @@ public record ListResourcesQuery(
     string? SearchText,
     string? OrderBy,
     bool IncludeDeleted
-) : MediatR.IRequest<PagedResult<ResourceListItemDto>>;
+) : MediatR.IRequest<PagedResult<ResourceDto>>;
 
 public record GetResourceQuery(string ResourceTypeKey, string Id)
-    : MediatR.IRequest<ResourceListItemDto>;
+    : MediatR.IRequest<ResourceDto>;
 
 public record CreateResourceCommand(
     string ResourceTypeKey,
