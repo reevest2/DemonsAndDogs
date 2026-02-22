@@ -18,6 +18,7 @@
 @code {
     [Parameter] public string ResourceName { get; set; }
     [Parameter] public EventCallback<object> OnSave { get; set; }
+    [Parameter] public Func<Task<object>> LoadItems { get; set; }
     [Inject] public IResourceManagerRegistry Registry { get; set; }
 
     private Type editorComponentType;

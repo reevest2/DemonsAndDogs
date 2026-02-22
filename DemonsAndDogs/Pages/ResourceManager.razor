@@ -3,7 +3,7 @@
 @using MediatR
 @using UIComponents.PageComponents
 
-<ResourceManagementPage ResourceName="@resourceName" OnSave="@Save" />
+<ResourceManagementPage ResourceName="@resourceName" OnSave="@Save" LoadItems="@LoadItems"  />
 
 @code {
     [Parameter] public string resourceName { get; set; }
@@ -12,5 +12,10 @@
     async Task Save(object model)
     {
         await Mediator.Send(new SaveResourceCommand(resourceName, model));
+    }
+    
+    async Task<object> LoadItems()
+    {
+        return await Mediator.Send(new GetAllResourcesQuery(resourceName));
     }
 }
