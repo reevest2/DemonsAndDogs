@@ -5,15 +5,15 @@
 @using Radzen
 @using Radzen.Blazor
 
-<RadzenDataGrid TItem="Resource<TResource>" Data="@Items" ColumnWidth="200px">
+<RadzenDataGrid TItem="TResource" Data="@Items" ColumnWidth="200px">
     <Columns>
-        <RadzenDataGridColumn TItem="Resource<TResource>" Property="OwnerId"  Title="OwnerId" Width="160px"/>
-        <RadzenDataGridColumn TItem="Resource<TResource>" Property="Version" Title="Ver" Width="80px" />
-        <RadzenDataGridColumn TItem="Resource<TResource>" Property="CreatedAt" Title="Created" FormatString="{0:G}" Width="180px" />
-        <RadzenDataGridColumn TItem="Resource<TResource>" Property="UpdatedAt" Title="Updated" FormatString="{0:G}" Width="180px" />
-        <RadzenDataGridColumn TItem="Resource<TResource>" Property="IsDeleted" Title="Deleted" Width="90px" />
+        <RadzenDataGridColumn TItem="TResource" Property="OwnerId"  Title="OwnerId" Width="160px"/>
+        <RadzenDataGridColumn TItem="TResource" Property="Version" Title="Ver" Width="80px" />
+        <RadzenDataGridColumn TItem="TResource" Property="CreatedAt" Title="Created" FormatString="{0:G}" Width="180px" />
+        <RadzenDataGridColumn TItem="TResource" Property="UpdatedAt" Title="Updated" FormatString="{0:G}" Width="180px" />
+        <RadzenDataGridColumn TItem="TResource" Property="IsDeleted" Title="Deleted" Width="90px" />
 
-        <RadzenDataGridColumn TItem="Resource<TResource>" Title="Actions" Width="260px">
+        <RadzenDataGridColumn TItem="TResource" Title="Actions" Width="260px">
             <Template Context="row">
                 <RadzenStack Orientation="Orientation.Horizontal" Gap="8px">
                     <RadzenButton Text="View"
@@ -28,13 +28,10 @@
 </RadzenDataGrid>
 
 @code {
-    [Parameter] public IEnumerable<Resource<TResource>> Items { get; set; } = [];
+    [Parameter] public IEnumerable<TResource> Items { get; set; } = [];
     [Inject] DialogService DialogService { get; set; }
 
-    static string ShortId(string id)
-        => string.IsNullOrWhiteSpace(id) ? "" : (id.Length <= 8 ? id : id[..8]);
-
-    async Task ViewJson(Resource<TResource> row)
+    async Task ViewJson(TResource row)
     {
         var json = JsonSerializer.Serialize(row, new JsonSerializerOptions { WriteIndented = true });
         await DialogService.OpenAsync<JsonViewerDialog>(

@@ -1,11 +1,4 @@
-﻿using System.Text.Json;
-using AppConstants;
-using Models.Resources;
-using Models.Resources.Abstract;
-using Models.Resources.Character;
-using UIComponents.ResourceGrid;
-using UIComponents.ResourceRegistry;
-
+﻿
 namespace UIComponents.ResourceRegistry;
 
 public interface IResourceManagerRegistry

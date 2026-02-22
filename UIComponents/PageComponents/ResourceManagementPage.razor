@@ -1,4 +1,5 @@
-﻿@using Radzen.Blazor
+﻿@using Microsoft.Win32
+@using Radzen.Blazor
 @using UIComponents.ResourceRegistry
 
 <RadzenTabs>
@@ -46,8 +47,8 @@
         }
         else
         {
-            editorComponentType = null;
-            gridComponentType = null;
+            editorComponentType = null; //typeof(JsonResourceEditor);
+            gridComponentType = null; //typeof(ResourceGrid<>);
             editorParameters = new Dictionary<string, object>();
             gridParameters = new Dictionary<string, object>();
         }

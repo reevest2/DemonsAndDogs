@@ -1,5 +1,5 @@
 ﻿@page "/{resourceName}/Manager"
-@using Mediator.Mediator.Records
+@using Mediator
 @using MediatR
 @using UIComponents.PageComponents
 
@@ -18,11 +18,11 @@
 
     async Task Save(object model)
     {
-        await Mediator.Send(new SaveResourceCommand(resourceName, model));
+        //await Mediator.Send(new SaveResourceCommand(resourceName, model));
     }
     
     async Task LoadItems()
     {
-        Items = await Mediator.Send(new GetAllResourcesQuery(resourceName));
+        //Items = await Mediator.Send(new GetAllResourcesQuery(resourceName));
     }
 }

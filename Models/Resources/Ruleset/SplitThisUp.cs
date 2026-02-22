@@ -1,12 +1,14 @@
-﻿namespace Models.Resources.Ruleset;
+﻿using Models.Resources.Abstract;
 
-public class CampaignData
+namespace Models.Resources.Ruleset;
+
+public class CampaignData : ResourceBase
 {
     public string Name { get; set; } = default!;
     public string RulesetTemplateId { get; set; } = default!;
 }
 
-public class RulesetResource
+public class RulesetData : ResourceBase
 {
     public string TemplateName { get; set; } = default!;
     public string? Notes { get; set; }
@@ -22,7 +24,7 @@ public class RulesetCategorySpec
     public int? DefaultMax { get; set; }
 }
 
-public class TemplateData
+public class TemplateData : ResourceBase
 {
     public string Name { get; set; } = default!;
     public string TemplateId { get; set; } = default!;
@@ -30,7 +32,7 @@ public class TemplateData
     public Dictionary<string, object?> Seed { get; set; } = new();
 }
 
-public class EntityData
+public class EntityData : ResourceBase
 {
     public string Name { get; set; } = default!;
     public string CampaignId { get; set; } = default!;
