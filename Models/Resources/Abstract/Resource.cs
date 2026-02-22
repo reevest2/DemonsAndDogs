@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
+using Models.Enums;
 using Pgvector;
 
 namespace Models.Resources.Abstract;
@@ -16,6 +17,9 @@ public class Resource<T>
     
     [Column(TypeName = "jsonb")]
     public T Data { get; set; }
+    public ResourceType ResourceTypeKey { get; set; }
+    public string? ResourceName { get; set; }
+    public string? ResourceDescription { get; set; }
     
     //TODO: Vector Storage?
     // [Column(TypeName = "vector(1536)")]

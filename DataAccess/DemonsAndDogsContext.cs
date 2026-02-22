@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Models;
+using Models.Enums;
 using Models.Resources;
 using Models.Resources.Abstract;
 using Models.Resources.Character;
@@ -33,6 +34,12 @@ public class DbContext(DbContextOptions<DbContext> options)
         {
             b.ToTable(tableName);
             b.Property(x => x.Data).HasColumnType("jsonb");
+            b.Property(x => ResourceType)
+                .HasConversion<string>()
+                .HasMaxLength(128);
+
+            b.Property(x => x.ResourceName).HasMaxLength(256);
+            b.Property(x => x.ResourceDescription).HasMaxLength(2048);
         });
     }
 }
