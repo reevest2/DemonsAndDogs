@@ -13,13 +13,13 @@ public sealed class SaveResourceCommandHandler(IMediator mediator) : IRequestHan
     {
         if (request.ResourceName.Equals(ResourceKeys.CharacterTemplateResources, StringComparison.OrdinalIgnoreCase))
         {
-            await mediator.Send(new CreateCharacterTemplateResourceCommand((CharacterTemplateData)request.Resource), cancellationToken);
+            await mediator.Send(new CreateCharacterTemplateResourceCommand(request.Resource), cancellationToken);
             return;
         }
 
         if (request.ResourceName.Equals(ResourceKeys.CharacterResources, StringComparison.OrdinalIgnoreCase))
         {
-            await mediator.Send(new CreateCharacterResourceCommand((CharacterData)request.Resource), cancellationToken);
+            await mediator.Send(new CreateCharacterResourceCommand(request.Resource), cancellationToken);
             return;
         }
 

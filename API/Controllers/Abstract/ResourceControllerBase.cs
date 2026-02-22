@@ -1,5 +1,6 @@
 ﻿using API.Services.Abstraction;
 using Microsoft.AspNetCore.Mvc;
+using Models.Resources;
 using Models.Resources.Abstract;
 
 namespace API.Controllers.Abstract;
@@ -11,7 +12,7 @@ public abstract class ResourceControllerBase<TModel, TService>(TService service)
     protected string OwnerId => "dev";
 
     [HttpGet("{resourceId}")]
-    public async Task<ActionResult<TModel>> GetById(string resourceId)
+    public async Task<ActionResult<Resource<TModel>>> GetById(string resourceId)
     {
         var resource = await service.GetById(OwnerId, resourceId);
         if (resource is null) return NotFound();
@@ -26,14 +27,14 @@ public abstract class ResourceControllerBase<TModel, TService>(TService service)
     }
 
     [HttpPost]
-    public async Task<ActionResult<TModel>> Create([FromBody] TModel resource)
+    public async Task<ActionResult<Resource<TModel>>> Create([FromBody] TModel resource)
     {
         var created = await service.Create(OwnerId, resource);
         return Ok(created);
     }
 
     [HttpPut("{resourceId}")]
-    public async Task<ActionResult<TModel>> Update(string resourceId, [FromBody] TModel resource)
+    public async Task<ActionResult<Resource<TModel>>> Update(string resourceId, [FromBody] TModel resource)
     {
         var updated = await service.Update(OwnerId, resourceId, resource);
         return Ok(updated);

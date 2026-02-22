@@ -10,45 +10,45 @@ using Models.Resources.Character;
 namespace Mediator.Mediator.Handlers;
 
 public class GetCharacterResourceHandler(HttpClient http)
-    : IRequestHandler<GetCharacterResourceQuery, CharacterData?>
+    : IRequestHandler<GetCharacterResourceQuery, Resource<CharacterData>?>
 {
-    public async Task<CharacterData?> Handle(GetCharacterResourceQuery request, CancellationToken ct)
+    public async Task<Resource<CharacterData>?> Handle(GetCharacterResourceQuery request, CancellationToken ct)
     {
         var res = await http.GetAsync($"api/characterresources/{request.ResourceId}", ct);
         if (res.StatusCode == HttpStatusCode.NotFound) return null;
         res.EnsureSuccessStatusCode();
-        return await res.Content.ReadFromJsonAsync<CharacterData>(cancellationToken: ct);
+        return await res.Content.ReadFromJsonAsync<Resource<CharacterData>>(cancellationToken: ct);
     }
 }
 
 public class GetCharacterResourcesHandler(HttpClient http)
-    : IRequestHandler<GetCharacterResourcesQuery, List<CharacterData>>
+    : IRequestHandler<GetCharacterResourcesQuery, List<Resource<CharacterData>>>
 {
-    public async Task<List<CharacterData>> Handle(GetCharacterResourcesQuery request, CancellationToken ct)
+    public async Task<List<Resource<CharacterData>>> Handle(GetCharacterResourcesQuery request, CancellationToken ct)
     {
-        return await http.GetFromJsonAsync<List<CharacterData>>("api/characterresources", ct) ?? new();
+        return await http.GetFromJsonAsync<List<Resource<CharacterData>>>("api/characterresources", ct) ?? new();
     }
 }
 
 public class CreateCharacterResourceHandler(HttpClient http)
-    : IRequestHandler<CreateCharacterResourceCommand, CharacterData>
+    : IRequestHandler<CreateCharacterResourceCommand, Resource<CharacterData>>
 {
-    public async Task<CharacterData> Handle(CreateCharacterResourceCommand request, CancellationToken ct)
+    public async Task<Resource<CharacterData>> Handle(CreateCharacterResourceCommand request, CancellationToken ct)
     {
         var res = await http.PostAsJsonAsync("api/characterresources", request.Resource, ct);
         res.EnsureSuccessStatusCode();
-        return (await res.Content.ReadFromJsonAsync<CharacterData>(cancellationToken: ct))!;
+        return (await res.Content.ReadFromJsonAsync<Resource<CharacterData>>(cancellationToken: ct))!;
     }
 }
 
 public class UpdateCharacterResourceHandler(HttpClient http)
-    : IRequestHandler<UpdateCharacterResourceCommand, CharacterData>
+    : IRequestHandler<UpdateCharacterResourceCommand, Resource<CharacterData>>
 {
-    public async Task<CharacterData> Handle(UpdateCharacterResourceCommand request, CancellationToken ct)
+    public async Task<Resource<CharacterData>> Handle(UpdateCharacterResourceCommand request, CancellationToken ct)
     {
         var res = await http.PutAsJsonAsync($"api/characterresources/{request.ResourceId}", request.Resource, ct);
         res.EnsureSuccessStatusCode();
-        return (await res.Content.ReadFromJsonAsync<CharacterData>(cancellationToken: ct))!;
+        return (await res.Content.ReadFromJsonAsync<Resource<CharacterData>>(cancellationToken: ct))!;
     }
 }
 
@@ -84,9 +84,9 @@ public class GetCharacterTemplateResourcesHandler(HttpClient http)
 }
 
 public class CreateCharacterTemplateResourceHandler(HttpClient http)
-    : IRequestHandler<CreateCharacterTemplateResourceCommand, CharacterTemplateData>
+    : IRequestHandler<CreateCharacterTemplateResourceCommand, Resource<CharacterTemplateData>>
 {
-    public async Task<CharacterTemplateData> Handle(CreateCharacterTemplateResourceCommand request, CancellationToken ct)
+    public async Task<Resource<CharacterTemplateData>> Handle(CreateCharacterTemplateResourceCommand request, CancellationToken ct)
     {
         var res = await http.PostAsJsonAsync("api/charactertemplateresources", request.Resource, ct);
 
@@ -96,18 +96,18 @@ public class CreateCharacterTemplateResourceHandler(HttpClient http)
             throw new HttpRequestException($"{(int)res.StatusCode} {res.ReasonPhrase} Body={body}");
         }
 
-        return (await res.Content.ReadFromJsonAsync<CharacterTemplateData>(cancellationToken: ct))!;
+        return (await res.Content.ReadFromJsonAsync<Resource<CharacterTemplateData>>(cancellationToken: ct))!;
     }
 }
 
 public class UpdateCharacterTemplateResourceHandler(HttpClient http)
-    : IRequestHandler<UpdateCharacterTemplateResourceCommand, CharacterTemplateData>
+    : IRequestHandler<UpdateCharacterTemplateResourceCommand, Resource<CharacterTemplateData>>
 {
-    public async Task<CharacterTemplateData> Handle(UpdateCharacterTemplateResourceCommand request, CancellationToken ct)
+    public async Task<Resource<CharacterTemplateData>> Handle(UpdateCharacterTemplateResourceCommand request, CancellationToken ct)
     {
         var res = await http.PutAsJsonAsync($"api/charactertemplateresources/{request.ResourceId}", request.Resource, ct);
         res.EnsureSuccessStatusCode();
-        return (await res.Content.ReadFromJsonAsync<CharacterTemplateData>(cancellationToken: ct))!;
+        return (await res.Content.ReadFromJsonAsync<Resource<CharacterTemplateData>>(cancellationToken: ct))!;
     }
 }
 

@@ -8,83 +8,80 @@ namespace API.Services.Abstraction;
 
 public interface IResourceService
 {
-     public interface IResourceService<TResource>
+    public interface IResourceService<TResource>
     {
         Task<List<Resource<TResource>>> GetAll();
-        Task<TResource> GetById(string ownerId, string resourceId);
-        Task<TResource> GetFirstByOwner(string ownerId);
-        Task<List<TResource>> GetAllByOwnerId(string ownerId);
+        Task<Resource<TResource>> GetById(string ownerId, string resourceId);
+        Task<Resource<TResource>> GetFirstByOwner(string ownerId);
+        Task<List<Resource<TResource>>> GetAllByOwnerId(string ownerId);
         Task<int> GetCountByOwnerId(string ownerId, bool includeDeleted = false);
-        Task<TResource> GetByOwnerIdAndSubjectId(string ownerId, string subjectId);
-        Task<TResource> Create(string ownerId, TResource resource);
-        Task<TResource> Update(string ownerId, string resourceId, TResource resource);
+        Task<Resource<TResource>> GetByOwnerIdAndSubjectId(string ownerId, string subjectId);
+        Task<Resource<TResource>> Create(string ownerId, TResource resource);
+        Task<Resource<TResource>> Update(string ownerId, string resourceId, TResource resource);
         Task Delete(string ownerId, string resourceId, bool hardDelete = false);
     }
     
-    public abstract class ResourceService<TResource> : IResourceService<TResource>
+   public abstract class ResourceService<TResource>(
+       IResourceRepository.IResourceRepository<TResource> resourceRepository,
+       ILogger logger)
+       : IResourceService.IResourceService<TResource>
+   {
+    protected readonly IResourceRepository.IResourceRepository<TResource> _resourceRepository = resourceRepository;
+    protected readonly ILogger _logger = logger;
+
+    public virtual async Task<List<Resource<TResource>>> GetAll()
     {
-        protected readonly IResourceRepository.IResourceRepository<TResource> _resourceRepository;
-        protected readonly ILogger _logger;
-        
-        public ResourceService(IResourceRepository.IResourceRepository<TResource> resourceRepository, ILogger logger)
-        {
-            _resourceRepository = resourceRepository;
-            _logger = logger;
-        }
+        return await _resourceRepository.GetAllAsync();
+    }
+    public virtual async Task<Resource<TResource>> GetById(string ownerId, string resourceId)
+    {
+        var resource = await _resourceRepository.GetByIdAsync(resourceId);
+        return resource;
+    }
 
-        public virtual async Task<List<Resource<TResource>>> GetAll()
+    public virtual async Task<Resource<TResource>> GetFirstByOwner(string ownerId)
+    {
+        var resource = await _resourceRepository.FirstOrDefaultAsync(ownerId);
+        return resource;
+    }
+    
+    public virtual async Task<List<Resource<TResource>>> GetAllByOwnerId(string ownerId)
+    {
+        return await _resourceRepository.GetListByOwnerAsync(ownerId);
+    }
+    
+    public virtual async Task<int> GetCountByOwnerId(string ownerId, bool includeDeleted = false)
+    {
+        return await _resourceRepository.GetCountByOwnerAsync(ownerId, includeDeleted);
+    }
+    
+    public virtual async Task<Resource<TResource>> GetByOwnerIdAndSubjectId(string ownerId, string subjectId)
+    {
+        return await _resourceRepository.GetByOwnerIdAndSubjectId(ownerId, subjectId);
+    }
+    
+    public virtual async Task<Resource<TResource>> Create(string ownerId, TResource resource)
+    {
+        return await _resourceRepository.CreateResourceAsync(resource, ownerId, null, null);
+    }
+    
+    public virtual async Task<Resource<TResource>> Update(string ownerId, string resourceId, TResource resource)
+    {
+        var storedResource = await _resourceRepository.GetByIdAsync(resourceId);
+        return await _resourceRepository.UpdateResourceAsync(resourceId, resource);
+    }
+    
+    public virtual async Task Delete(string ownerId, string resourceId, bool hardDelete = false)
+    {
+        var storedResource = await _resourceRepository.GetByIdAsync(resourceId);
+        if (hardDelete)
         {
-            return await _resourceRepository.GetAllAsync();
+            await _resourceRepository.DeleteResourceAsync(resourceId);
         }
-        public virtual async Task<TResource> GetById(string ownerId, string resourceId)
+        else
         {
-            var resource = await _resourceRepository.GetByIdAsync(resourceId);
-            return resource;
-        }
-
-        public virtual async Task<TResource> GetFirstByOwner(string ownerId)
-        {
-            var list = await _resourceRepository.GetListByOwnerAsync(ownerId);
-            return list.FirstOrDefault();
-        }
-        
-        public virtual async Task<List<TResource>> GetAllByOwnerId(string ownerId)
-        {
-            return await _resourceRepository.GetListByOwnerAsync(ownerId);
-        }
-        
-        public virtual async Task<int> GetCountByOwnerId(string ownerId, bool includeDeleted = false)
-        {
-            return await _resourceRepository.GetCountByOwnerAsync(ownerId, includeDeleted);
-        }
-        
-        public virtual async Task<TResource> GetByOwnerIdAndSubjectId(string ownerId, string subjectId)
-        {
-            return await _resourceRepository.GetByOwnerIdAndSubjectId(ownerId, subjectId);
-        }
-
-        public virtual async Task<TResource> Create(string ownerId, TResource resource)
-        {
-            return await _resourceRepository.CreateResourceAsync(resource, ownerId, null, null);
-        }
-
-        public virtual async Task<TResource> Update(string ownerId, string resourceId, TResource resource)
-        {
-            var storedResource = await _resourceRepository.GetByIdAsync(resourceId);
-            return await _resourceRepository.UpdateResourceAsync(resourceId, resource);
-        }
-
-        public virtual async Task Delete(string ownerId, string resourceId, bool hardDelete = false)
-        {
-            var storedResource = await _resourceRepository.GetByIdAsync(resourceId);
-            if (hardDelete)
-            {
-                await _resourceRepository.DeleteResourceAsync(resourceId);
-            }
-            else
-            {
-                await _resourceRepository.UpdateResourceAsync(resourceId, storedResource, true);
-            }
+            await _resourceRepository.UpdateResourceAsync(resourceId, storedResource.Data, true);
         }
     }
+}
 }
