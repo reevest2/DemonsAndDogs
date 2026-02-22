@@ -27,7 +27,6 @@ public static class DIConfiguration
 
     public static void ConfigureServices(this IServiceCollection services)
     {
-        services.AddScoped<ITestResourceService, TestResourceService>();
         services.AddScoped<ICharacterResourceService, CharacterResourceService>();
         services.AddScoped<ICharacterTemplateResourceService, CharacterTemplateResourceService>();
         services.AddScoped<IRulesetResourceService, RulesetResourceService>();

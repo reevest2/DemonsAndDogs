@@ -16,8 +16,8 @@ public interface IResourceService
         Task<List<Resource<TResource>>> GetAllByOwnerId(string ownerId);
         Task<int> GetCountByOwnerId(string ownerId, bool includeDeleted = false);
         Task<Resource<TResource>> GetByOwnerIdAndSubjectId(string ownerId, string subjectId);
-        Task<Resource<TResource>> Create(string ownerId, TResource resource);
-        Task<Resource<TResource>> Update(string ownerId, string resourceId, TResource resource);
+        Task<Resource<TResource>> Create(Resource<TResource> resource);
+        Task<Resource<TResource>> Update(string resourceId, Resource<TResource> resource);
         Task Delete(string ownerId, string resourceId, bool hardDelete = false);
     }
     
@@ -60,15 +60,15 @@ public interface IResourceService
         return await _resourceRepository.GetByOwnerIdAndSubjectId(ownerId, subjectId);
     }
     
-    public virtual async Task<Resource<TResource>> Create(string ownerId, TResource resource)
+    public virtual async Task<Resource<TResource>> Create(Resource<TResource> resource)
     {
-        return await _resourceRepository.CreateResourceAsync(resource, ownerId, null, null);
+        return await _resourceRepository.CreateResourceAsync(resource.Data, resource.OwnerId, resource.SubjectId, resource.EntityId);
     }
     
-    public virtual async Task<Resource<TResource>> Update(string ownerId, string resourceId, TResource resource)
+    public virtual async Task<Resource<TResource>> Update(string resourceId, Resource<TResource> resource)
     {
         var storedResource = await _resourceRepository.GetByIdAsync(resourceId);
-        return await _resourceRepository.UpdateResourceAsync(resourceId, resource);
+        return await _resourceRepository.UpdateResourceAsync(storedResource.Id, resource.Data, resource.IsDeleted);
     }
     
     public virtual async Task Delete(string ownerId, string resourceId, bool hardDelete = false)

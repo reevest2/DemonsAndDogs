@@ -8,7 +8,7 @@ namespace API.Services;
 
 public class RulesetResourceService : IResourceService.ResourceService<RulesetResource>, IRulesetResourceService
 {
-    public RulesetResourceService(IResourceRepository.IResourceRepository<RulesetResource>resourceRepository, ILogger<TestResourceService> logger) 
+    public RulesetResourceService(IResourceRepository.IResourceRepository<RulesetResource>resourceRepository, ILogger<RulesetResourceService> logger) 
         : base(resourceRepository, logger)
     {
     }

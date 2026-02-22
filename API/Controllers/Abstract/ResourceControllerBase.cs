@@ -27,16 +27,16 @@ public abstract class ResourceControllerBase<TModel, TService>(TService service)
     }
 
     [HttpPost]
-    public async Task<ActionResult<Resource<TModel>>> Create([FromBody] TModel resource)
+    public async Task<ActionResult<Resource<TModel>>> Create([FromBody] Resource<TModel> resource)
     {
-        var created = await service.Create(OwnerId, resource);
+        var created = await service.Create(resource);
         return Ok(created);
     }
 
     [HttpPut("{resourceId}")]
-    public async Task<ActionResult<Resource<TModel>>> Update(string resourceId, [FromBody] TModel resource)
+    public async Task<ActionResult<Resource<TModel>>> Update(string resourceId, [FromBody] Resource<TModel> resource)
     {
-        var updated = await service.Update(OwnerId, resourceId, resource);
+        var updated = await service.Update(resourceId, resource);
         return Ok(updated);
     }
 
