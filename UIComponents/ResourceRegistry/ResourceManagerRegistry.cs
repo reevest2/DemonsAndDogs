@@ -3,6 +3,7 @@ using AppConstants;
 using Models.Character;
 using Models.Resources;
 using Models.Resources.Abstract;
+using Models.Resources.Character;
 using UIComponents.ResourceGrid;
 using UIComponents.ResourceRegistry;
 

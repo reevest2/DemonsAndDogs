@@ -7,7 +7,7 @@ namespace API.Controllers.Abstract;
 public abstract class ResourceControllerBase<TModel, TService>(TService service) : ControllerBase
     where TService : IResourceService.IResourceService<TModel>
 {
-    protected string OwnerId => User?.Identity?.Name ?? string.Empty;
+    protected string OwnerId => "dev";
 
     [HttpGet("{resourceId}")]
     public async Task<ActionResult<TModel>> GetById(string resourceId)

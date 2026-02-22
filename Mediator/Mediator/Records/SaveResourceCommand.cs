@@ -1,5 +1,6 @@
 ﻿using AppConstants;
 using MediatR;
+using Models.Resources.Character;
 
 namespace Mediator.Mediator.Records;
 

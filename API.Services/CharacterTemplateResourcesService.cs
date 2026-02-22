@@ -1,8 +1,9 @@
 ﻿using API.Services.Abstraction;
 using DataAccess.Abstraction;
 using Microsoft.Extensions.Logging;
-using Models.Character;
-using Models.Resources;
+using Models.Resources.Character;
+
+namespace API.Services;
 
 public class CharacterTemplateResourceService : IResourceService.ResourceService<CharacterTemplateData>, ICharacterTemplateResourceService
 {

@@ -1,6 +1,8 @@
 ﻿using System.Text.Json;
 using Models.Character;
 
+namespace Models.Resources.Character;
+
 public class CharacterTemplateData
 {
     public string Name { get; set; }
@@ -44,7 +46,6 @@ public class CharacterTemplateField
     public decimal? Min { get; set; }
     public decimal? Max { get; set; }
     public int? MaxLength { get; set; }
-    public string Pattern { get; set; }
 }
 
 public class CharacterTemplateOption

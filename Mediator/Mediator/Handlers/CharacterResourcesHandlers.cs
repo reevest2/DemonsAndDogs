@@ -4,6 +4,7 @@ using Mediator.Mediator.Records;
 using MediatR;
 using Models.Character;
 using Models.Resources;
+using Models.Resources.Character;
 
 namespace Mediator.Mediator.Handlers;
 
@@ -65,7 +66,7 @@ public class GetCharacterTemplateResourceHandler(HttpClient http)
 {
     public async Task<CharacterTemplateData?> Handle(GetCharacterTemplateResourceQuery request, CancellationToken ct)
     {
-        var res = await http.GetAsync($"api/charactertemplateresources/{request.ResourceId}", ct);
+        var res = await http.GetAsync($"api/charactertemplateresources", ct);
         if (res.StatusCode == HttpStatusCode.NotFound) return null;
         res.EnsureSuccessStatusCode();
         return await res.Content.ReadFromJsonAsync<CharacterTemplateData>(cancellationToken: ct);
@@ -87,7 +88,13 @@ public class CreateCharacterTemplateResourceHandler(HttpClient http)
     public async Task<CharacterTemplateData> Handle(CreateCharacterTemplateResourceCommand request, CancellationToken ct)
     {
         var res = await http.PostAsJsonAsync("api/charactertemplateresources", request.Resource, ct);
-        res.EnsureSuccessStatusCode();
+
+        if (!res.IsSuccessStatusCode)
+        {
+            var body = await res.Content.ReadAsStringAsync(ct);
+            throw new HttpRequestException($"{(int)res.StatusCode} {res.ReasonPhrase} Body={body}");
+        }
+
         return (await res.Content.ReadFromJsonAsync<CharacterTemplateData>(cancellationToken: ct))!;
     }
 }

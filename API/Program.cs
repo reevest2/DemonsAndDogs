@@ -12,6 +12,18 @@ public class Program
     public static void Main(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
+        
+        //TODO: Put this in settings
+        builder.Services.AddCors(options =>
+        {
+            options.AddPolicy("DevCors", policy =>
+            {
+                policy
+                    .WithOrigins("http://localhost:5150")
+                    .AllowAnyHeader()
+                    .AllowAnyMethod();
+            });
+        });
 
         // Add services to the container.
 
@@ -30,6 +42,7 @@ public class Program
         builder.Services.ConfigureServices();
 
         var app = builder.Build();
+        app.UseCors("DevCors");
 
         // Configure the HTTP request pipeline.
         if (app.Environment.IsDevelopment())
@@ -39,7 +52,6 @@ public class Program
         }
 
         app.UseHttpsRedirection();
-
         app.UseAuthorization();
 
 

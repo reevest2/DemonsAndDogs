@@ -38,13 +38,14 @@
 
             editorParameters = new Dictionary<string, object>
             {
-                ["Model"] = config.CreateModel(),
+                ["Model"] = config.CreateModel.Invoke(),
                 ["OnSave"] = OnSave
             };
 
+            
             gridParameters = new Dictionary<string, object>
             {
-                ["Items"] = Array.Empty<Resource<CharacterData>>()
+                ["Items"] = config.CreateGridItems.Invoke()
             };
 
             editorError = null;

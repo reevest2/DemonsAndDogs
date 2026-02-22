@@ -5,6 +5,7 @@ using Models;
 using Models.Character;
 using Models.Resources;
 using Models.Resources.Abstract;
+using Models.Resources.Character;
 using Newtonsoft.Json;
 
 namespace DataAccess;
