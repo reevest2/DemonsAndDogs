@@ -1,5 +1,341 @@
-﻿<h3>JsonResourceEditor</h3>
+﻿@using System.Text.Json
+@using Radzen
+@using Radzen.Blazor
+
+<RadzenStack Gap="12px">
+    <RadzenRow AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+        <RadzenStack Orientation="Orientation.Horizontal" Gap="8px" AlignItems="AlignItems.Center">
+            <RadzenText TextStyle="TextStyle.H5">@Title</RadzenText>
+            @if (!string.IsNullOrWhiteSpace(ResourceTypeKey))
+            {
+                <RadzenBadge Text="@ResourceTypeKey" />
+            }
+        </RadzenStack>
+
+        <RadzenStack Orientation="Orientation.Horizontal" Gap="8px">
+            @if (ShowCancel)
+            {
+                <RadzenButton Text="Cancel" ButtonStyle="ButtonStyle.Light" Click="@OnCancelClicked" />
+            }
+            <RadzenButton Text="Save" Icon="save" Disabled="@(!CanSave)" Click="@OnSaveClicked" />
+        </RadzenStack>
+    </RadzenRow>
+
+    @if (!string.IsNullOrWhiteSpace(Error))
+    {
+        <RadzenAlert Severity="AlertSeverity.Error" Style="margin-bottom: 8px;">
+            @Error
+        </RadzenAlert>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(Info))
+    {
+        <RadzenAlert Severity="AlertSeverity.Info" Style="margin-bottom: 8px;">
+            @Info
+        </RadzenAlert>
+    }
+
+    <RadzenTabs Change="@OnTabChanged">
+        <Tabs>
+            <RadzenTabsItem Text="Details">
+                <RadzenCard>
+                    <RadzenStack Gap="12px">
+                        <RadzenStack Gap="6px">
+                            <RadzenText TextStyle="TextStyle.Subtitle2">Name</RadzenText>
+                            <RadzenTextBox Style="width: 100%;" @bind-Value="@ResourceName" Disabled="@ReadOnly" />
+                        </RadzenStack>
+
+                        <RadzenStack Gap="6px">
+                            <RadzenText TextStyle="TextStyle.Subtitle2">Description</RadzenText>
+                            <RadzenTextArea Style="width: 100%; min-height: 90px;" @bind-Value="@ResourceDescription" Disabled="@ReadOnly" />
+                        </RadzenStack>
+
+                        <RadzenRow>
+                            <RadzenColumn Size="12" SizeMD="6">
+                                <RadzenStack Gap="6px">
+                                    <RadzenText TextStyle="TextStyle.Subtitle2">Resource Id</RadzenText>
+                                    <RadzenTextBox Style="width: 100%;" Value="@ResourceId" Disabled="true" />
+                                </RadzenStack>
+                            </RadzenColumn>
+                            <RadzenColumn Size="12" SizeMD="6">
+                                <RadzenStack Gap="6px">
+                                    <RadzenText TextStyle="TextStyle.Subtitle2">Owner Id</RadzenText>
+                                    <RadzenTextBox Style="width: 100%;" @bind-Value="@OwnerId" Disabled="@ReadOnly" />
+                                </RadzenStack>
+                            </RadzenColumn>
+                        </RadzenRow>
+
+                        <RadzenRow>
+                            <RadzenColumn Size="12" SizeMD="6">
+                                <RadzenStack Gap="6px">
+                                    <RadzenText TextStyle="TextStyle.Subtitle2">Entity Id</RadzenText>
+                                    <RadzenTextBox Style="width: 100%;" @bind-Value="@EntityId" Disabled="@ReadOnly" />
+                                </RadzenStack>
+                            </RadzenColumn>
+                            <RadzenColumn Size="12" SizeMD="6">
+                                <RadzenStack Gap="6px">
+                                    <RadzenText TextStyle="TextStyle.Subtitle2">Subject Id</RadzenText>
+                                    <RadzenTextBox Style="width: 100%;" @bind-Value="@SubjectId" Disabled="@ReadOnly" />
+                                </RadzenStack>
+                            </RadzenColumn>
+                        </RadzenRow>
+
+                        <RadzenStack Orientation="Orientation.Horizontal" Gap="10px" AlignItems="AlignItems.Center">
+                            <RadzenCheckBox @bind-Value="@IsDeleted" Disabled="@ReadOnly" />
+                            <RadzenText TextStyle="TextStyle.Body1">Deleted</RadzenText>
+                        </RadzenStack>
+                    </RadzenStack>
+                </RadzenCard>
+            </RadzenTabsItem>
+
+            <RadzenTabsItem Text="JSON">
+                <RadzenCard>
+                    <RadzenStack Gap="10px">
+                        <RadzenStack Orientation="Orientation.Horizontal" Gap="8px" AlignItems="AlignItems.Center">
+                            <RadzenButton Text="Format" Icon="auto_fix_high" ButtonStyle="ButtonStyle.Light" Disabled="@ReadOnly" Click="@FormatJsonClicked" />
+                            <RadzenButton Text="Minify" Icon="compress" ButtonStyle="ButtonStyle.Light" Disabled="@ReadOnly" Click="@MinifyJsonClicked" />
+                            <RadzenButton Text="Validate" Icon="verified" ButtonStyle="ButtonStyle.Light" Click="@ValidateJsonClicked" />
+                            <RadzenButton Text="Reset" Icon="refresh" ButtonStyle="ButtonStyle.Light" Disabled="@ReadOnly" Click="@ResetJsonClicked" />
+                        </RadzenStack>
+
+                        <RadzenTextArea Style="width: 100%; min-height: 420px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;"
+                                        @bind-Value="@JsonText"
+                                        Disabled="@ReadOnly"
+                                        Change="@OnJsonChanged" />
+                    </RadzenStack>
+                </RadzenCard>
+            </RadzenTabsItem>
+
+            <RadzenTabsItem Text="Preview">
+                <RadzenCard>
+                    <RadzenStack Gap="10px">
+                        <RadzenText TextStyle="TextStyle.Subtitle2">Read-only preview</RadzenText>
+                        <pre style="white-space: pre-wrap; word-break: break-word; margin: 0;">@PreviewJson</pre>
+                    </RadzenStack>
+                </RadzenCard>
+            </RadzenTabsItem>
+        </Tabs>
+    </RadzenTabs>
+</RadzenStack>
 
 @code {
-    
+    [Parameter] public string Title { get; set; } = "JSON Resource Editor";
+
+    [Parameter] public string ResourceId { get; set; } = "";
+    [Parameter] public string ResourceTypeKey { get; set; } = "";
+
+    [Parameter] public string? ResourceName { get; set; }
+    [Parameter] public EventCallback<string?> ResourceNameChanged { get; set; }
+
+    [Parameter] public string? ResourceDescription { get; set; }
+    [Parameter] public EventCallback<string?> ResourceDescriptionChanged { get; set; }
+
+    [Parameter] public string? EntityId { get; set; }
+    [Parameter] public EventCallback<string?> EntityIdChanged { get; set; }
+
+    [Parameter] public string? OwnerId { get; set; }
+    [Parameter] public EventCallback<string?> OwnerIdChanged { get; set; }
+
+    [Parameter] public string? SubjectId { get; set; }
+    [Parameter] public EventCallback<string?> SubjectIdChanged { get; set; }
+
+    [Parameter] public bool IsDeleted { get; set; }
+    [Parameter] public EventCallback<bool> IsDeletedChanged { get; set; }
+
+    [Parameter] public string Json { get; set; } = "{}";
+    [Parameter] public EventCallback<string> JsonChanged { get; set; }
+
+    [Parameter] public bool ReadOnly { get; set; }
+    [Parameter] public bool ShowCancel { get; set; } = true;
+
+    [Parameter] public EventCallback<ResourceJsonSaveRequest> OnSave { get; set; }
+    [Parameter] public EventCallback OnCancel { get; set; }
+
+    string JsonText = "{}";
+    string OriginalJson = "{}";
+    string PreviewJson = "{}";
+    string Error = "";
+    string Info = "";
+    bool JsonValid = true;
+    int ActiveTabIndex = 0;
+
+    bool CanSave => !ReadOnly && JsonValid;
+
+    protected override void OnParametersSet()
+    {
+        var incoming = string.IsNullOrWhiteSpace(Json) ? "{}" : Json;
+        if (OriginalJson != incoming)
+        {
+            OriginalJson = incoming;
+            JsonText = incoming;
+            PreviewJson = TryFormat(incoming, indented: true) ?? incoming;
+            Error = "";
+            Info = "";
+            JsonValid = TryParse(incoming);
+        }
+    }
+
+    async Task OnSaveClicked()
+    {
+        Error = "";
+        Info = "";
+
+        if (!TryParse(JsonText))
+        {
+            Error = "JSON is invalid. Fix it before saving.";
+            JsonValid = false;
+            return;
+        }
+
+        JsonValid = true;
+
+        var payload = new ResourceJsonSaveRequest
+        {
+            ResourceId = ResourceId,
+            ResourceTypeKey = ResourceTypeKey,
+            ResourceName = ResourceName,
+            ResourceDescription = ResourceDescription,
+            EntityId = EntityId,
+            OwnerId = OwnerId,
+            SubjectId = SubjectId,
+            IsDeleted = IsDeleted,
+            Json = JsonText
+        };
+
+        if (OnSave.HasDelegate)
+            await OnSave.InvokeAsync(payload);
+
+        if (JsonChanged.HasDelegate)
+            await JsonChanged.InvokeAsync(JsonText);
+
+        PreviewJson = TryFormat(JsonText, indented: true) ?? JsonText;
+        Info = "Saved payload prepared.";
+    }
+
+    async Task OnCancelClicked()
+    {
+        if (OnCancel.HasDelegate)
+            await OnCancel.InvokeAsync();
+    }
+
+    async Task OnJsonChanged(object value)
+    {
+        Error = "";
+        Info = "";
+        JsonValid = TryParse(JsonText);
+        PreviewJson = TryFormat(JsonText, indented: true) ?? JsonText;
+
+        if (!JsonValid)
+            Error = "JSON is invalid.";
+
+        if (JsonChanged.HasDelegate && JsonValid)
+            await JsonChanged.InvokeAsync(JsonText);
+    }
+
+    Task OnTabChanged(int index)
+    {
+        ActiveTabIndex = index;
+        if (ActiveTabIndex == 2)
+            PreviewJson = TryFormat(JsonText, indented: true) ?? JsonText;
+
+        return Task.CompletedTask;
+    }
+
+    void FormatJsonClicked()
+    {
+        Error = "";
+        Info = "";
+        var formatted = TryFormat(JsonText, indented: true);
+        if (formatted is null)
+        {
+            Error = "Cannot format because JSON is invalid.";
+            JsonValid = false;
+            return;
+        }
+
+        JsonText = formatted;
+        PreviewJson = formatted;
+        JsonValid = true;
+    }
+
+    void MinifyJsonClicked()
+    {
+        Error = "";
+        Info = "";
+        var formatted = TryFormat(JsonText, indented: false);
+        if (formatted is null)
+        {
+            Error = "Cannot minify because JSON is invalid.";
+            JsonValid = false;
+            return;
+        }
+
+        JsonText = formatted;
+        PreviewJson = TryFormat(formatted, indented: true) ?? formatted;
+        JsonValid = true;
+    }
+
+    void ValidateJsonClicked()
+    {
+        Error = "";
+        Info = "";
+        JsonValid = TryParse(JsonText);
+        if (JsonValid)
+        {
+            Info = "JSON is valid.";
+            PreviewJson = TryFormat(JsonText, indented: true) ?? JsonText;
+        }
+        else
+        {
+            Error = "JSON is invalid.";
+        }
+    }
+
+    void ResetJsonClicked()
+    {
+        Error = "";
+        Info = "";
+        JsonText = OriginalJson;
+        JsonValid = TryParse(JsonText);
+        PreviewJson = TryFormat(JsonText, indented: true) ?? JsonText;
+    }
+
+    static bool TryParse(string json)
+    {
+        try
+        {
+            using var _ = JsonDocument.Parse(string.IsNullOrWhiteSpace(json) ? "{}" : json);
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    static string? TryFormat(string json, bool indented)
+    {
+        try
+        {
+            using var doc = JsonDocument.Parse(string.IsNullOrWhiteSpace(json) ? "{}" : json);
+            return JsonSerializer.Serialize(doc.RootElement, new JsonSerializerOptions { WriteIndented = indented });
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    public sealed class ResourceJsonSaveRequest
+    {
+        public string ResourceId { get; set; } = "";
+        public string ResourceTypeKey { get; set; } = "";
+        public string? ResourceName { get; set; }
+        public string? ResourceDescription { get; set; }
+        public string? EntityId { get; set; }
+        public string? OwnerId { get; set; }
+        public string? SubjectId { get; set; }
+        public bool IsDeleted { get; set; }
+        public string Json { get; set; } = "{}";
+    }
 }
