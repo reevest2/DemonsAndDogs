@@ -1,6 +1,4 @@
-﻿@using Models.Resources
-@using Models.Resources.Abstract
-@using Radzen.Blazor
+﻿@using Radzen.Blazor
 @using UIComponents.ResourceRegistry
 
 <RadzenTabs>
@@ -27,9 +25,6 @@
     private IDictionary<string, object> editorParameters = new Dictionary<string, object>();
     private IDictionary<string, object> gridParameters = new Dictionary<string, object>();
 
-    private ErrorBoundary editorBoundary;
-    private string editorError;
-
     protected override void OnParametersSet()
     {
         if (Registry != null && Registry.TryGet(ResourceName, out var config))
@@ -48,9 +43,6 @@
             {
                 ["Items"] = Items
             };
-
-            editorError = null;
-            editorBoundary?.Recover();
         }
         else
         {
@@ -59,11 +51,5 @@
             editorParameters = new Dictionary<string, object>();
             gridParameters = new Dictionary<string, object>();
         }
-    }
-
-    private Task OnEditorError(Exception ex)
-    {
-        editorError = ex.ToString();
-        return Task.CompletedTask;
     }
 }
