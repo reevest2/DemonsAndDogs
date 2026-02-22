@@ -1,6 +1,6 @@
-﻿using Models.DTO;
-
-namespace Mediator.Mediator;
+﻿using System.Text.Json;
+using MediatR;
+using Models.DTO;
 
 public record ListResourcesQuery(
     string ResourceTypeKey,
@@ -8,27 +8,34 @@ public record ListResourcesQuery(
     int Take,
     string? SearchText,
     string? OrderBy,
-    bool IncludeDeleted
-) : MediatR.IRequest<PagedResult<ResourceDto>>;
+    bool IncludeDeleted,
+    string? OwnerId
+) : IRequest<PagedResult<ResourceDto>>;
 
-public record GetResourceQuery(string ResourceTypeKey, string Id)
-    : MediatR.IRequest<ResourceDto>;
+public record GetResourceQuery(string ResourceTypeKey, string Id, string? OwnerId)
+    : IRequest<ResourceDto>;
 
 public record CreateResourceCommand(
     string ResourceTypeKey,
     string? ResourceName,
     string? ResourceDescription,
     string? EntityId,
-    string? SubjectId
-) : MediatR.IRequest<string>;
+    string? OwnerId,
+    string? SubjectId,
+    JsonElement? Data
+) : IRequest<string>;
 
 public record UpdateResourceCommand(
     string ResourceTypeKey,
     string Id,
     string? ResourceName,
     string? ResourceDescription,
-    bool IsDeleted
-) : MediatR.IRequest;
+    string? EntityId,
+    string? OwnerId,
+    string? SubjectId,
+    bool IsDeleted,
+    JsonElement? Data
+) : IRequest;
 
-public record DeleteResourceCommand(string ResourceTypeKey, string Id, bool HardDelete)
-    : MediatR.IRequest;
+public record DeleteResourceCommand(string ResourceTypeKey, string Id, string? OwnerId, bool HardDelete)
+    : IRequest;

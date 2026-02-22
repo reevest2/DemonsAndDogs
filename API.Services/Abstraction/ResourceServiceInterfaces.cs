@@ -2,18 +2,18 @@
 
 namespace API.Services.Abstraction;
 
-public interface IRulesetResourceService : IResourceService.IResourceService<RulesetData>
+public interface IRulesetResourceService : IResourceService<RulesetData>
 {
 }
 
-public interface ICampaignResourceService : IResourceService.IResourceService<CampaignData>
+public interface ICampaignResourceService : IResourceService<CampaignData>
 {
 }
 
-public interface ITemplateResourceService : IResourceService.IResourceService<TemplateData>
+public interface ITemplateResourceService : IResourceService<TemplateData>
 {
 }
 
-public interface IEntityResourceService : IResourceService.IResourceService<EntityData>
+public interface IEntityResourceService : IResourceService<EntityData>
 {
 }

@@ -1,13 +1,14 @@
 ﻿using API.Services.Abstraction;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace API.Controllers;
 
 [ApiController]
-[Route("[controller]")]
-[Route("User/{ownerId}/[controller]")]
+[Authorize]
+[Route("api/[controller]")]
 public abstract class ResourceControllerBase<TResource, TService> : ControllerBase
-    where TService : IResourceService.IResourceService<TResource>
+    where TService : IResourceService<TResource>
 {
     protected readonly TService Service;
 
@@ -16,53 +17,50 @@ public abstract class ResourceControllerBase<TResource, TService> : ControllerBa
         Service = service;
     }
 
-    [HttpGet]
+    [Authorize(Policy = "ValidateApiKey")]
+    [HttpGet(nameof(GetAll))]
     public virtual async Task<IActionResult> GetAll()
     {
         var response = await Service.GetAll();
         return Ok(response);
     }
 
-    [HttpGet("{resourceId}")]
-    public virtual async Task<IActionResult> GetById([FromRoute] string ownerId, [FromRoute] string resourceId)
+    [HttpGet(nameof(GetById) + "/User/{ownerId}/{id}")]
+    public virtual async Task<IActionResult> GetById([FromRoute] string ownerId, [FromRoute] string id)
     {
-        var response = await Service.GetById(ownerId, resourceId);
+        var response = await Service.GetById(ownerId, id);
         return Ok(response);
     }
 
-    [HttpGet]
+    [HttpGet(nameof(GetAllByOwnerId) + "/User/{ownerId}")]
     public virtual async Task<IActionResult> GetAllByOwnerId([FromRoute] string ownerId)
     {
         var response = await Service.GetAllByOwnerId(ownerId);
         return Ok(response);
     }
 
-    [HttpPost]
+    [HttpPost(nameof(Create) + "/User/{ownerId}")]
     public virtual async Task<IActionResult> Create([FromRoute] string ownerId, [FromBody] TResource request)
     {
         var response = await Service.Create(ownerId, request);
-        var controllerName = ControllerContext.ActionDescriptor.ControllerName;
-        return Created($"User/{ownerId}/{controllerName}/{GetResourceId(response)}", response);
+        return Created($"{nameof(GetById)}/User/{ownerId}/{GetResourceId(response)}", response);
     }
 
-    [HttpPut("{resourceId}")]
-    public virtual async Task<IActionResult> Update(
-        [FromRoute] string ownerId,
-        [FromRoute] string resourceId,
-        [FromBody] TResource resource)
+    [HttpPut(nameof(Update) + "/User/{ownerId}/{id}")]
+    public virtual async Task<IActionResult> Update([FromRoute] string ownerId, [FromRoute] string id, [FromBody] TResource resource)
     {
-        var response = await Service.Update(ownerId, resourceId, resource);
+        var response = await Service.Update(ownerId, id, resource);
         return Ok(response);
     }
 
-    [HttpDelete("{resourceId}")]
-    public virtual async Task<IActionResult> Delete([FromRoute] string ownerId, [FromRoute] string resourceId)
+    [HttpDelete(nameof(Delete) + "/User/{ownerId}/{id}")]
+    public virtual async Task<IActionResult> Delete([FromRoute] string ownerId, [FromRoute] string id)
     {
-        await Service.Delete(ownerId, resourceId);
+        await Service.Delete(ownerId, id);
         return NoContent();
     }
 
-    [HttpGet("Count")]
+    [HttpGet(nameof(GetCountByOwnerId) + "/User/{ownerId}")]
     public virtual async Task<IActionResult> GetCountByOwnerId([FromRoute] string ownerId)
     {
         var response = await Service.GetCountByOwnerId(ownerId);

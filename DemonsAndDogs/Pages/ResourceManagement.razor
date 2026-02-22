@@ -1,28 +1,52 @@
-﻿@page "/{resourceName}/Manager"
-@using Mediator
-@using MediatR
+﻿@using MediatR
+@using Models.Contracts
+@using Models.DTO
 @using UIComponents.PageComponents
 
-<ResourceManagementPage ResourceName="@resourceName" OnSave="@Save" Items="@Items"  />
+<ResourceManagementPage ResourceName="@resourceName" OnSave="@Save" Items="@Items" />
 
 @code {
-    [Parameter] public string resourceName { get; set; }
-    [Inject] IMediator Mediator { get; set; }
-    private object Items { get; set; }
+    [Parameter] public string resourceName { get; set; } = "";
+    [Parameter] public string ownerId { get; set; } = "";
+    [Inject] IMediator Mediator { get; set; } = default!;
+
+    private IReadOnlyList<ResourceDto> Items { get; set; } = Array.Empty<ResourceDto>();
 
     protected override async Task OnInitializedAsync()
     {
         await LoadItems();
-        await base.OnInitializedAsync();
     }
 
-    async Task Save(object model)
+    private async Task Save(object model)
     {
-        //await Mediator.Send(new SaveResourceCommand(resourceName, model));
+        if (model is not CreateResourceRequest m) return;
+
+        await Mediator.Send(new CreateResourceCommand(
+            resourceName,
+            m.ResourceName,
+            m.ResourceDescription,
+            m.EntityId,
+            ownerId,
+            m.SubjectId,
+            m.Data
+        ));
+
+        await LoadItems();
+        StateHasChanged();
     }
-    
-    async Task LoadItems()
+
+    private async Task LoadItems()
     {
-        //Items = await Mediator.Send(new GetAllResourcesQuery(resourceName));
+        var page = await Mediator.Send(new ListResourcesQuery(
+            resourceName,
+            0,
+            50,
+            null,
+            null,
+            false,
+            ownerId
+        ));
+
+        Items = page.Items;
     }
 }

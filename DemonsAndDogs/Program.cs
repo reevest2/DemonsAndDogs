@@ -19,6 +19,7 @@ public class Program
         builder.Services.AddScoped<NotificationService>();
         builder.Services.AddScoped<TooltipService>();
         builder.Services.AddScoped<ContextMenuService>();
+        builder.Services.AddScoped<ApiClient>();
         //Http client to the API
         builder.Services.AddScoped(_ => new HttpClient { BaseAddress = new Uri("https://localhost:44390/") }); //TODO: Put in settings somewhere
         
