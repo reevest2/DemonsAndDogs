@@ -11,7 +11,7 @@ public interface IResourceRepository
     {
         DbSet<Resource<T>> GetDbSet();
         IQueryable<Resource<T>> GetQuery();
-        Task<List<T>> GetAllAsync(params Expression<Func<Resource<T>, bool>>[] filters);
+        Task<List<Resource<T>>> GetAllAsync(params Expression<Func<Resource<T>, bool>>[] filters);
         Task<T> GetByIdAsync(string id);
         Task<T> GetByOwnerAsync(string ownerId, params Expression<Func<Resource<T>, bool>>[] filters);
         Task<T> FirstOrDefaultAsync(string ownerId, params Expression<Func<Resource<T>, bool>>[] filters);

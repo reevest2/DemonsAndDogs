@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
 using Models.Resources;
+using Models.Resources.Abstract;
 
 namespace API.Services.Abstraction;
 
@@ -9,7 +10,7 @@ public interface IResourceService
 {
      public interface IResourceService<TResource>
     {
-        Task<List<TResource>> GetAll();
+        Task<List<Resource<TResource>>> GetAll();
         Task<TResource> GetById(string ownerId, string resourceId);
         Task<TResource> GetFirstByOwner(string ownerId);
         Task<List<TResource>> GetAllByOwnerId(string ownerId);
@@ -31,7 +32,7 @@ public interface IResourceService
             _logger = logger;
         }
 
-        public virtual async Task<List<TResource>> GetAll()
+        public virtual async Task<List<Resource<TResource>>> GetAll()
         {
             return await _resourceRepository.GetAllAsync();
         }

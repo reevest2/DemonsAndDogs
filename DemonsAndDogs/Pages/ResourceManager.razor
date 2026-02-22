@@ -3,19 +3,26 @@
 @using MediatR
 @using UIComponents.PageComponents
 
-<ResourceManagementPage ResourceName="@resourceName" OnSave="@Save" LoadItems="@LoadItems"  />
+<ResourceManagementPage ResourceName="@resourceName" OnSave="@Save" Items="@Items"  />
 
 @code {
     [Parameter] public string resourceName { get; set; }
     [Inject] IMediator Mediator { get; set; }
-    
+    private object Items { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadItems();
+        await base.OnInitializedAsync();
+    }
+
     async Task Save(object model)
     {
         await Mediator.Send(new SaveResourceCommand(resourceName, model));
     }
     
-    async Task<object> LoadItems()
+    async Task LoadItems()
     {
-        return await Mediator.Send(new GetAllResourcesQuery(resourceName));
+        Items = await Mediator.Send(new GetAllResourcesQuery(resourceName));
     }
 }

@@ -1,5 +1,6 @@
 ﻿using MediatR;
 using Models.Resources;
+using Models.Resources.Abstract;
 using Models.Resources.Character;
 
 namespace Mediator.Mediator.Records;
@@ -10,8 +11,8 @@ public record CreateCharacterResourceCommand(CharacterData Resource) : IRequest<
 public record UpdateCharacterResourceCommand(string ResourceId, CharacterData Resource) : IRequest<CharacterData>;
 public record DeleteCharacterResourceCommand(string ResourceId) : IRequest;
 
-public record GetCharacterTemplateResourceQuery() : IRequest<CharacterTemplateData?>;
-public record GetCharacterTemplateResourcesQuery() : IRequest<List<CharacterTemplateData>>;
+public record GetCharacterTemplateResourceQuery() :IRequest<List<Resource<CharacterTemplateData>>>;
+public sealed record GetCharacterTemplateResourcesQuery : IRequest<List<Resource<CharacterTemplateData>>>;
 public record CreateCharacterTemplateResourceCommand(CharacterTemplateData Resource) : IRequest<CharacterTemplateData>;
 public record UpdateCharacterTemplateResourceCommand(string ResourceId, CharacterTemplateData Resource) : IRequest<CharacterTemplateData>;
 public record DeleteCharacterTemplateResourceCommand(string ResourceId) : IRequest;

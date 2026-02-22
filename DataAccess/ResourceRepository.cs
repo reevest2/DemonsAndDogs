@@ -18,14 +18,15 @@ namespace DataAccess;
         public DbSet<Resource<TResource>> GetDbSet() => _context.Set<Resource<TResource>>();
         public IQueryable<Resource<TResource>> GetQuery() => _context.Set<Resource<TResource>>().AsQueryable();
 
-        public virtual async Task<List<TResource>> GetAllAsync(params Expression<Func<Resource<TResource>, bool>>[] filters)
+        public virtual async Task<List<Resource<TResource>>> GetAllAsync(
+            params Expression<Func<Resource<TResource>, bool>>[] filters)
         {
             var query = _context.Set<Resource<TResource>>().Where(r => !r.IsDeleted);
             if (filters is { Length: > 0 })
             {
                 query = filters.Aggregate(query, (current, filter) => current.Where(filter));
             }
-            return await query.Select(r => r.Data).ToListAsync();
+            return await query.ToListAsync();
         }
 
         public virtual async Task<TResource> GetByIdAsync(string id)

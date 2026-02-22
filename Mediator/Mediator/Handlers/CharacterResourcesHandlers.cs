@@ -4,6 +4,7 @@ using Mediator.Mediator.Records;
 using MediatR;
 using Models.Character;
 using Models.Resources;
+using Models.Resources.Abstract;
 using Models.Resources.Character;
 
 namespace Mediator.Mediator.Handlers;
@@ -62,23 +63,23 @@ public class DeleteCharacterResourceHandler(HttpClient http)
 }
 
 public class GetCharacterTemplateResourceHandler(HttpClient http)
-    : IRequestHandler<GetCharacterTemplateResourceQuery, CharacterTemplateData?>
+    : IRequestHandler<GetCharacterTemplateResourceQuery, List<Resource<CharacterTemplateData>>>
 {
-    public async Task<CharacterTemplateData?> Handle(GetCharacterTemplateResourceQuery request, CancellationToken ct)
+    public async Task<List<Resource<CharacterTemplateData>>> Handle(GetCharacterTemplateResourceQuery request, CancellationToken ct)
     {
         var res = await http.GetAsync($"api/charactertemplateresources", ct);
         if (res.StatusCode == HttpStatusCode.NotFound) return null;
         res.EnsureSuccessStatusCode();
-        return await res.Content.ReadFromJsonAsync<CharacterTemplateData>(cancellationToken: ct);
+        return await res.Content.ReadFromJsonAsync<List<Resource<CharacterTemplateData>>>(cancellationToken: ct);
     }
 }
 
 public class GetCharacterTemplateResourcesHandler(HttpClient http)
-    : IRequestHandler<GetCharacterTemplateResourcesQuery, List<CharacterTemplateData>>
+    : IRequestHandler<GetCharacterTemplateResourcesQuery, List<Resource<CharacterTemplateData>>>
 {
-    public async Task<List<CharacterTemplateData>> Handle(GetCharacterTemplateResourcesQuery request, CancellationToken ct)
+    public async Task<List<Resource<CharacterTemplateData>>> Handle(GetCharacterTemplateResourcesQuery request, CancellationToken ct)
     {
-        return await http.GetFromJsonAsync<List<CharacterTemplateData>>("api/charactertemplateresources", ct) ?? new();
+        return await http.GetFromJsonAsync<List<Resource<CharacterTemplateData>>>("api/charactertemplateresources", ct) ?? new();
     }
 }
 

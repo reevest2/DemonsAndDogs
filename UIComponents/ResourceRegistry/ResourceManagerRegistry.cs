@@ -19,9 +19,7 @@ public sealed record ResourceManagerConfig(
     Type Editor,
     Type Grid,
     Func<object> CreateModel,
-    Func<object> CreateGridItems
-    
-    
+    Func<object> CreateGrid
 );
 
 /// <summary>
@@ -54,8 +52,8 @@ public sealed class ResourceManagerRegistry : IResourceManagerRegistry
                     Thumbnail = new ThumbnailMetadata(),
                     Sections = new List<CharacterTemplateSection>()
                 },
-                () => Array.Empty<Resource<CharacterTemplateData>>()
-            )
+                () => new List<Resource<CharacterTemplateData>>()
+            ),
         };
 
     public bool TryGet(string resourceName, out ResourceManagerConfig config)

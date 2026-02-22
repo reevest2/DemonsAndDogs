@@ -1,5 +1,6 @@
 ﻿using API.Services.Abstraction;
 using Microsoft.AspNetCore.Mvc;
+using Models.Resources.Abstract;
 
 namespace API.Controllers.Abstract;
 
@@ -18,7 +19,7 @@ public abstract class ResourceControllerBase<TModel, TService>(TService service)
     }
 
     [HttpGet]
-    public async Task<ActionResult<List<TModel>>> GetAll()
+    public async Task<ActionResult<List<Resource<TModel>>>> GetAll()
     {
         var list = await service.GetAll();
         return Ok(list);

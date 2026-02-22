@@ -18,7 +18,7 @@
 @code {
     [Parameter] public string ResourceName { get; set; }
     [Parameter] public EventCallback<object> OnSave { get; set; }
-    [Parameter] public Func<Task<object>> LoadItems { get; set; }
+    [Parameter] public object Items { get; set; }
     [Inject] public IResourceManagerRegistry Registry { get; set; }
 
     private Type editorComponentType;
@@ -46,7 +46,7 @@
             
             gridParameters = new Dictionary<string, object>
             {
-                ["Items"] = config.CreateGridItems.Invoke()
+                ["Items"] = Items
             };
 
             editorError = null;
