@@ -1,5 +1,4 @@
 ﻿using System.Text.Json;
-using Models.Character;
 
 namespace Models.Resources.Character;
 
@@ -7,7 +6,6 @@ public class CharacterTemplateData
 {
     public string Name { get; set; }
     public string Description { get; set; }
-    public ThumbnailMetadata Thumbnail { get; set; }
     public List<CharacterTemplateSection> Sections { get; set; } = new();
 }
 
@@ -58,8 +56,6 @@ public class CharacterData
 {
     public string TemplateResourceId { get; set; }
     public string TemplateVersion { get; set; }
-
-    public ThumbnailMetadata Thumbnail { get; set; }
 
     public Dictionary<string, JsonElement> Values { get; set; } = new();
 }

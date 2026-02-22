@@ -2,7 +2,6 @@
 using System.Net.Http.Json;
 using Mediator.Mediator.Records;
 using MediatR;
-using Models.Character;
 using Models.Resources;
 using Models.Resources.Abstract;
 using Models.Resources.Character;

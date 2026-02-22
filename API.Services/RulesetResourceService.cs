@@ -1,8 +1,8 @@
 ﻿using API.Services.Abstraction;
 using DataAccess.Abstraction;
 using Microsoft.Extensions.Logging;
-using Models.Character;
 using Models.Resources;
+using Models.Resources.Ruleset;
 
 namespace API.Services;
 

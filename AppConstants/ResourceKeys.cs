@@ -2,8 +2,8 @@
 
 public static class ResourceKeys
 {
-    public const string TestResources = "TestResources";
-    public const string CharacterResources = "CharacterResources";
     public const string RulesetResources = "RulesetResources";
-    public const string CharacterTemplateResources = "CharacterTemplateResources";
+    public const string CampaignResources = "CampaignResources";
+    public const string TemplateResources = "TemplateResources";
+    public const string EntityResources = "EntityResources";
 }

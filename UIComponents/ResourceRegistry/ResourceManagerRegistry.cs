@@ -1,6 +1,5 @@
 ﻿using System.Text.Json;
 using AppConstants;
-using Models.Character;
 using Models.Resources;
 using Models.Resources.Abstract;
 using Models.Resources.Character;
@@ -30,30 +29,7 @@ public sealed class ResourceManagerRegistry : IResourceManagerRegistry
     private static readonly Dictionary<string, ResourceManagerConfig> Map =
         new(StringComparer.OrdinalIgnoreCase)
         {
-            [ResourceKeys.CharacterResources] = new ResourceManagerConfig(
-                typeof(CharacterEditor),
-                typeof(ResourceGrid<CharacterData>),
-                () => new CharacterData
-                {
-                    Thumbnail = new ThumbnailMetadata(),
-                    Values = new Dictionary<string, JsonElement>()
-                    
-                },
-                () => Array.Empty<Resource<CharacterData>>()
-            ),
-
-            [ResourceKeys.CharacterTemplateResources] = new ResourceManagerConfig(
-                typeof(CharacterTemplateEditor),
-                typeof(ResourceGrid<CharacterTemplateData>),
-                () => new CharacterTemplateData
-                {
-                    Name = "New Template",
-                    Description = "Test",
-                    Thumbnail = new ThumbnailMetadata(),
-                    Sections = new List<CharacterTemplateSection>()
-                },
-                () => new List<Resource<CharacterTemplateData>>()
-            ),
+            
         };
 
     public bool TryGet(string resourceName, out ResourceManagerConfig config)

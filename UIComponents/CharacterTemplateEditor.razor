@@ -1,5 +1,4 @@
-﻿@using Models.Character
-@using Models.Resources.Character
+﻿@using Models.Resources.Character
 @using Radzen
 @using Radzen.Blazor
 
@@ -17,19 +16,6 @@
                             <RadzenFormField Text="Description">
                                 <RadzenTextArea Style="width: 100%; min-height: 120px" @bind-Value="Model.Description"/>
                             </RadzenFormField>
-                        </RadzenStack>
-                    </RadzenFieldset>
-
-                    <RadzenFieldset Text="Thumbnail">
-                        <RadzenStack Gap="10px">
-                            <RadzenFormField Text="Image Url">
-                                <RadzenTextBox Style="width: 100%" @bind-Value="ThumbnailUrl" Change="@(_ => Notify())"/>
-                            </RadzenFormField>
-
-                            @if (!string.IsNullOrWhiteSpace(ThumbnailUrl))
-                            {
-                                <img src="@ThumbnailUrl" style="max-width: 220px; border-radius: 8px;"/>
-                            }
                         </RadzenStack>
                     </RadzenFieldset>
                 </RadzenStack>
@@ -260,15 +246,7 @@
     CharacterTemplateSection SelectedSection;
     CharacterTemplateField SelectedField;
 
-    string ThumbnailUrl
-    {
-        get => Model?.Thumbnail?.ImageUrl ?? "";
-        set
-        {
-            Model.Thumbnail ??= new ThumbnailMetadata();
-            Model.Thumbnail.ImageUrl = value ?? "";
-        }
-    }
+    
 
     bool HasSelectedSection => SelectedSection is not null;
 
