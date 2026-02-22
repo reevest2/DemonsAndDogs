@@ -20,6 +20,8 @@ public sealed record ResourceManagerConfig(
     Type Grid,
     Func<object> CreateModel,
     Func<object> CreateGridItems
+    
+    
 );
 
 /// <summary>
@@ -48,7 +50,7 @@ public sealed class ResourceManagerRegistry : IResourceManagerRegistry
                 () => new CharacterTemplateData
                 {
                     Name = "New Template",
-                    Description = "",
+                    Description = "Test",
                     Thumbnail = new ThumbnailMetadata(),
                     Sections = new List<CharacterTemplateSection>()
                 },
