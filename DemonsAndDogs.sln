@@ -23,6 +23,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "API.Client", "API.Client\AP
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DemonsAndDogs.Tests", "DemonsAndDogs.Tests\DemonsAndDogs.Tests.csproj", "{36E72839-F9CD-45CB-ABA3-C6ED5EBCCC42}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DemonsAndDogs.PlaywrightTests", "DemonsAndDogs.PlaywrightTests\DemonsAndDogs.PlaywrightTests.csproj", "{B938D68B-7006-4C20-8989-6FF1AE56BC32}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DemonsAndDogs.API.Tests", "DemonsAndDogs.API.Tests\DemonsAndDogs.API.Tests.csproj", "{D0679832-0A48-4F37-8259-C2647DFB03F9}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -73,5 +77,13 @@ Global
 		{36E72839-F9CD-45CB-ABA3-C6ED5EBCCC42}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{36E72839-F9CD-45CB-ABA3-C6ED5EBCCC42}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{36E72839-F9CD-45CB-ABA3-C6ED5EBCCC42}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B938D68B-7006-4C20-8989-6FF1AE56BC32}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B938D68B-7006-4C20-8989-6FF1AE56BC32}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B938D68B-7006-4C20-8989-6FF1AE56BC32}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B938D68B-7006-4C20-8989-6FF1AE56BC32}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D0679832-0A48-4F37-8259-C2647DFB03F9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D0679832-0A48-4F37-8259-C2647DFB03F9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D0679832-0A48-4F37-8259-C2647DFB03F9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D0679832-0A48-4F37-8259-C2647DFB03F9}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
