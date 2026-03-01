@@ -1,0 +1,27 @@
+﻿@page "/Resources"
+@using Models.Resources
+@using MediatR
+@using Mediator.Mediator.Contracts
+@using UIComponents.PageComponents
+@inject IMediator Mediator
+
+<RadzenContent Container="main">
+    @if (resources == null)
+    {
+        <RadzenProgressBar Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+    }
+    else
+    {
+        <ResourcesListView resources="@resources" />
+    }
+</RadzenContent>
+
+@code {
+    private List<DataResource>? resources;
+    private string ownerId = "DefaultUser";
+
+    protected override async Task OnInitializedAsync()
+    {
+        resources = await Mediator.Send(new GetResourcesListQuery(ownerId));
+    }
+}

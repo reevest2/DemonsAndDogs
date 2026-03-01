@@ -1,0 +1,66 @@
+﻿@using Models.Resources
+@using MediatR
+@using Mediator.Mediator.Contracts
+@using Radzen
+@using Radzen.Blazor
+@inject IMediator Mediator
+@inject ApiClient ApiClient
+@inject NavigationManager NavManager
+@inject NotificationService NotificationService
+
+<RadzenCard>
+    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center" Style="margin-bottom: 20px">
+        <RadzenHeading Size="H4">JSON Resources (Schemas)</RadzenHeading>
+        <RadzenButton Text="Create New Schema" Icon="add_circle" Click="@(() => NavManager.NavigateTo("/CreateSchema"))" ButtonStyle="ButtonStyle.Primary" />
+    </RadzenStack>
+
+    <RadzenDataGrid Data="@resources" TItem="JsonResource" AllowPaging="true" PageSize="10" AllowSorting="true">
+        <Columns>
+            <RadzenDataGridColumn TItem="JsonResource" Property="EntityId" Title="Title" />
+            <RadzenDataGridColumn TItem="JsonResource" Property="ResourceKind" Title="Kind" />
+            <RadzenDataGridColumn TItem="JsonResource" Property="CreatedAt" Title="Created At" />
+            <RadzenDataGridColumn TItem="JsonResource" Title="Actions" Sortable="false" Filterable="false" Width="150px">
+                <Template Context="resource">
+                    <RadzenButton Icon="edit" Size="ButtonSize.Small" ButtonStyle="ButtonStyle.Secondary" Click="@(() => NavManager.NavigateTo($"/EditJsonResource/{resource.Id}"))" />
+                    <RadzenButton Icon="delete" Size="ButtonSize.Small" ButtonStyle="ButtonStyle.Danger" Click="@(() => DeleteResource(resource))" Style="margin-left: 5px" />
+                </Template>
+            </RadzenDataGridColumn>
+        </Columns>
+    </RadzenDataGrid>
+</RadzenCard>
+
+@code {
+    private List<JsonResource> resources = new();
+    private string ownerId = "DefaultUser"; // TODO: Get from auth
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadResources();
+    }
+
+    private async Task LoadResources()
+    {
+        try
+        {
+            resources = await Mediator.Send(new GetJsonResourcesQuery(ownerId));
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Error, Summary = "Error", Detail = $"Failed to load resources: {ex.Message}" });
+        }
+    }
+
+    private async Task DeleteResource(JsonResource resource)
+    {
+        try
+        {
+            await ApiClient.Delete($"api/JsonResource/Delete/User/{ownerId}/{resource.Id}", default);
+            NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Success, Summary = "Success", Detail = "Resource deleted" });
+            await LoadResources();
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Error, Summary = "Error", Detail = $"Failed to delete resource: {ex.Message}" });
+        }
+    }
+}

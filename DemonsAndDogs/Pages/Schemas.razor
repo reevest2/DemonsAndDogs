@@ -1,0 +1,27 @@
+﻿@page "/Schemas"
+@using Models.Resources
+@using MediatR
+@using Mediator.Mediator.Contracts
+@using UIComponents.PageComponents
+@inject IMediator Mediator
+
+<RadzenContent Container="main">
+    @if (schemas == null)
+    {
+        <RadzenProgressBar Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+    }
+    else
+    {
+        <SchemasListView schemas="@schemas" />
+    }
+</RadzenContent>
+
+@code {
+    private List<SchemaResource>? schemas;
+    private string ownerId = "DefaultUser";
+
+    protected override async Task OnInitializedAsync()
+    {
+        schemas = await Mediator.Send(new GetSchemasListQuery(ownerId));
+    }
+}

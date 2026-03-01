@@ -1,0 +1,8 @@
+﻿@page "/EditJsonResource/{ResourceId}"
+@using UIComponents.PageComponents
+
+<EditJsonResourceComponent ResourceId="@ResourceId" />
+
+@code {
+    [Parameter] public string ResourceId { get; set; }
+}

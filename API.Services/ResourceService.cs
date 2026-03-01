@@ -60,9 +60,7 @@ public abstract class ResourceService<TResource>(
 
     public virtual async Task<TResource> Update(string ownerId, string resourceId, TResource resource)
     {
-        var storedResource = await _resourceRepository.GetByIdAsync(resourceId);
-        var updated = await _resourceRepository.UpdateResourceAsync(storedResource);
-        return updated;
+        return await _resourceRepository.UpdateResourceAsync(resource);
     }
 
     public virtual async Task Delete(string ownerId, string resourceId, bool hardDelete = false)
@@ -75,6 +73,7 @@ public abstract class ResourceService<TResource>(
             return;
         }
 
+        storedResource.IsDeleted = true;
         await _resourceRepository.UpdateResourceAsync(storedResource);
     }
 }

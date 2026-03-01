@@ -1,0 +1,40 @@
+﻿@page "/Schemas/{SchemaKey}"
+@using Models.Resources
+@using MediatR
+@using Mediator.Mediator.Contracts
+@using UIComponents.PageComponents
+@inject IMediator Mediator
+@inject NotificationService NotificationService
+
+<RadzenContent Container="main">
+    @if (schema == null)
+    {
+        <RadzenProgressBar Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+    }
+    else
+    {
+        <SchemaEditorView schema="@schema" />
+    }
+</RadzenContent>
+
+@code {
+    [Parameter] public string SchemaKey { get; set; }
+    private SchemaResource? schema;
+    private string ownerId = "DefaultUser";
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            schema = await Mediator.Send(new GetSchemaEditorQuery(ownerId, SchemaKey));
+            if (schema == null)
+            {
+                 NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Error, Summary = "Not Found", Detail = $"Schema {SchemaKey} not found." });
+            }
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Error, Summary = "Error", Detail = ex.Message });
+        }
+    }
+}

@@ -1,0 +1,43 @@
+﻿@using Models.Resources
+@using MediatR
+@using Mediator.Mediator.Contracts
+@using Radzen
+@using Radzen.Blazor
+@inject IMediator Mediator
+@inject NavigationManager NavManager
+
+<RadzenStack Gap="20px">
+    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+        <RadzenText Text="Schemas" TextStyle="TextStyle.H4" />
+        <RadzenButton Text="New Schema" Icon="add_circle" Click="@OnNewSchema" />
+    </RadzenStack>
+
+    <RadzenDataGrid Data="@schemas" TItem="SchemaResource" AllowPaging="true" PageSize="10">
+        <Columns>
+            <RadzenDataGridColumn TItem="SchemaResource" Property="SchemaKey" Title="Key" />
+            <RadzenDataGridColumn TItem="SchemaResource" Property="Name" Title="Name" />
+            <RadzenDataGridColumn TItem="SchemaResource" Property="LatestPublishedVersion" Title="Latest Version">
+                <Template Context="schema">
+                    @(schema.LatestPublishedVersion?.ToString() ?? "Not Published")
+                </Template>
+            </RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="SchemaResource" Title="Actions" Width="200px">
+                <Template Context="schema">
+                    <RadzenButton Icon="edit" Text="Edit Draft" Size="ButtonSize.Small" Click="@(() => NavManager.NavigateTo($"/Schemas/{schema.SchemaKey}"))" />
+                    <RadzenButton Icon="add" Text="Create Resource" Size="ButtonSize.Small" ButtonStyle="ButtonStyle.Secondary" 
+                                  Disabled="@(schema.LatestPublishedVersion == null)"
+                                  Click="@(() => NavManager.NavigateTo($"/Resources/New/{schema.SchemaKey}"))" />
+                </Template>
+            </RadzenDataGridColumn>
+        </Columns>
+    </RadzenDataGrid>
+</RadzenStack>
+
+@code {
+    [Parameter] public List<SchemaResource> schemas { get; set; } = new();
+
+    private void OnNewSchema()
+    {
+        NavManager.NavigateTo("/Schemas/Create");
+    }
+}

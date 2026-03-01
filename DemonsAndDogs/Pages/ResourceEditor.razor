@@ -1,0 +1,66 @@
+﻿@page "/Resources/Edit/{ResourceId}"
+@page "/Resources/New/{SchemaKey}"
+@using System.Text.Json
+@using Models.Resources
+@using MediatR
+@using Mediator.Mediator.Contracts
+@using UIComponents.PageComponents
+@inject IMediator Mediator
+@inject ApiClient ApiClient
+@inject NotificationService NotificationService
+
+<RadzenContent Container="main">
+    @if (resource == null || schemaJson == null)
+    {
+        <RadzenProgressBar Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+    }
+    else
+    {
+        <ResourceEditorView resource="@resource" schemaJson="@schemaJson.Value" />
+    }
+</RadzenContent>
+
+@code {
+    [Parameter] public string? ResourceId { get; set; }
+    [Parameter] public string? SchemaKey { get; set; }
+    
+    private DataResource? resource;
+    private JsonElement? schemaJson;
+    private string ownerId = "DefaultUser";
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            if (!string.IsNullOrEmpty(ResourceId))
+            {
+                resource = await Mediator.Send(new GetResourceEditorQuery(ownerId, ResourceId));
+                await LoadSchema(resource.SchemaKey, resource.SchemaVersion);
+            }
+            else if (!string.IsNullOrEmpty(SchemaKey))
+            {
+                resource = await Mediator.Send(new GetNewResourceEditorQuery(ownerId, SchemaKey));
+                await LoadSchema(resource.SchemaKey, resource.SchemaVersion);
+            }
+        }
+        catch (Exception ex)
+        {
+             NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Error, Summary = "Error", Detail = ex.Message });
+        }
+    }
+
+    private async Task LoadSchema(string schemaKey, int version)
+    {
+        // Fetch published schema
+        var publishedVersions = await ApiClient.Get<List<PublishedSchemaResource>>($"api/PublishedSchemaResource/GetAllByOwnerId/User/{ownerId}", default);
+        var pub = publishedVersions.FirstOrDefault(v => v.SchemaKey == schemaKey && v.Version == version);
+        if (pub != null)
+        {
+            schemaJson = pub.PublishedJson;
+        }
+        else
+        {
+            NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Error, Summary = "Schema Not Found", Detail = $"Version {version} of schema {schemaKey} not found." });
+        }
+    }
+}

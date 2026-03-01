@@ -1,0 +1,105 @@
+﻿@using System.Text.Json
+@using Radzen
+@using Radzen.Blazor
+
+@if (Schema.ValueKind == JsonValueKind.Object && Schema.TryGetProperty("properties", out var properties))
+{
+    <RadzenStack Gap="15px">
+        @foreach (var prop in properties.EnumerateObject())
+        {
+            var propName = prop.Name;
+            var propSchema = prop.Value;
+            var title = propSchema.TryGetProperty("title", out var t) ? t.GetString() : propName;
+            var description = propSchema.TryGetProperty("description", out var d) ? d.GetString() : null;
+            var type = propSchema.TryGetProperty("type", out var ty) ? ty.GetString() : "string";
+            
+            <RadzenStack Gap="5px">
+                <RadzenLabel Text="@title" Style="font-weight: bold" />
+                @if (!string.IsNullOrEmpty(description))
+                {
+                    <RadzenText Text="@description" TextStyle="TextStyle.Caption" />
+                }
+
+                @if (propSchema.TryGetProperty("enum", out var enumProp))
+                {
+                    <RadzenDropDown TValue="string" 
+                                    Data="@(enumProp.EnumerateArray().Select(v => v.ToString()))"
+                                    Value="@GetValue(propName)"
+                                    ValueChanged="@(v => OnValueChanged(propName, v))" />
+                }
+                else
+                {
+                    @switch (type)
+                    {
+                        case "string":
+                            <RadzenTextBox Value="@GetValue(propName)" 
+                                           ValueChanged="@(v => OnValueChanged(propName, v))" />
+                            break;
+                        case "integer":
+                        case "number":
+                            <RadzenNumeric TValue="double?" 
+                                           Value="@GetDoubleValue(propName)"
+                                           ValueChanged="@(v => OnValueChanged(propName, v))" />
+                            break;
+                        case "boolean":
+                            <RadzenCheckBox TValue="bool" 
+                                            Value="@GetBoolValue(propName)"
+                                            ValueChanged="@(v => OnValueChanged(propName, v))" />
+                            break;
+                        default:
+                            <RadzenText Text="@($"Unsupported type: {type}")" TextStyle="TextStyle.Caption" Style="color: red" />
+                            break;
+                    }
+                }
+            </RadzenStack>
+        }
+    </RadzenStack>
+}
+
+@code {
+    [Parameter] public JsonElement Schema { get; set; }
+    [Parameter] public JsonElement Value { get; set; }
+    [Parameter] public EventCallback<JsonElement> ValueChanged { get; set; }
+
+    private Dictionary<string, object> currentValues = new();
+
+    protected override void OnParametersSet()
+    {
+        if (Value.ValueKind == JsonValueKind.Object)
+        {
+            currentValues = JsonSerializer.Deserialize<Dictionary<string, object>>(Value.GetRawText()) ?? new();
+        }
+    }
+
+    private string GetValue(string key) => currentValues.TryGetValue(key, out var val) ? val?.ToString() ?? "" : "";
+    
+    private double? GetDoubleValue(string key) 
+    {
+        if (currentValues.TryGetValue(key, out var val))
+        {
+            if (val is JsonElement je && je.ValueKind == JsonValueKind.Number) return je.GetDouble();
+            if (val is double d) return d;
+            if (val is int i) return i;
+            if (double.TryParse(val?.ToString(), out var parsed)) return parsed;
+        }
+        return null;
+    }
+
+    private bool GetBoolValue(string key)
+    {
+        if (currentValues.TryGetValue(key, out var val))
+        {
+            if (val is JsonElement je) return je.ValueKind == JsonValueKind.True;
+            if (val is bool b) return b;
+            if (bool.TryParse(val?.ToString(), out var parsed)) return parsed;
+        }
+        return false;
+    }
+
+    private async Task OnValueChanged(string key, object? value)
+    {
+        currentValues[key] = value;
+        var newJson = JsonSerializer.SerializeToElement(currentValues);
+        await ValueChanged.InvokeAsync(newJson);
+    }
+}

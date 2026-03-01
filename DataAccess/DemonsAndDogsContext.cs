@@ -13,8 +13,14 @@ public class DbContext(DbContextOptions<DbContext> options)
     {
         base.OnModelCreating(modelBuilder);
         ConfigureResource<JsonResource>(modelBuilder, "JsonResources");
+        ConfigureResource<SchemaResource>(modelBuilder, "SchemaResources");
+        ConfigureResource<PublishedSchemaResource>(modelBuilder, "PublishedSchemaResources");
+        ConfigureResource<DataResource>(modelBuilder, "DataResources");
     }
     public DbSet<Resource<JsonResource>> JsonResources { get; set; }
+    public DbSet<Resource<SchemaResource>> SchemaResources { get; set; }
+    public DbSet<Resource<PublishedSchemaResource>> PublishedSchemaResources { get; set; }
+    public DbSet<Resource<DataResource>> DataResources { get; set; }
     
     private static void ConfigureResource<T>(ModelBuilder modelBuilder, string tableName) where T : ResourceBase
     {

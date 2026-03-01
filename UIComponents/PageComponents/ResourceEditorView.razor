@@ -1,0 +1,93 @@
+﻿@using Models.Resources
+@using System.Text.Json
+@using MediatR
+@using Mediator.Mediator.Contracts
+@using Radzen
+@using Radzen.Blazor
+@inject IMediator Mediator
+@inject NavigationManager NavManager
+@inject NotificationService NotificationService
+
+<RadzenStack Gap="20px">
+    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+        <RadzenText Text="@($"Resource Editor: {resource.Name} ({resource.SchemaKey} v{resource.SchemaVersion})")" TextStyle="TextStyle.H4" />
+        <RadzenStack Orientation="Orientation.Horizontal" Gap="10px">
+            <RadzenButton Text="Validate" Icon="check_circle" Click="@ValidateResource" ButtonStyle="ButtonStyle.Secondary" />
+            <RadzenButton Text="Save" Icon="save" Click="@SaveResource" ButtonStyle="ButtonStyle.Primary" />
+        </RadzenStack>
+    </RadzenStack>
+
+    <RadzenCard>
+        <RadzenStack Gap="15px">
+             <RadzenText Text="Resource Metadata" TextStyle="TextStyle.Subtitle2" />
+             <RadzenTextBox Placeholder="Resource Name (e.g. Fireball)" Style="width:100%" @bind-Value="resource.Name" />
+        </RadzenStack>
+    </RadzenCard>
+
+    <RadzenCard>
+        <RadzenText Text="Form" TextStyle="TextStyle.Subtitle2" Style="margin-bottom: 15px" />
+        <DynamicFormRenderer Schema="@schemaJson" Value="@resource.JsonPayload" ValueChanged="@(v => resource.JsonPayload = v)" />
+    </RadzenCard>
+
+    @if (validationResult != null)
+    {
+        <RadzenCard>
+            <RadzenText Text="Validation Results" TextStyle="TextStyle.Subtitle2" />
+            @if (validationResult.IsValid)
+            {
+                <RadzenAlert AlertStyle="AlertStyle.Success">Resource is valid against schema.</RadzenAlert>
+            }
+            else
+            {
+                <RadzenAlert AlertStyle="AlertStyle.Danger">
+                    <ul style="margin: 0">
+                        @foreach (var error in validationResult.Errors)
+                        {
+                            <li><strong>@error.Path</strong>: @error.Message</li>
+                        }
+                    </ul>
+                </RadzenAlert>
+            }
+        </RadzenCard>
+    }
+</RadzenStack>
+
+@code {
+    [Parameter] public DataResource resource { get; set; } = new();
+    [Parameter] public JsonElement schemaJson { get; set; }
+    private ValidationResult? validationResult;
+    private string ownerId = "DefaultUser";
+
+    private async Task ValidateResource()
+    {
+        try
+        {
+            validationResult = await Mediator.Send(new ValidateResourceCommand(resource.SchemaKey, resource.SchemaVersion, resource.JsonPayload.GetRawText()));
+        }
+        catch (Exception ex)
+        {
+            validationResult = new ValidationResult(false, new List<ValidationError> { new ValidationError("$", ex.Message) });
+        }
+    }
+
+    private async Task SaveResource()
+    {
+        try
+        {
+            await ValidateResource();
+            if (validationResult?.IsValid == false)
+            {
+                NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Warning, Summary = "Invalid", Detail = "Please fix validation errors before saving." });
+                return;
+            }
+
+            await Mediator.Send(new SaveResourceCommand(ownerId, resource));
+            NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Success, Summary = "Success", Detail = "Resource saved successfully" });
+            NavManager.NavigateTo("/Resources");
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Error, Summary = "Error", Detail = ex.Message });
+        }
+    }
+}
