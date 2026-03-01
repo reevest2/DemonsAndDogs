@@ -1,0 +1,76 @@
+﻿@page "/"
+@using DatabaseSeedTool.Services
+@inject DatabaseSeedService SeedService
+@inject NotificationService NotificationService
+
+<PageTitle>Database Seed Tool</PageTitle>
+
+<RadzenText TextStyle="TextStyle.H3" Text="Database Seed Tool" Style="margin-bottom: 1rem;" />
+<RadzenText TextStyle="TextStyle.Body1" Style="color: var(--rz-text-secondary-color); margin-bottom: 2rem;">
+    Manage the database by seeding initial data, saving the current state, or reloading from a saved state.
+</RadzenText>
+
+<RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" Wrap="FlexWrap.Wrap">
+    <RadzenButton Text="Seed Database"
+                  Icon="add_circle"
+                  ButtonStyle="ButtonStyle.Primary"
+                  Size="ButtonSize.Large"
+                  Click="@OnSeed"
+                  Disabled="@_isProcessing" />
+
+    <RadzenButton Text="Save State"
+                  Icon="save"
+                  ButtonStyle="ButtonStyle.Success"
+                  Size="ButtonSize.Large"
+                  Click="@OnSave"
+                  Disabled="@_isProcessing" />
+
+    <RadzenButton Text="Reload State"
+                  Icon="refresh"
+                  ButtonStyle="ButtonStyle.Warning"
+                  Size="ButtonSize.Large"
+                  Click="@OnReload"
+                  Disabled="@_isProcessing" />
+</RadzenStack>
+
+@if (_isProcessing)
+{
+    <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" Style="margin-top: 1rem;" />
+}
+
+@code {
+    private bool _isProcessing;
+
+    private async Task OnSeed()
+    {
+        await ExecuteAction("Seed", async () => await SeedService.SeedDatabaseAsync());
+    }
+
+    private async Task OnSave()
+    {
+        await ExecuteAction("Save", async () => await SeedService.SaveStateAsync());
+    }
+
+    private async Task OnReload()
+    {
+        await ExecuteAction("Reload", async () => await SeedService.ReloadStateAsync());
+    }
+
+    private async Task ExecuteAction(string actionName, Func<Task<string>> action)
+    {
+        _isProcessing = true;
+        try
+        {
+            var result = await action();
+            NotificationService.Notify(NotificationSeverity.Success, $"{actionName} Succeeded", result);
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, $"{actionName} Failed", ex.Message);
+        }
+        finally
+        {
+            _isProcessing = false;
+        }
+    }
+}
