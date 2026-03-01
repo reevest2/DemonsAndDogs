@@ -19,7 +19,6 @@ public class DatabaseSeedService
     public async Task<string> SeedDatabaseAsync()
     {
         await using var context = await _contextFactory.CreateDbContextAsync();
-        await context.Database.EnsureCreatedAsync();
 
         var existingCount = await context.JsonResources.CountAsync();
         if (existingCount > 0)
@@ -38,7 +37,6 @@ public class DatabaseSeedService
         filePath ??= GetDefaultSeedFile();
 
         await using var context = await _contextFactory.CreateDbContextAsync();
-        await context.Database.EnsureCreatedAsync();
 
         var resources = await context.JsonResources.AsNoTracking().ToListAsync();
 
@@ -67,7 +65,6 @@ public class DatabaseSeedService
             return "No resources found in the state file.";
 
         await using var context = await _contextFactory.CreateDbContextAsync();
-        await context.Database.EnsureCreatedAsync();
 
         await using var transaction = await context.Database.BeginTransactionAsync();
         try
