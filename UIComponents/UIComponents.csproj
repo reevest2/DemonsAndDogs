@@ -18,8 +18,11 @@
 
     <ItemGroup>
       <ProjectReference Include="..\AppConstants\AppConstants.csproj" />
-      <ProjectReference Include="..\Mediator\Mediator.csproj" />
       <ProjectReference Include="..\Models\Models.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="PageComponents\" />
     </ItemGroup>
 
 </Project>

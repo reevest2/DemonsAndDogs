@@ -127,15 +127,7 @@ public class ResourceRepository<TResource> : IResourceRepository<TResource> wher
 
         var resource = new Resource<TResource>
         {
-            Id = data.Id ?? Guid.NewGuid().ToString(),
-            OwnerId = data.OwnerId,
-            SubjectId = data.SubjectId,
-            EntityId = data.EntityId,
-            CampaignId = data.CampaignId,
-            RulesetId = data.RulesetId,
-            GameId = data.GameId,
-            SchemaVersion = data.SchemaVersion,
-            ResourceKind = data.ResourceKind,
+            Id = Guid.NewGuid().ToString(),
             CreatedAt = timestamp,
             UpdatedAt = timestamp,
             Version = 1,
@@ -151,37 +143,14 @@ public class ResourceRepository<TResource> : IResourceRepository<TResource> wher
 
     public virtual async Task<TResource> UpdateResourceAsync(TResource data)
     {
-        var resource = await _context.Set<Resource<TResource>>()
-            .FirstOrDefaultAsync(r => r.Id == data.Id);
-
-        if (resource == null)
-            throw new KeyNotFoundException(data.Id);
-
-        resource.UpdatedAt = DateTime.UtcNow;
-        resource.OwnerId = data.OwnerId;
-        resource.SubjectId = data.SubjectId;
-        resource.EntityId = data.EntityId;
-        resource.CampaignId = data.CampaignId;
-        resource.RulesetId = data.RulesetId;
-        resource.GameId = data.GameId;
-        resource.SchemaVersion = data.SchemaVersion;
-        resource.ResourceKind = data.ResourceKind;
-        resource.Version++;
-        resource.Data = data;
-
+        _context.Set<Resource<TResource>>().Update(new Resource<TResource> { Data = data });
         await _context.SaveChangesAsync();
         return data;
     }
 
     public virtual async Task DeleteResourceAsync(TResource data)
     {
-        var resource = await _context.Set<Resource<TResource>>()
-            .FirstOrDefaultAsync(r => r.Id == data.Id);
-
-        if (resource != null)
-        {
-            _context.Set<Resource<TResource>>().Remove(resource);
-            await _context.SaveChangesAsync();
-        }
+        _context.Set<Resource<TResource>>().Remove(new Resource<TResource> { Data = data });
+        await _context.SaveChangesAsync();
     }
 }
