@@ -16,4 +16,9 @@
       <ProjectReference Include="..\Models\Models.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="Mediator\Contracts\" />
+      <Folder Include="Mediator\Handlers\" />
+    </ItemGroup>
+
 </Project>

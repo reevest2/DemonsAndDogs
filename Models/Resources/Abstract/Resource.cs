@@ -1,5 +1,4 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
-using Models.Enums;
 using Pgvector;
 
 namespace Models.Resources.Abstract;
