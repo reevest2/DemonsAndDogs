@@ -2,60 +2,204 @@
 apply: always
 ---
 
-# Junie Assistant Rules for DemonsAndDogs
+# DemonsAndDogs – Rider Junie Enforcement Rules
 
-## Summary
-This document defines **non-negotiable engineering rules** for the DemonsAndDogs solution, plus an explanation of the **JsonResource-based resource pattern** used in the database layer.
+This document defines non-negotiable architectural constraints for the DemonsAndDogs solution.
 
----
+Rider Junie must treat these as hard constraints, not suggestions.
 
-## Core Rules
+These rules apply to:
 
-### 1) Resources come only from JsonResource (no new resource models)
-- **Do not create new resource model types** (no new `Resource<T>` specializations beyond what already exists).
-- Resources must be represented using **`JsonResource`** and persisted in the **`JsonResources`** table via:
-    - `DbSet<Resource<JsonResource>> JsonResources`
-- If new resource shapes are needed, they must be expressed as **JSON inside `JsonResource`**, not new tables/models.
+- All new code
+- All refactored code
+- All generated code
+- All modifications to existing code
 
 ---
 
-### 2) Pages must be parameterized components; data fetched via Mediator queries to the API
-- Each UI “page” in **DemonsAndDogs** must be a **component** that accepts parameters for its data needs (ids, filters, paging, etc.).
-- The component **must not** directly embed data access logic.
-- UIComponents should live in the UIComponentsLibrary
-- Data must be retrieved by:
-    - issuing **Mediator queries**
-    - which call the **API** (not direct DB access from UI)
+## 1. Resource Model Constraint (JsonResource Only)
+
+### Forbidden
+
+Rider Junie must NOT:
+
+- Create new resource model types
+- Create new Resource<T> specializations
+- Create new resource tables
+- Introduce alternative resource storage mechanisms
+
+### Required
+
+All resources MUST:
+
+- Use JsonResource
+- Be stored in the JsonResources table
+- Be accessed via:
+
+```csharp
+DbSet<Resource<JsonResource>> JsonResources
+```
+
+### Extending Resource Shape
+
+If a new resource structure is required:
+
+- The structure MUST be represented as JSON inside JsonResource
+- No database schema changes are allowed
+- No additional EF entities are allowed
+
+Database schema stability is mandatory.
 
 ---
 
-### 3) Prefer components as much as possible
-- UI should be built from reusable components first.
-- Avoid duplicating layout, form fields, grids, dialogs, and validation across multiple pages.
-- If something appears more than once, it should become a component.
+## 2. UI Architecture Constraint
+
+### Page Definition
+
+Every UI page MUST:
+
+- Be implemented as a parameterized component
+- Accept required inputs via parameters (id, filters, paging, etc.)
+
+A page MUST NOT:
+
+- Access the database directly
+- Reference repositories
+- Contain embedded data access logic
+
+### Required Data Flow
+
+All data retrieval MUST follow this exact flow:
+
+```
+UI Component
+→ Mediator Query
+→ API Endpoint
+→ Handler
+→ Data Layer
+```
+
+Direct UI → Database access is forbidden.
+
+### Component Location
+
+Reusable UI components MUST exist in:
+
+```
+UIComponentsLibrary
+```
 
 ---
 
-### 4) Controller method parameters must use records
-- When passing parameters into controller actions, use a **single record** type rather than multiple primitive parameters.
-- Applies to both query and body payloads where appropriate.
-- This includes filters, paging, search criteria, and command payloads.
+## 3. Component-First Enforcement
+
+Before creating new UI markup or logic:
+
+1. Check for an existing reusable component.
+2. If functionality appears more than once, it MUST be extracted into a component.
+
+This applies to:
+
+- Forms
+- Grids
+- Dialogs
+- Layout sections
+- Validation logic
+
+Duplication is not permitted when componentization is possible.
 
 ---
 
-### 5) One type per file (services, repositories, contracts, handlers)
-- Each **service**, **repository**, **contract**, and **handler** must live in its **own file**.
-- No “grouped” files containing multiple handlers/contracts/types.
+## 4. Controller Parameter Constraint (Records Only)
+
+Controller methods MUST:
+
+- Accept a single record type as input
+- Not use multiple primitive parameters
+
+Applies to:
+
+- Query parameters
+- Request bodies
+- Filters
+- Paging
+- Search criteria
+- Command payloads
+
+### Correct
+
+```csharp
+public async Task<IActionResult> Get(GetDogsQuery request)
+```
+
+### Incorrect
+
+```csharp
+public async Task<IActionResult> Get(Guid id, int page, string filter)
+```
 
 ---
 
-### 6) No magic strings; use AppConstants class library
-- Do not introduce hard-coded strings for:
-    - routes, policy names, claim types, cache keys
-    - resource keys, table names (where applicable), header names
-    - any cross-cutting identifiers used in more than one place
-- Use the **AppConstants** class library for these values.
+## 5. One Type Per File Rule
 
-### 7) Ensure that unit tests in the project all pass.
+Each of the following MUST exist in its own file:
+
+- Service
+- Repository
+- Contract
+- Handler
+- Record
+- Interface
+
+Forbidden:
+
+- Multiple handlers in one file
+- Grouped contracts
+- Multiple services in one file
+
+File name MUST match type name.
 
 ---
+
+## 6. No Hard-Coded Strings
+
+Rider Junie must NOT introduce hard-coded strings for:
+
+- Routes
+- Policy names
+- Claim types
+- Cache keys
+- Resource keys
+- Header names
+- Cross-layer identifiers
+- Any value reused across layers
+
+All shared string values must come from the AppConstants class library.
+
+If a string could be reused, it belongs in AppConstants.
+
+---
+
+## 7. Unit Test Integrity
+
+All unit tests MUST pass.
+
+Rider Junie must NOT:
+
+- Introduce changes that break existing tests
+- Leave failing tests unresolved
+- Introduce functionality without appropriate tests (when applicable)
+
+Test stability is mandatory.
+
+---
+
+## Enforcement Priority
+
+If a requested implementation conflicts with these rules:
+
+1. These rules take priority.
+2. The architecture must not be violated.
+3. An alternative compliant implementation must be used.
+
+These constraints are architectural invariants of the DemonsAndDogs solution.
