@@ -1,6 +1,6 @@
 ﻿using System.Net.Http.Json;
 
-public sealed class ApiClient
+public sealed class ApiClient : IApiClient
 {
     private readonly HttpClient _http;
 

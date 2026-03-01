@@ -1,5 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
+# 
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DemonsAndDogs", "DemonsAndDogs\DemonsAndDogs.csproj", "{8854E278-BD0E-47AE-88E1-69AE93846F66}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Models", "Models\Models.csproj", "{9CF96288-416F-4FC8-A765-332F32CF6EB6}"
@@ -19,6 +20,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mediator", "Mediator\Mediator.csproj", "{221A5EEF-3FF4-4ED7-B9BC-0BEB130A02FB}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "API.Client", "API.Client\API.Client.csproj", "{5F7E5976-57A0-4FC5-BDB9-2565F0B4ABB8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DemonsAndDogs.Tests", "DemonsAndDogs.Tests\DemonsAndDogs.Tests.csproj", "{36E72839-F9CD-45CB-ABA3-C6ED5EBCCC42}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -66,5 +69,9 @@ Global
 		{5F7E5976-57A0-4FC5-BDB9-2565F0B4ABB8}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5F7E5976-57A0-4FC5-BDB9-2565F0B4ABB8}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5F7E5976-57A0-4FC5-BDB9-2565F0B4ABB8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{36E72839-F9CD-45CB-ABA3-C6ED5EBCCC42}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{36E72839-F9CD-45CB-ABA3-C6ED5EBCCC42}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{36E72839-F9CD-45CB-ABA3-C6ED5EBCCC42}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{36E72839-F9CD-45CB-ABA3-C6ED5EBCCC42}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

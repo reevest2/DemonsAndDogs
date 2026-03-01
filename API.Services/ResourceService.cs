@@ -51,6 +51,13 @@ public abstract class ResourceService<TResource>(
 
     public virtual async Task<TResource> Create(string ownerId, TResource resource)
     {
+        resource.OwnerId = ownerId;
+        resource.Id ??= Guid.NewGuid().ToString();
+        resource.CreatedAt = DateTime.UtcNow;
+        resource.UpdatedAt = resource.CreatedAt;
+        resource.Version = 1;
+        resource.IsDeleted = false;
+
         var created = await _resourceRepository.CreateResourceAsync(resource);
         return created;
     }
