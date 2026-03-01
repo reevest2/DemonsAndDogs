@@ -1,6 +1,7 @@
 ﻿using API.Services.Abstraction;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Models.Contracts;
 
 namespace API.Controllers;
 
@@ -26,44 +27,44 @@ public abstract class ResourceControllerBase<TResource, TService> : ControllerBa
     }
 
     [HttpGet(nameof(GetById) + "/User/{ownerId}/{id}")]
-    public virtual async Task<IActionResult> GetById([FromRoute] string ownerId, [FromRoute] string id)
+    public virtual async Task<IActionResult> GetById([FromRoute] OwnerResourceRouteParams routeParams)
     {
-        var response = await Service.GetById(ownerId, id);
+        var response = await Service.GetById(routeParams.OwnerId, routeParams.Id);
         return Ok(response);
     }
 
     [HttpGet(nameof(GetAllByOwnerId) + "/User/{ownerId}")]
-    public virtual async Task<IActionResult> GetAllByOwnerId([FromRoute] string ownerId)
+    public virtual async Task<IActionResult> GetAllByOwnerId([FromRoute] OwnerRouteParams routeParams)
     {
-        var response = await Service.GetAllByOwnerId(ownerId);
+        var response = await Service.GetAllByOwnerId(routeParams.OwnerId);
         return Ok(response);
     }
 
     [HttpPost(nameof(Create) + "/User/{ownerId}")]
-    public virtual async Task<IActionResult> Create([FromRoute] string ownerId, [FromBody] TResource request)
+    public virtual async Task<IActionResult> Create([FromRoute] OwnerRouteParams routeParams, [FromBody] TResource request)
     {
-        var response = await Service.Create(ownerId, request);
-        return Created($"{nameof(GetById)}/User/{ownerId}/{GetResourceId(response)}", response);
+        var response = await Service.Create(routeParams.OwnerId, request);
+        return Created($"{nameof(GetById)}/User/{routeParams.OwnerId}/{GetResourceId(response)}", response);
     }
 
     [HttpPut(nameof(Update) + "/User/{ownerId}/{id}")]
-    public virtual async Task<IActionResult> Update([FromRoute] string ownerId, [FromRoute] string id, [FromBody] TResource resource)
+    public virtual async Task<IActionResult> Update([FromRoute] OwnerResourceRouteParams routeParams, [FromBody] TResource resource)
     {
-        var response = await Service.Update(ownerId, id, resource);
+        var response = await Service.Update(routeParams.OwnerId, routeParams.Id, resource);
         return Ok(response);
     }
 
     [HttpDelete(nameof(Delete) + "/User/{ownerId}/{id}")]
-    public virtual async Task<IActionResult> Delete([FromRoute] string ownerId, [FromRoute] string id)
+    public virtual async Task<IActionResult> Delete([FromRoute] OwnerResourceRouteParams routeParams)
     {
-        await Service.Delete(ownerId, id);
+        await Service.Delete(routeParams.OwnerId, routeParams.Id);
         return NoContent();
     }
 
     [HttpGet(nameof(GetCountByOwnerId) + "/User/{ownerId}")]
-    public virtual async Task<IActionResult> GetCountByOwnerId([FromRoute] string ownerId)
+    public virtual async Task<IActionResult> GetCountByOwnerId([FromRoute] OwnerRouteParams routeParams)
     {
-        var response = await Service.GetCountByOwnerId(ownerId);
+        var response = await Service.GetCountByOwnerId(routeParams.OwnerId);
         return Ok(response);
     }
 

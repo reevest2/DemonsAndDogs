@@ -1,8 +1,5 @@
 ﻿using API.Services.Abstraction;
 using DataAccess.Abstraction;
-using IResourceService = System.ComponentModel.Design.IResourceService;
-using API.Services.Abstraction;
-using DataAccess.Abstraction;
 using Microsoft.Extensions.Logging;
 using Models.Resources;
 using Models.Resources.Abstract;
