@@ -21,6 +21,6 @@ public static class DIConfiguration
 
     public static void ConfigureServices(this IServiceCollection services)
     {
-        services.AddScoped<IResourceService<JsonResource>, ResourceService<JsonResource>>();
+        services.AddScoped<IJsonResourceService, JsonResourceService>();
     }
 }

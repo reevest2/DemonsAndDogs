@@ -1,0 +1,180 @@
+﻿@page "/CreateSchema"
+@using System.Text.Json
+
+<RadzenCard Style="padding:20px">
+    <ChildContent>
+        <RadzenHeading Size="H4">JSON Schema Builder</RadzenHeading>
+        <RadzenFieldset Text="Schema Details" Style="margin-top:20px">
+            <RadzenTemplateForm Data="@schemaModel" TItem="SchemaModel">
+                <RadzenStack Spacing="20px">
+                    <RadzenTextBox Name="Title" Placeholder="Schema Title" Style="width:100%" @bind-Value="schemaModel.Title" />
+                    <RadzenTextArea Name="Description" Placeholder="Description" Style="width:100%" @bind-Value="schemaModel.Description" />
+                    <RadzenDropDown Data="@schemaTypes" @bind-Value="schemaModel.Type" Style="width:200px" />
+                </RadzenStack>
+                <RadzenButton Text="Generate Schema" Icon="save" Style="margin-top:10px" Click="@GenerateSchema" ButtonStyle="ButtonStyle.Primary" />
+            </RadzenTemplateForm>
+        </RadzenFieldset>
+        <RadzenFieldset Text="Properties" Style="margin-top:20px">
+            <RadzenRow>
+                <RadzenColumn Width="6">
+                    <RadzenDataGrid @ref="grid" Data="@properties" TItem="SchemaProperty" AllowPaging="false" AllowSorting="false" AllowFiltering="false" Style="height:300px">
+                        <Columns>
+                            <RadzenDataGridColumn TItem="SchemaProperty" Property="Name" Title="Name" />
+                            <RadzenDataGridColumn TItem="SchemaProperty" Property="Type" Title="Type" />
+                            <RadzenDataGridColumn TItem="SchemaProperty" Property="Required" Title="Required">
+                                <Template Context="prop">@((prop.Required) ? "Yes" : "No")</Template>
+                            </RadzenDataGridColumn>
+                            <RadzenDataGridColumn TItem="SchemaProperty" Title="Actions">
+                                <Template Context="prop">
+                                    <RadzenButton Icon="edit" Size="ButtonSize.Small" ButtonStyle="ButtonStyle.Secondary" Style="margin-right:5px" Click="@(() => EditProperty(prop))" />
+                                    <RadzenButton Icon="delete" Size="ButtonSize.Small" ButtonStyle="ButtonStyle.Danger" Click="@(() => DeleteProperty(prop))" />
+                                </Template>
+                            </RadzenDataGridColumn>
+                        </Columns>
+                    </RadzenDataGrid>
+                    <RadzenButton Icon="add_circle" Text="Add Property" Style="margin-top:10px" Click="@AddProperty" />
+                </RadzenColumn>
+                <RadzenColumn Width="6">
+                    @if (propertyEditorVisible)
+                    {
+                        <RadzenTemplateForm Data="@currentProperty" TItem="SchemaProperty" Submit="@SaveProperty">
+                            <RadzenStack Spacing="10px">
+                                <RadzenTextBox Name="PropName" Placeholder="Property Name" Style="width:100%" @bind-Value="currentProperty.Name" />
+                                <RadzenDropDown Name="PropType" Data="@propertyTypes" Style="width:100%" @bind-Value="currentProperty.Type" />
+                                <RadzenCheckBox Name="PropRequired" @bind-Value="currentProperty.Required" TValue="bool" />
+                                <RadzenLabel Text="Required" Style="margin-left:5px;vertical-align:middle" />
+                                <RadzenTextBox Name="PropFormat" Placeholder="Format" Style="width:100%" @bind-Value="currentProperty.Format" />
+                                <RadzenTextBox Name="PropDescription" Placeholder="Description" Style="width:100%" @bind-Value="currentProperty.Description" />
+                                <RadzenTextBox Name="EnumValues" Placeholder="Enum values (comma separated)" Style="width:100%" @bind-Value="enumString" />
+                                <RadzenButton Text="Save Property" Icon="check" ButtonStyle="ButtonStyle.Primary" Type="Submit" />
+                                <RadzenButton Text="Cancel" Icon="cancel" ButtonStyle="ButtonStyle.Secondary" Click="@CancelPropertyEdit" Style="margin-left:5px" />
+                            </RadzenStack>
+                        </RadzenTemplateForm>
+                    }
+                </RadzenColumn>
+            </RadzenRow>
+        </RadzenFieldset>
+        <RadzenFieldset Text="JSON Schema Preview" Style="margin-top:20px">
+            <RadzenTextArea Value="@jsonSchemaText" ReadOnly="true" Style="width:100%;height:300px" />
+        </RadzenFieldset>
+    </ChildContent>
+</RadzenCard>
+
+@code {
+    RadzenDataGrid<SchemaProperty> grid;
+    SchemaModel schemaModel = new();
+    List<SchemaProperty> properties = new();
+    SchemaProperty currentProperty = new();
+    bool propertyEditorVisible;
+    string enumString;
+    string jsonSchemaText;
+    List<string> schemaTypes = new() { "object", "array" };
+    List<string> propertyTypes = new() { "string", "number", "integer", "boolean", "array", "object" };
+
+    void AddProperty()
+    {
+        currentProperty = new SchemaProperty();
+        enumString = string.Empty;
+        propertyEditorVisible = true;
+    }
+
+    void EditProperty(SchemaProperty prop)
+    {
+        currentProperty = new SchemaProperty
+        {
+            Name = prop.Name,
+            Type = prop.Type,
+            Required = prop.Required,
+            Description = prop.Description,
+            Format = prop.Format,
+            EnumValues = prop.EnumValues != null ? new List<string>(prop.EnumValues) : new List<string>()
+        };
+        enumString = currentProperty.EnumValues != null && currentProperty.EnumValues.Count > 0 ? string.Join(", ", currentProperty.EnumValues) : string.Empty;
+        propertyEditorVisible = true;
+        properties.Remove(prop);
+    }
+
+    void DeleteProperty(SchemaProperty prop)
+    {
+        properties.Remove(prop);
+        GenerateSchema();
+    }
+
+    void SaveProperty(SchemaProperty args)
+    {
+        if (!string.IsNullOrWhiteSpace(enumString))
+        {
+            args.EnumValues = enumString.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(s => s.Trim()).ToList();
+        }
+        properties.Add(args);
+        propertyEditorVisible = false;
+        GenerateSchema();
+        grid?.Reload();
+    }
+
+    void CancelPropertyEdit()
+    {
+        propertyEditorVisible = false;
+    }
+
+    void GenerateSchema()
+    {
+        var schema = new Dictionary<string, object>();
+        if (!string.IsNullOrWhiteSpace(schemaModel.Title))
+        {
+            schema["title"] = schemaModel.Title;
+        }
+        if (!string.IsNullOrWhiteSpace(schemaModel.Description))
+        {
+            schema["description"] = schemaModel.Description;
+        }
+        schema["type"] = schemaModel.Type;
+        var propertiesObj = new Dictionary<string, object>();
+        var requiredList = new List<string>();
+        foreach (var p in properties)
+        {
+            var propSchema = new Dictionary<string, object>();
+            propSchema["type"] = p.Type;
+            if (!string.IsNullOrWhiteSpace(p.Description))
+            {
+                propSchema["description"] = p.Description;
+            }
+            if (p.EnumValues != null && p.EnumValues.Count > 0)
+            {
+                propSchema["enum"] = p.EnumValues;
+            }
+            if (!string.IsNullOrWhiteSpace(p.Format))
+            {
+                propSchema["format"] = p.Format;
+            }
+            propertiesObj[p.Name] = propSchema;
+            if (p.Required)
+            {
+                requiredList.Add(p.Name);
+            }
+        }
+        schema["properties"] = propertiesObj;
+        if (requiredList.Count > 0)
+        {
+            schema["required"] = requiredList;
+        }
+        jsonSchemaText = JsonSerializer.Serialize(schema, new JsonSerializerOptions { WriteIndented = true });
+    }
+
+    public class SchemaModel
+    {
+        public string Title { get; set; }
+        public string Description { get; set; }
+        public string Type { get; set; } = "object";
+    }
+
+    public class SchemaProperty
+    {
+        public string Name { get; set; }
+        public string Type { get; set; }
+        public bool Required { get; set; }
+        public string Description { get; set; }
+        public List<string> EnumValues { get; set; }
+        public string Format { get; set; }
+    }
+}

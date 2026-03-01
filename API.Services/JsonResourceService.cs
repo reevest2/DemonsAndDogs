@@ -5,7 +5,7 @@ using Models.Resources;
 
 namespace API.Services;
 
-public class JsonResourceService(IResourceRepository<JsonResource> resourceRepository, ILogger logger) 
+public class JsonResourceService(IResourceRepository<JsonResource> resourceRepository, ILogger<JsonResource> logger) 
     : ResourceService<JsonResource>(resourceRepository, logger), IJsonResourceService
 {
     

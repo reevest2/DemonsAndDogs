@@ -2,7 +2,6 @@ using Mediator;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Radzen;
-using UIComponents.ResourceRegistry;
 
 namespace DemonsAndDogs;
 
@@ -14,7 +13,6 @@ public class Program
         builder.RootComponents.Add<App>("#app");
         builder.RootComponents.Add<HeadOutlet>("head::after");
 
-        builder.Services.AddSingleton<IResourceManagerRegistry, ResourceManagerRegistry>();
         builder.Services.AddScoped<DialogService>();
         builder.Services.AddScoped<NotificationService>();
         builder.Services.AddScoped<TooltipService>();
