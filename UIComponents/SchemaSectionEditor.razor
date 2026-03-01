@@ -1,0 +1,85 @@
+﻿@using AppConstants
+@using Radzen
+@using Radzen.Blazor
+
+<RadzenCard class="schema-section" Style="margin-bottom: 1rem;">
+    <RadzenRow AlignItems="AlignItems.Center" Gap="0.5rem" Style="margin-bottom: 0.75rem;">
+        <RadzenColumn Size="10">
+            <RadzenFormField Text="Section Name" Style="width: 100%;">
+                <RadzenTextBox Value="@SectionName"
+                               ValueChanged="OnSectionNameChanged"
+                               Placeholder="e.g. attributes" />
+            </RadzenFormField>
+        </RadzenColumn>
+        <RadzenColumn Size="2" Style="text-align: right;">
+            <RadzenButton Icon="close"
+                          ButtonStyle="ButtonStyle.Danger"
+                          Variant="Variant.Text"
+                          Click="@(() => OnRemoveSection.InvokeAsync())"
+                          title="Remove section" />
+        </RadzenColumn>
+    </RadzenRow>
+
+    @for (var i = 0; i < Properties.Count; i++)
+    {
+        var index = i;
+        <SchemaPropertyEditor Name="@Properties[index].Name"
+                              NameChanged="@(v => UpdatePropertyName(index, v))"
+                              Type="@Properties[index].Type"
+                              TypeChanged="@(v => UpdatePropertyType(index, v))"
+                              OnRemove="@(() => RemoveProperty(index))" />
+    }
+
+    <RadzenButton Icon="add"
+                  Text="Add Property"
+                  ButtonStyle="ButtonStyle.Secondary"
+                  Variant="Variant.Text"
+                  Size="ButtonSize.Small"
+                  Click="AddProperty"
+                  Style="margin-top: 0.5rem;" />
+</RadzenCard>
+
+@code {
+    [Parameter] public string SectionName { get; set; } = string.Empty;
+    [Parameter] public EventCallback<string> SectionNameChanged { get; set; }
+    [Parameter] public List<SchemaProperty> Properties { get; set; } = [];
+    [Parameter] public EventCallback OnRemoveSection { get; set; }
+    [Parameter] public EventCallback OnChanged { get; set; }
+
+    private async Task OnSectionNameChanged(string value)
+    {
+        SectionName = value;
+        await SectionNameChanged.InvokeAsync(value);
+        await OnChanged.InvokeAsync();
+    }
+
+    private async Task UpdatePropertyName(int index, string value)
+    {
+        Properties[index].Name = value;
+        await OnChanged.InvokeAsync();
+    }
+
+    private async Task UpdatePropertyType(int index, string value)
+    {
+        Properties[index].Type = value;
+        await OnChanged.InvokeAsync();
+    }
+
+    private async Task AddProperty()
+    {
+        Properties.Add(new SchemaProperty());
+        await OnChanged.InvokeAsync();
+    }
+
+    private async Task RemoveProperty(int index)
+    {
+        Properties.RemoveAt(index);
+        await OnChanged.InvokeAsync();
+    }
+
+    public class SchemaProperty
+    {
+        public string Name { get; set; } = string.Empty;
+        public string Type { get; set; } = PropertyTypes.String;
+    }
+}

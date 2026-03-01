@@ -1,0 +1,122 @@
+﻿@using System.Text.Json
+@using AppConstants
+@using Radzen
+@using Radzen.Blazor
+
+<RadzenStack Gap="1rem" Style="max-width: 900px;">
+    <RadzenText TextStyle="TextStyle.H4" Text="Schema Builder" />
+    <RadzenText TextStyle="TextStyle.Body1" Style="color: var(--rz-text-secondary-color);">
+        Define your schema by adding sections. Each section contains properties with a name and type.
+    </RadzenText>
+
+    <RadzenFormField Text="Owner ID" Style="max-width: 400px;">
+        <RadzenTextBox @bind-Value="OwnerId" Placeholder="Enter owner ID" />
+    </RadzenFormField>
+
+    @for (var i = 0; i < _sections.Count; i++)
+    {
+        var index = i;
+        <SchemaSectionEditor SectionName="@_sections[index].Name"
+                             SectionNameChanged="@(v => _sections[index].Name = v)"
+                             Properties="@_sections[index].Properties"
+                             OnRemoveSection="@(() => RemoveSection(index))"
+                             OnChanged="UpdatePreview" />
+    }
+
+    <RadzenButton Icon="add_circle_outline"
+                  Text="Add Section"
+                  ButtonStyle="ButtonStyle.Info"
+                  Variant="Variant.Outlined"
+                  Click="AddSection" />
+
+    @if (_sections.Count > 0)
+    {
+        <RadzenFieldset Text="JSON Preview" Style="margin-top: 1rem;">
+            <pre style="background: var(--rz-base-200); padding: 1rem; border-radius: 4px; overflow-x: auto; font-size: 0.85rem;">@_jsonPreview</pre>
+        </RadzenFieldset>
+    }
+
+    <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" Style="margin-top: 0.5rem;">
+        <RadzenButton Text="Create Schema"
+                      Icon="save"
+                      ButtonStyle="ButtonStyle.Primary"
+                      Click="@(() => OnSubmit.InvokeAsync(BuildSchema()))"
+                      Disabled="@(!IsValid)" />
+        <RadzenButton Text="Clear"
+                      Icon="clear_all"
+                      ButtonStyle="ButtonStyle.Light"
+                      Variant="Variant.Outlined"
+                      Click="Clear" />
+    </RadzenStack>
+</RadzenStack>
+
+@code {
+    [Parameter] public string OwnerId { get; set; } = string.Empty;
+    [Parameter] public EventCallback<SchemaSubmission> OnSubmit { get; set; }
+
+    private readonly List<SchemaSection> _sections = [];
+    private string _jsonPreview = string.Empty;
+
+    private bool IsValid =>
+        !string.IsNullOrWhiteSpace(OwnerId) &&
+        _sections.Count > 0 &&
+        _sections.All(s =>
+            !string.IsNullOrWhiteSpace(s.Name) &&
+            s.Properties.Count > 0 &&
+            s.Properties.All(p => !string.IsNullOrWhiteSpace(p.Name)));
+
+    private void AddSection()
+    {
+        _sections.Add(new SchemaSection());
+        UpdatePreview();
+    }
+
+    private void RemoveSection(int index)
+    {
+        _sections.RemoveAt(index);
+        UpdatePreview();
+    }
+
+    private void Clear()
+    {
+        _sections.Clear();
+        _jsonPreview = string.Empty;
+    }
+
+    private void UpdatePreview()
+    {
+        var schema = BuildJsonObject();
+        _jsonPreview = JsonSerializer.Serialize(schema, new JsonSerializerOptions { WriteIndented = true });
+    }
+
+    private Dictionary<string, Dictionary<string, string>> BuildJsonObject()
+    {
+        var schema = new Dictionary<string, Dictionary<string, string>>();
+        foreach (var section in _sections)
+        {
+            var props = new Dictionary<string, string>();
+            foreach (var prop in section.Properties)
+            {
+                if (!string.IsNullOrWhiteSpace(prop.Name))
+                    props[prop.Name] = prop.Type;
+            }
+            var key = string.IsNullOrWhiteSpace(section.Name) ? "" : section.Name;
+            schema[key] = props;
+        }
+        return schema;
+    }
+
+    private SchemaSubmission BuildSchema()
+    {
+        var json = JsonSerializer.Serialize(BuildJsonObject());
+        return new SchemaSubmission(OwnerId, json);
+    }
+
+    public record SchemaSubmission(string OwnerId, string JsonContent);
+
+    private class SchemaSection
+    {
+        public string Name { get; set; } = string.Empty;
+        public List<SchemaSectionEditor.SchemaProperty> Properties { get; set; } = [];
+    }
+}

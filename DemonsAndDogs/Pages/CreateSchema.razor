@@ -1,69 +1,25 @@
 ﻿@page "/CreateSchema"
 @using MediatR
 @using Mediator.Mediator.Contracts
+@using UIComponents
 @inject IMediator Mediator
 @inject NotificationService NotificationService
 
 <PageTitle>Create Schema</PageTitle>
 
-<h3>Create Schema</h3>
-
-<RadzenStack Gap="1rem" Style="max-width: 800px;">
-    <RadzenFormField Text="Owner ID">
-        <RadzenTextBox @bind-Value="_ownerId" Placeholder="Enter owner ID" />
-    </RadzenFormField>
-
-    <RadzenFormField Text="Schema JSON">
-        <RadzenTextArea @bind-Value="_jsonContent" Rows="12" Placeholder='{ "type": "object", "properties": { } }' />
-    </RadzenFormField>
-
-    <RadzenButton Text="Create Schema" Click="OnSubmit" ButtonStyle="ButtonStyle.Primary" IsBusy="_isSubmitting" />
-</RadzenStack>
+<SchemaBuilder OnSubmit="OnSubmit" />
 
 @code {
-    private string _ownerId = string.Empty;
-    private string _jsonContent = string.Empty;
-    private bool _isSubmitting;
-
-    private async Task OnSubmit()
+    private async Task OnSubmit(SchemaBuilder.SchemaSubmission submission)
     {
-        if (string.IsNullOrWhiteSpace(_ownerId))
-        {
-            NotificationService.Notify(NotificationSeverity.Warning, "Validation", "Owner ID is required.");
-            return;
-        }
-
-        if (string.IsNullOrWhiteSpace(_jsonContent))
-        {
-            NotificationService.Notify(NotificationSeverity.Warning, "Validation", "Schema JSON is required.");
-            return;
-        }
-
         try
         {
-            System.Text.Json.JsonDocument.Parse(_jsonContent);
-        }
-        catch
-        {
-            NotificationService.Notify(NotificationSeverity.Error, "Validation", "Invalid JSON content.");
-            return;
-        }
-
-        _isSubmitting = true;
-
-        try
-        {
-            var result = await Mediator.Send(new CreateSchemaRequest(_ownerId, string.Empty, _jsonContent));
+            var result = await Mediator.Send(new CreateSchemaRequest(submission.OwnerId, string.Empty, submission.JsonContent));
             NotificationService.Notify(NotificationSeverity.Success, "Success", $"Schema created with ID: {result.Id}");
-            _jsonContent = string.Empty;
         }
         catch (Exception ex)
         {
             NotificationService.Notify(NotificationSeverity.Error, "Error", ex.Message);
-        }
-        finally
-        {
-            _isSubmitting = false;
         }
     }
 }

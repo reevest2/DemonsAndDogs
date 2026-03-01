@@ -1,0 +1,49 @@
+﻿@using AppConstants
+@using Radzen
+@using Radzen.Blazor
+
+<RadzenRow AlignItems="AlignItems.End" Gap="0.5rem" class="schema-property-row">
+    <RadzenColumn Size="5">
+        <RadzenFormField Text="Property Name" Style="width: 100%;">
+            <RadzenTextBox Value="@Name"
+                           ValueChanged="OnNameChanged"
+                           Placeholder="e.g. hitPoints" />
+        </RadzenFormField>
+    </RadzenColumn>
+    <RadzenColumn Size="5">
+        <RadzenFormField Text="Type" Style="width: 100%;">
+            <RadzenDropDown TValue="string"
+                            Value="@Type"
+                            ValueChanged="OnTypeChanged"
+                            Data="PropertyTypes.All"
+                            Placeholder="Select type" />
+        </RadzenFormField>
+    </RadzenColumn>
+    <RadzenColumn Size="2">
+        <RadzenButton Icon="delete"
+                      ButtonStyle="ButtonStyle.Danger"
+                      Variant="Variant.Text"
+                      Click="@(() => OnRemove.InvokeAsync())"
+                      title="Remove property" />
+    </RadzenColumn>
+</RadzenRow>
+
+@code {
+    [Parameter] public string Name { get; set; } = string.Empty;
+    [Parameter] public EventCallback<string> NameChanged { get; set; }
+    [Parameter] public string Type { get; set; } = PropertyTypes.String;
+    [Parameter] public EventCallback<string> TypeChanged { get; set; }
+    [Parameter] public EventCallback OnRemove { get; set; }
+
+    private async Task OnNameChanged(string value)
+    {
+        Name = value;
+        await NameChanged.InvokeAsync(value);
+    }
+
+    private async Task OnTypeChanged(string value)
+    {
+        Type = value;
+        await TypeChanged.InvokeAsync(value);
+    }
+}

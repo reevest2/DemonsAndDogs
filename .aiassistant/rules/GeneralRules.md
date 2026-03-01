@@ -22,6 +22,7 @@ This document defines **non-negotiable engineering rules** for the DemonsAndDogs
 ### 2) Pages must be parameterized components; data fetched via Mediator queries to the API
 - Each UI “page” in **DemonsAndDogs** must be a **component** that accepts parameters for its data needs (ids, filters, paging, etc.).
 - The component **must not** directly embed data access logic.
+- UIComponents should live in the UIComponentsLibrary
 - Data must be retrieved by:
     - issuing **Mediator queries**
     - which call the **API** (not direct DB access from UI)
@@ -55,44 +56,6 @@ This document defines **non-negotiable engineering rules** for the DemonsAndDogs
     - any cross-cutting identifiers used in more than one place
 - Use the **AppConstants** class library for these values.
 
+### 7) Ensure that unit tests in the project all pass.
+
 ---
-
-## Resource Pattern Explanation (JsonResource)
-
-### What this pattern does
-The resource pattern stores typed resources using a generic `Resource<T>` wrapper, where the **payload is stored as JSON** in PostgreSQL using `jsonb`. In this solution:
-- `T` is constrained to `ResourceBase`
-- the only configured resource table is **`JsonResources`**
-- the JSON payload is stored in a `Data` column typed as **`jsonb`**
-
-### Why it exists
-This approach centralizes “resource” storage into a single table and supports schema-flexible payloads without creating new tables/models for each resource variation.
-
-### How the DbContext config works
-- `OnModelCreating` calls `ConfigureResource<JsonResource>(..., "JsonResources")`
-- The generic configuration maps:
-    - `Resource<T>` to the specified table
-    - the `Data` property to PostgreSQL `jsonb`
-
-### Reference implementation
-```csharp
-public class DbContext(DbContextOptions<DbContext> options)
-    : IdentityDbContext<IdentityUser, IdentityRole, string>(options)
-{
-    protected override void OnModelCreating(ModelBuilder modelBuilder)
-    {
-        base.OnModelCreating(modelBuilder);
-        ConfigureResource<JsonResource>(modelBuilder, "JsonResources");
-    }
-
-    public DbSet<Resource<JsonResource>> JsonResources { get; set; }
-
-    private static void ConfigureResource<T>(ModelBuilder modelBuilder, string tableName) where T : ResourceBase
-    {
-        modelBuilder.Entity<Resource<T>>(b =>
-        {
-            b.ToTable(tableName);
-            b.Property(x => x.Data).HasColumnType("jsonb");
-        });
-    }
-}
