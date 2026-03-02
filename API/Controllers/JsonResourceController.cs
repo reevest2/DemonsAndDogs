@@ -8,7 +8,7 @@ namespace API.Controllers;
 [ApiController]
 [Authorize]
 [Route("api/[controller]")]
-public class JsonResourceController(IJsonResourceService service)
-    : ResourceControllerBase<JsonResource, IJsonResourceService>(service)
+public class JsonResourceController(IJsonResourceService service) : ControllerBase
 {
+    
 }

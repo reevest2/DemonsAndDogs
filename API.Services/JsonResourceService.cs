@@ -1,12 +1,10 @@
 ﻿using API.Services.Abstraction;
-using DataAccess.Abstraction;
 using Microsoft.Extensions.Logging;
 using Models.Resources;
 
 namespace API.Services;
 
-public class JsonResourceService(IResourceRepository<JsonResource> resourceRepository, ILogger<JsonResource> logger) 
-    : ResourceService<JsonResource>(resourceRepository, logger), IJsonResourceService
+public class JsonResourceService : IJsonResourceService
 {
     
 }

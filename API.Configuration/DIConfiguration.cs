@@ -16,7 +16,7 @@ public static class DIConfiguration
     
     public static void ConfigureRepositories(this IServiceCollection services)
     {
-        services.AddScoped<IResourceRepository<JsonResource>, ResourceRepository<JsonResource>>();
+        
     }
 
     public static void ConfigureServices(this IServiceCollection services)

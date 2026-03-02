@@ -2,7 +2,7 @@
 
 namespace API.Services.Abstraction;
 
-public interface IJsonResourceService : IResourceService<JsonResource>
+public interface IJsonResourceService
 {
     
 }
