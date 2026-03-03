@@ -1,8 +1,8 @@
 ﻿using Models.Resources;
 
-namespace API.Services.Abstraction;
+namespace DataAccess.Abstraction;
 
-public interface IJsonResourceService
+public interface IJsonResourceRepository
 {
     Task<JsonResource?> GetByIdAsync(string id);
     Task<IEnumerable<JsonResource>> GetAllAsync();
