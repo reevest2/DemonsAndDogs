@@ -14,7 +14,7 @@
     {
         try
         {
-            var result = await Mediator.Send(new CreateSchemaRequest(submission.OwnerId, string.Empty, submission.JsonContent));
+            var result = await Mediator.Send(new CreateSchemaRequest(submission.OwnerId, string.Empty, submission.ResourceKind, submission.JsonContent));
             NotificationService.Notify(NotificationSeverity.Success, "Success", $"Schema created with ID: {result.Id}");
         }
         catch (Exception ex)

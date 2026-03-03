@@ -39,3 +39,22 @@ API services define interfaces in `Abstraction` folders, allowing for dependency
 
 ### Embedded Documentation
 Documentation is stored as `.md` files in `Documentation/Content` and embedded as assembly resources. The `MCPServer` project exposes these via MCP tools so AI assistants can retrieve project guidance on demand.
+
+### Use Records for DTOs
+Records are used extensively for data transfer objects (DTOs) and domain models to ensure immutability and type safety. 
+They provide a clear and concise way to define data structures for data transfer.
+Controllers and services use records to pass data between layers.
+
+### Pages in DemonsAndDogs app should have a single Component
+Each page in the app should have a single component that encapsulates the page's logic and UI.
+Parameters passed to the component should be defined as properties of the component.
+This allows for easy reuse and testability.
+
+### All Resources should be a JsonResource
+All resources should be defined as JsonResource classes in the `Models` project.
+Different resource kinds should be defined in the `AppConstants/ResourceKinds.cs` file.
+This ensures that the resources are easily accessible and can be easily serialized and deserialized.
+
+### No Magic Strings
+Avoid using magic strings in code.
+When possible use constants defined in `AppConstants` projects.

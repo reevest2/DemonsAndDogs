@@ -1,9 +1,22 @@
 ﻿using ModelContextProtocol.Server;
 using System.ComponentModel;
 
+/// <summary>
+/// Provides functionality for generating implementation plans and code instructions using solution documentation
+/// via MCP (ModelContextProtocol) tools.
+/// </summary>
 [McpServerPromptType]
 public static class DocumentationPrompts
 {
+    /// <summary>
+    /// Generates an implementation plan and code instructions based on solution documentation using MCP tools.
+    /// </summary>
+    /// <param name="request">
+    /// A feature request provided as input, such as "Add customer grid with paging".
+    /// </param>
+    /// <returns>
+    /// A detailed string containing an implementation plan and generated code instructions tailored to the provided feature request.
+    /// </returns>
     [McpServerPrompt(Name = "generate_feature", Title = "Generate feature using solution docs")]
     [Description("Generates an implementation plan and code instructions using the solution documentation via MCP tools.")]
     public static string GenerateFeature(

@@ -9,9 +9,14 @@
         Define your schema by adding sections. Each section contains properties with a name and type.
     </RadzenText>
 
-    <RadzenFormField Text="Owner ID" Style="max-width: 400px;">
-        <RadzenTextBox @bind-Value="OwnerId" Placeholder="Enter owner ID" />
-    </RadzenFormField>
+    <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" Style="max-width: 900px;">
+        <RadzenFormField Text="Owner ID" Style="flex: 1;">
+            <RadzenTextBox @bind-Value="OwnerId" Placeholder="Enter owner ID" />
+        </RadzenFormField>
+        <RadzenFormField Text="Resource Kind" Style="flex: 1;">
+            <RadzenDropDown @bind-Value="ResourceKind" Data="@ResourceKindOptions" />
+        </RadzenFormField>
+    </RadzenStack>
 
     @for (var i = 0; i < _sections.Count; i++)
     {
@@ -52,13 +57,17 @@
 
 @code {
     [Parameter] public string OwnerId { get; set; } = string.Empty;
+    [Parameter] public string ResourceKind { get; set; } = AppConstants.ResourceKinds.Character;
     [Parameter] public EventCallback<SchemaSubmission> OnSubmit { get; set; }
+
+    private static readonly string[] ResourceKindOptions = ResourceKinds.All;
 
     private readonly List<SchemaSection> _sections = [];
     private string _jsonPreview = string.Empty;
 
     private bool IsValid =>
         !string.IsNullOrWhiteSpace(OwnerId) &&
+        !string.IsNullOrWhiteSpace(ResourceKind) &&
         _sections.Count > 0 &&
         _sections.All(s =>
             !string.IsNullOrWhiteSpace(s.Name) &&
@@ -109,10 +118,10 @@
     private SchemaSubmission BuildSchema()
     {
         var json = JsonSerializer.Serialize(BuildJsonObject());
-        return new SchemaSubmission(OwnerId, json);
+        return new SchemaSubmission(OwnerId, ResourceKind, json);
     }
 
-    public record SchemaSubmission(string OwnerId, string JsonContent);
+    public record SchemaSubmission(string OwnerId, string ResourceKind, string JsonContent);
 
     private class SchemaSection
     {

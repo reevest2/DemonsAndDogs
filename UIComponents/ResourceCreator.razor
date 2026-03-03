@@ -1,0 +1,185 @@
+﻿@using System.Text.Json
+@using AppConstants
+@using Models.Resources
+@using Radzen
+@using Radzen.Blazor
+
+<RadzenStack Gap="1rem" Style="max-width: 900px;">
+    <RadzenText TextStyle="TextStyle.H4" Text="Create Resource" />
+
+    <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem">
+        <RadzenFormField Text="Filter by Kind" Style="flex: 1;">
+            <RadzenDropDown @bind-Value="_filterKind" Data="@_resourceKindOptions" Change="@OnFilterChanged" />
+        </RadzenFormField>
+        <RadzenFormField Text="Select Schema" Style="flex: 2;">
+            <RadzenDropDown @bind-Value="_selectedSchema" Data="@_filteredSchemas" TextProperty="EntityId" Placeholder="Choose a schema..." Change="@OnSchemaSelected" />
+        </RadzenFormField>
+    </RadzenStack>
+
+    @if (_selectedSchema != null)
+    {
+        <RadzenCard Variant="Variant.Outlined">
+            <RadzenStack Gap="1rem">
+                <RadzenFormField Text="Resource Name" Style="max-width: 400px;">
+                    <RadzenTextBox @bind-Value="_resourceName" Placeholder="Enter name..." />
+                </RadzenFormField>
+                <RadzenFormField Text="Owner ID" Style="max-width: 400px;">
+                    <RadzenTextBox @bind-Value="_ownerId" Placeholder="Enter owner ID..." />
+                </RadzenFormField>
+
+                @foreach (var entry in _formValues)
+                {
+                    <RadzenFieldset Text="@entry.Key">
+                        <RadzenStack Gap="0.5rem">
+                            @foreach (var prop in entry.Value)
+                            {
+                                <RadzenRow AlignItems="AlignItems.Center">
+                                    <RadzenColumn Size="4">
+                                        <RadzenText TextStyle="TextStyle.Subtitle2" Text="@prop.Key" />
+                                    </RadzenColumn>
+                                    <RadzenColumn Size="8">
+                                        @RenderEditor(entry.Key, prop.Key, _propTypes[entry.Key][prop.Key])
+                                    </RadzenColumn>
+                                </RadzenRow>
+                            }
+                        </RadzenStack>
+                    </RadzenFieldset>
+                }
+
+                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" Style="margin-top: 1rem;">
+                    <RadzenButton Text="Create Resource" Icon="save" ButtonStyle="ButtonStyle.Primary" Click="HandleSubmit" Disabled="@(!IsFormValid)" />
+                </RadzenStack>
+            </RadzenStack>
+        </RadzenCard>
+    }
+</RadzenStack>
+
+@code {
+    [Parameter] public IEnumerable<JsonResource> Schemas { get; set; } = [];
+    [Parameter] public EventCallback<ResourceCreationSubmission> OnSubmit { get; set; }
+
+    private string _filterKind = ResourceKinds.Character;
+    private List<JsonResource> _filteredSchemas = [];
+    private JsonResource? _selectedSchema;
+    
+    private string _resourceName = string.Empty;
+    private string _ownerId = string.Empty;
+
+    private Dictionary<string, Dictionary<string, object>> _formValues = [];
+    private Dictionary<string, Dictionary<string, string>> _propTypes = [];
+
+    private static readonly string[] _resourceKindOptions = ResourceKinds.All;
+
+    protected override void OnParametersSet()
+    {
+        FilterSchemas();
+    }
+
+    private void OnFilterChanged()
+    {
+        FilterSchemas();
+        _selectedSchema = null;
+    }
+
+    private void FilterSchemas()
+    {
+        _filteredSchemas = Schemas.Where(s => s.SubjectId == _filterKind).ToList();
+    }
+
+    private void OnSchemaSelected()
+    {
+        if (_selectedSchema == null) return;
+
+        _formValues = [];
+        _propTypes = [];
+        
+        try 
+        {
+            var schemaData = JsonSerializer.Deserialize<Dictionary<string, Dictionary<string, string>>>(_selectedSchema.Data.GetRawText());
+            if (schemaData != null)
+            {
+                foreach (var section in schemaData)
+                {
+                    _formValues[section.Key] = [];
+                    _propTypes[section.Key] = [];
+                    foreach (var prop in section.Value)
+                    {
+                        _propTypes[section.Key][prop.Key] = prop.Value;
+                        _formValues[section.Key][prop.Key] = GetDefaultValue(prop.Value);
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error parsing schema: {ex.Message}");
+        }
+    }
+
+    private object GetDefaultValue(string type) => type switch
+    {
+        PropertyTypes.Int => 0,
+        PropertyTypes.Decimal => 0.0m,
+        PropertyTypes.Bool => false,
+        PropertyTypes.DateTime => DateTime.Now,
+        _ => string.Empty
+    };
+
+    private RenderFragment RenderEditor(string section, string prop, string type) => builder =>
+    {
+        var value = _formValues[section][prop];
+        
+        switch (type)
+        {
+            case PropertyTypes.Int:
+                builder.OpenComponent<RadzenNumeric<int>>(0);
+                builder.AddAttribute(1, "Value", (int)value);
+                builder.AddAttribute(2, "ValueChanged", EventCallback.Factory.Create<int>(this, v => _formValues[section][prop] = v));
+                builder.AddAttribute(3, "Style", "width: 100%");
+                builder.CloseComponent();
+                break;
+            case PropertyTypes.Decimal:
+                builder.OpenComponent<RadzenNumeric<decimal>>(0);
+                builder.AddAttribute(1, "Value", (decimal)value);
+                builder.AddAttribute(2, "ValueChanged", EventCallback.Factory.Create<decimal>(this, v => _formValues[section][prop] = v));
+                builder.AddAttribute(3, "Style", "width: 100%");
+                builder.CloseComponent();
+                break;
+            case PropertyTypes.Bool:
+                builder.OpenComponent<RadzenCheckBox<bool>>(0);
+                builder.AddAttribute(1, "Value", (bool)value);
+                builder.AddAttribute(2, "ValueChanged", EventCallback.Factory.Create<bool>(this, v => _formValues[section][prop] = v));
+                builder.CloseComponent();
+                break;
+            case PropertyTypes.DateTime:
+                builder.OpenComponent<RadzenDatePicker<DateTime?>>(0);
+                builder.AddAttribute(1, "Value", (DateTime?)value);
+                builder.AddAttribute(2, "ValueChanged", EventCallback.Factory.Create<DateTime?>(this, v => _formValues[section][prop] = v ?? DateTime.Now));
+                builder.AddAttribute(3, "Style", "width: 100%");
+                builder.CloseComponent();
+                break;
+            default:
+                builder.OpenComponent<RadzenTextBox>(0);
+                builder.AddAttribute(1, "Value", value?.ToString() ?? "");
+                builder.AddAttribute(2, "ValueChanged", EventCallback.Factory.Create<string>(this, v => _formValues[section][prop] = v));
+                builder.AddAttribute(3, "Style", "width: 100%");
+                builder.CloseComponent();
+                break;
+        }
+    };
+
+    private bool IsFormValid => !string.IsNullOrWhiteSpace(_resourceName) && !string.IsNullOrWhiteSpace(_ownerId) && _selectedSchema != null;
+
+    private async Task HandleSubmit()
+    {
+        if (!IsFormValid || _selectedSchema == null) return;
+
+        var jsonContent = JsonSerializer.Serialize(_formValues);
+        var submission = new ResourceCreationSubmission(_ownerId, _resourceName, _filterKind, _selectedSchema.Id, jsonContent);
+        await OnSubmit.InvokeAsync(submission);
+        _resourceName = string.Empty;
+        _selectedSchema = null;
+    }
+
+    public record ResourceCreationSubmission(string OwnerId, string EntityId, string ResourceKind, string SchemaId, string JsonContent);
+}

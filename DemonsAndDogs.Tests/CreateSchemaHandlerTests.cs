@@ -21,7 +21,7 @@ public class CreateSchemaHandlerTests
     [Fact]
     public async Task Handle_SetsResourceKindToSchema()
     {
-        var request = new CreateSchemaRequest("owner-1", "test", """{"type":"object"}""");
+        var request = new CreateSchemaRequest("owner-1", "test", ResourceKinds.Character, """{"type":"object"}""");
 
         _apiClient.Post<JsonResource, JsonResource>(
             Arg.Any<string>(),
@@ -32,13 +32,15 @@ public class CreateSchemaHandlerTests
         var result = await _handler.Handle(request, CancellationToken.None);
 
         Assert.Equal(ResourceKinds.Schema, result.ResourceKind);
+        Assert.Equal("owner-1", result.OwnerId);
+        Assert.Equal("test", result.EntityId);
     }
 
     [Fact]
     public async Task Handle_ParsesJsonContent()
     {
         var json = """{"type":"object","properties":{}}""";
-        var request = new CreateSchemaRequest("owner-1", "test", json);
+        var request = new CreateSchemaRequest("owner-1", "test", ResourceKinds.Character, json);
 
         _apiClient.Post<JsonResource, JsonResource>(
             Arg.Any<string>(),
@@ -49,12 +51,14 @@ public class CreateSchemaHandlerTests
         var result = await _handler.Handle(request, CancellationToken.None);
 
         Assert.Equal("object", result.Data.GetProperty("type").GetString());
+        Assert.Equal("owner-1", result.OwnerId);
+        Assert.Equal("test", result.EntityId);
     }
 
     [Fact]
     public async Task Handle_CallsCorrectApiEndpoint()
     {
-        var request = new CreateSchemaRequest("owner-1", "test", """{"type":"object"}""");
+        var request = new CreateSchemaRequest("owner-1", "test", ResourceKinds.Character, """{"type":"object"}""");
 
         _apiClient.Post<JsonResource, JsonResource>(
             Arg.Any<string>(),
@@ -65,15 +69,15 @@ public class CreateSchemaHandlerTests
         await _handler.Handle(request, CancellationToken.None);
 
         await _apiClient.Received(1).Post<JsonResource, JsonResource>(
-            "api/JsonResource/Create/User/owner-1",
-            Arg.Any<JsonResource>(),
+            "api/JsonResource",
+            Arg.Is<JsonResource>(r => r.OwnerId == "owner-1" && r.EntityId == "test"),
             Arg.Any<CancellationToken>());
     }
 
     [Fact]
     public async Task Handle_ThrowsOnInvalidJson()
     {
-        var request = new CreateSchemaRequest("owner-1", "test", "not-json");
+        var request = new CreateSchemaRequest("owner-1", "test", ResourceKinds.Character, "not-json");
 
         await Assert.ThrowsAsync<JsonException>(() =>
             _handler.Handle(request, CancellationToken.None));

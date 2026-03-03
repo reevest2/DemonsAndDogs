@@ -1,0 +1,52 @@
+﻿@page "/CreateResource"
+@using MediatR
+@using Mediator.Mediator.Contracts
+@using UIComponents
+@using Models.Resources
+@using AppConstants
+@inject IMediator Mediator
+@inject NotificationService NotificationService
+
+<PageTitle>Create Resource</PageTitle>
+
+<ResourceCreator Schemas="@_schemas" OnSubmit="OnSubmit" />
+
+@code {
+    private IEnumerable<JsonResource> _schemas = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadSchemas();
+    }
+
+    private async Task LoadSchemas()
+    {
+        try
+        {
+            _schemas = await Mediator.Send(new GetResourcesByKindRequest(ResourceKinds.Schema));
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Error loading schemas", ex.Message);
+        }
+    }
+
+    private async Task OnSubmit(ResourceCreator.ResourceCreationSubmission submission)
+    {
+        try
+        {
+            var result = await Mediator.Send(new CreateResourceRequest(
+                submission.OwnerId, 
+                submission.EntityId, 
+                submission.ResourceKind, 
+                submission.SchemaId, 
+                submission.JsonContent));
+            
+            NotificationService.Notify(NotificationSeverity.Success, "Success", $"Resource created with ID: {result.Id}");
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Error creating resource", ex.Message);
+        }
+    }
+}

@@ -12,6 +12,7 @@ public class JsonResource
     public string? RulesetId { get; set; }
     public string? GameId { get; set; }
     public string? SchemaVersion { get; set; }
+    public string? Schema { get; set; }
     public string? ResourceKind { get; set; }
     public int Version { get; set; }
     public DateTime CreatedAt { get; set; } 
