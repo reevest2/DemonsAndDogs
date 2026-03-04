@@ -1,0 +1,51 @@
+﻿@page "/Games"
+@using MediatR
+@using Mediator.Mediator.Contracts
+@using Models.Resources
+@using UIComponents
+@inject IMediator Mediator
+@inject NotificationService NotificationService
+
+<PageTitle>Games</PageTitle>
+
+<GameManager Games="@_games" OnCreate="OnCreate" OnGameSelected="OnGameSelected" />
+
+@code {
+    private IEnumerable<JsonResource> _games = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadGames();
+    }
+
+    private async Task LoadGames()
+    {
+        try
+        {
+            _games = await Mediator.Send(new GetGamesRequest());
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Error loading games", ex.Message);
+        }
+    }
+
+    private async Task OnCreate(GameManager.GameSubmission submission)
+    {
+        try
+        {
+            var result = await Mediator.Send(new CreateGameRequest(submission.OwnerId, submission.Name, submission.Description));
+            NotificationService.Notify(NotificationSeverity.Success, "Success", $"Game created: {result.EntityId}");
+            await LoadGames();
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Error creating game", ex.Message);
+        }
+    }
+
+    private Task OnGameSelected(JsonResource game)
+    {
+        return Task.CompletedTask;
+    }
+}

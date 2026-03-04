@@ -1,0 +1,75 @@
+﻿@using Models.Resources
+@using Radzen
+@using Radzen.Blazor
+
+<RadzenStack Gap="1rem" Style="max-width: 900px;">
+    <RadzenText TextStyle="TextStyle.H4" Text="Games" />
+    <RadzenText TextStyle="TextStyle.Body1" Style="color: var(--rz-text-secondary-color);">
+        Define tabletop RPG games such as D&amp;D, Warhammer, or Call of Cthulhu.
+    </RadzenText>
+
+    <RadzenCard Variant="Variant.Outlined">
+        <RadzenStack Gap="1rem">
+            <RadzenText TextStyle="TextStyle.H6" Text="Create New Game" />
+            <RadzenFormField Text="Owner ID" Style="max-width: 400px;">
+                <RadzenTextBox @bind-Value="_ownerId" Placeholder="Enter owner ID..." />
+            </RadzenFormField>
+            <RadzenFormField Text="Game Name" Style="max-width: 400px;">
+                <RadzenTextBox @bind-Value="_name" Placeholder="e.g. Dungeons & Dragons 5e" />
+            </RadzenFormField>
+            <RadzenFormField Text="Description" Style="max-width: 400px;">
+                <RadzenTextArea @bind-Value="_description" Placeholder="Describe the game..." Rows="3" />
+            </RadzenFormField>
+            <RadzenButton Text="Create Game"
+                          Icon="add"
+                          ButtonStyle="ButtonStyle.Primary"
+                          Click="HandleCreate"
+                          Disabled="@(!IsValid)" />
+        </RadzenStack>
+    </RadzenCard>
+
+    @if (Games.Any())
+    {
+        <RadzenText TextStyle="TextStyle.H6" Text="Existing Games" />
+        <RadzenDataGrid Data="@Games" TItem="JsonResource" AllowSorting="true">
+            <Columns>
+                <RadzenDataGridColumn Property="EntityId" Title="Name" />
+                <RadzenDataGridColumn Property="OwnerId" Title="Owner" />
+                <RadzenDataGridColumn Property="CreatedAt" Title="Created" FormatString="{0:g}" />
+                <RadzenDataGridColumn TItem="JsonResource" Title="Actions" Width="120px">
+                    <Template Context="game">
+                        <RadzenButton Icon="visibility"
+                                      ButtonStyle="ButtonStyle.Light"
+                                      Variant="Variant.Text"
+                                      Click="@(() => OnGameSelected.InvokeAsync(game))"
+                                      Size="ButtonSize.Small" />
+                    </Template>
+                </RadzenDataGridColumn>
+            </Columns>
+        </RadzenDataGrid>
+    }
+</RadzenStack>
+
+@code {
+    [Parameter] public IEnumerable<JsonResource> Games { get; set; } = [];
+    [Parameter] public EventCallback<GameSubmission> OnCreate { get; set; }
+    [Parameter] public EventCallback<JsonResource> OnGameSelected { get; set; }
+
+    private string _ownerId = string.Empty;
+    private string _name = string.Empty;
+    private string _description = string.Empty;
+
+    private bool IsValid =>
+        !string.IsNullOrWhiteSpace(_ownerId) &&
+        !string.IsNullOrWhiteSpace(_name);
+
+    private async Task HandleCreate()
+    {
+        if (!IsValid) return;
+        await OnCreate.InvokeAsync(new GameSubmission(_ownerId, _name, _description));
+        _name = string.Empty;
+        _description = string.Empty;
+    }
+
+    public record GameSubmission(string OwnerId, string Name, string Description);
+}

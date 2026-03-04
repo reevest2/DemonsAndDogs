@@ -5,6 +5,7 @@ Welcome to the Demons and Dogs project documentation. This documentation is serv
 ## Available Pages
 
 - **architecture** - Overview of the project architecture and patterns used.
+- **generalRules** - General rules and guidelines for contributing to the project.
 
 ## How to Add a New Documentation Page
 

@@ -1,0 +1,127 @@
+﻿@using System.Text.Json
+@using Models.Resources
+@using Radzen
+@using Radzen.Blazor
+
+<RadzenStack Gap="1rem" Style="max-width: 900px;">
+    <RadzenText TextStyle="TextStyle.H4" Text="Documents" />
+    <RadzenText TextStyle="TextStyle.Body1" Style="color: var(--rz-text-secondary-color);">
+        Create documents for a game based on document definitions.
+    </RadzenText>
+
+    <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem">
+        <RadzenFormField Text="Select Game" Style="flex: 1;">
+            <RadzenDropDown @bind-Value="_selectedGameId"
+                            Data="@Games"
+                            TextProperty="EntityId"
+                            ValueProperty="Id"
+                            Placeholder="Choose a game..."
+                            Change="@OnGameChanged" />
+        </RadzenFormField>
+        <RadzenFormField Text="Select Campaign (optional)" Style="flex: 1;">
+            <RadzenDropDown @bind-Value="_selectedCampaignId"
+                            Data="@Campaigns"
+                            TextProperty="EntityId"
+                            ValueProperty="Id"
+                            Placeholder="Choose a campaign..."
+                            AllowClear="true" />
+        </RadzenFormField>
+    </RadzenStack>
+
+    @if (!string.IsNullOrEmpty(_selectedGameId))
+    {
+        <RadzenCard Variant="Variant.Outlined">
+            <RadzenStack Gap="1rem">
+                <RadzenText TextStyle="TextStyle.H6" Text="Create New Document" />
+                <RadzenFormField Text="Owner ID" Style="max-width: 400px;">
+                    <RadzenTextBox @bind-Value="_ownerId" Placeholder="Enter owner ID..." />
+                </RadzenFormField>
+                <RadzenFormField Text="Document Name" Style="max-width: 400px;">
+                    <RadzenTextBox @bind-Value="_name" Placeholder="e.g. Gandalf's Character Sheet" />
+                </RadzenFormField>
+                <RadzenFormField Text="Document Definition" Style="max-width: 400px;">
+                    <RadzenDropDown @bind-Value="_selectedDefinitionId"
+                                    Data="@Definitions"
+                                    TextProperty="EntityId"
+                                    ValueProperty="Id"
+                                    Placeholder="Choose a definition..." />
+                </RadzenFormField>
+                <RadzenFormField Text="JSON Content" Style="max-width: 600px;">
+                    <RadzenTextArea @bind-Value="_jsonContent" Placeholder='{"field": "value"}' Rows="6" />
+                </RadzenFormField>
+                <RadzenButton Text="Create Document"
+                              Icon="add"
+                              ButtonStyle="ButtonStyle.Primary"
+                              Click="HandleCreate"
+                              Disabled="@(!IsValid)" />
+            </RadzenStack>
+        </RadzenCard>
+
+        @if (Documents.Any())
+        {
+            <RadzenText TextStyle="TextStyle.H6" Text="Existing Documents" />
+            <RadzenDataGrid Data="@Documents" TItem="JsonResource" AllowSorting="true">
+                <Columns>
+                    <RadzenDataGridColumn Property="EntityId" Title="Name" />
+                    <RadzenDataGridColumn Property="OwnerId" Title="Owner" />
+                    <RadzenDataGridColumn Property="CampaignId" Title="Campaign" />
+                    <RadzenDataGridColumn Property="CreatedAt" Title="Created" FormatString="{0:g}" />
+                </Columns>
+            </RadzenDataGrid>
+        }
+    }
+</RadzenStack>
+
+@code {
+    [Parameter] public IEnumerable<JsonResource> Games { get; set; } = [];
+    [Parameter] public IEnumerable<JsonResource> Campaigns { get; set; } = [];
+    [Parameter] public IEnumerable<JsonResource> Definitions { get; set; } = [];
+    [Parameter] public IEnumerable<JsonResource> Documents { get; set; } = [];
+    [Parameter] public EventCallback<DocumentSubmission> OnCreate { get; set; }
+    [Parameter] public EventCallback<string> OnGameSelected { get; set; }
+
+    private string _selectedGameId = string.Empty;
+    private string _selectedCampaignId = string.Empty;
+    private string _selectedDefinitionId = string.Empty;
+    private string _ownerId = string.Empty;
+    private string _name = string.Empty;
+    private string _jsonContent = string.Empty;
+
+    private bool IsValid =>
+        !string.IsNullOrWhiteSpace(_ownerId) &&
+        !string.IsNullOrWhiteSpace(_name) &&
+        !string.IsNullOrWhiteSpace(_selectedGameId) &&
+        !string.IsNullOrWhiteSpace(_selectedDefinitionId) &&
+        !string.IsNullOrWhiteSpace(_jsonContent) &&
+        IsValidJson(_jsonContent);
+
+    private static bool IsValidJson(string json)
+    {
+        try
+        {
+            JsonSerializer.Deserialize<JsonElement>(json);
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private async Task OnGameChanged()
+    {
+        if (!string.IsNullOrEmpty(_selectedGameId))
+            await OnGameSelected.InvokeAsync(_selectedGameId);
+    }
+
+    private async Task HandleCreate()
+    {
+        if (!IsValid) return;
+        await OnCreate.InvokeAsync(new DocumentSubmission(
+            _ownerId, _selectedGameId, _selectedCampaignId, _selectedDefinitionId, _name, _jsonContent));
+        _name = string.Empty;
+        _jsonContent = string.Empty;
+    }
+
+    public record DocumentSubmission(string OwnerId, string GameId, string CampaignId, string DocumentDefinitionId, string Name, string JsonContent);
+}

@@ -1,0 +1,87 @@
+﻿@using Models.Resources
+@using Radzen
+@using Radzen.Blazor
+
+<RadzenStack Gap="1rem" Style="max-width: 900px;">
+    <RadzenText TextStyle="TextStyle.H4" Text="Campaigns" />
+    <RadzenText TextStyle="TextStyle.Body1" Style="color: var(--rz-text-secondary-color);">
+        Create and manage campaigns for your games.
+    </RadzenText>
+
+    <RadzenFormField Text="Select Game" Style="max-width: 400px;">
+        <RadzenDropDown @bind-Value="_selectedGameId"
+                        Data="@Games"
+                        TextProperty="EntityId"
+                        ValueProperty="Id"
+                        Placeholder="Choose a game..."
+                        Change="@OnGameChanged" />
+    </RadzenFormField>
+
+    @if (!string.IsNullOrEmpty(_selectedGameId))
+    {
+        <RadzenCard Variant="Variant.Outlined">
+            <RadzenStack Gap="1rem">
+                <RadzenText TextStyle="TextStyle.H6" Text="Create New Campaign" />
+                <RadzenFormField Text="Owner ID" Style="max-width: 400px;">
+                    <RadzenTextBox @bind-Value="_ownerId" Placeholder="Enter owner ID..." />
+                </RadzenFormField>
+                <RadzenFormField Text="Campaign Name" Style="max-width: 400px;">
+                    <RadzenTextBox @bind-Value="_name" Placeholder="e.g. The Lost Mine of Phandelver" />
+                </RadzenFormField>
+                <RadzenFormField Text="Description" Style="max-width: 400px;">
+                    <RadzenTextArea @bind-Value="_description" Placeholder="Describe the campaign..." Rows="3" />
+                </RadzenFormField>
+                <RadzenButton Text="Create Campaign"
+                              Icon="add"
+                              ButtonStyle="ButtonStyle.Primary"
+                              Click="HandleCreate"
+                              Disabled="@(!IsValid)" />
+            </RadzenStack>
+        </RadzenCard>
+
+        @if (Campaigns.Any())
+        {
+            <RadzenText TextStyle="TextStyle.H6" Text="Existing Campaigns" />
+            <RadzenDataGrid Data="@Campaigns" TItem="JsonResource" AllowSorting="true">
+                <Columns>
+                    <RadzenDataGridColumn Property="EntityId" Title="Name" />
+                    <RadzenDataGridColumn Property="OwnerId" Title="Owner" />
+                    <RadzenDataGridColumn Property="CreatedAt" Title="Created" FormatString="{0:g}" />
+                </Columns>
+            </RadzenDataGrid>
+        }
+    }
+</RadzenStack>
+
+@code {
+    [Parameter] public IEnumerable<JsonResource> Games { get; set; } = [];
+    [Parameter] public IEnumerable<JsonResource> Campaigns { get; set; } = [];
+    [Parameter] public EventCallback<CampaignSubmission> OnCreate { get; set; }
+    [Parameter] public EventCallback<string> OnGameSelected { get; set; }
+
+    private string _selectedGameId = string.Empty;
+    private string _ownerId = string.Empty;
+    private string _name = string.Empty;
+    private string _description = string.Empty;
+
+    private bool IsValid =>
+        !string.IsNullOrWhiteSpace(_ownerId) &&
+        !string.IsNullOrWhiteSpace(_name) &&
+        !string.IsNullOrWhiteSpace(_selectedGameId);
+
+    private async Task OnGameChanged()
+    {
+        if (!string.IsNullOrEmpty(_selectedGameId))
+            await OnGameSelected.InvokeAsync(_selectedGameId);
+    }
+
+    private async Task HandleCreate()
+    {
+        if (!IsValid) return;
+        await OnCreate.InvokeAsync(new CampaignSubmission(_ownerId, _selectedGameId, _name, _description));
+        _name = string.Empty;
+        _description = string.Empty;
+    }
+
+    public record CampaignSubmission(string OwnerId, string GameId, string Name, string Description);
+}

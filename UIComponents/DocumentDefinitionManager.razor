@@ -1,0 +1,103 @@
+﻿@using System.Text.Json
+@using Models.Resources
+@using Radzen
+@using Radzen.Blazor
+
+<RadzenStack Gap="1rem" Style="max-width: 900px;">
+    <RadzenText TextStyle="TextStyle.H4" Text="Document Definitions" />
+    <RadzenText TextStyle="TextStyle.Body1" Style="color: var(--rz-text-secondary-color);">
+        Define the document types needed for a game (e.g. Character Sheet, Spell List, Inventory).
+    </RadzenText>
+
+    <RadzenFormField Text="Select Game" Style="max-width: 400px;">
+        <RadzenDropDown @bind-Value="_selectedGameId"
+                        Data="@Games"
+                        TextProperty="EntityId"
+                        ValueProperty="Id"
+                        Placeholder="Choose a game..."
+                        Change="@OnGameChanged" />
+    </RadzenFormField>
+
+    @if (!string.IsNullOrEmpty(_selectedGameId))
+    {
+        <RadzenCard Variant="Variant.Outlined">
+            <RadzenStack Gap="1rem">
+                <RadzenText TextStyle="TextStyle.H6" Text="Create New Document Definition" />
+                <RadzenFormField Text="Owner ID" Style="max-width: 400px;">
+                    <RadzenTextBox @bind-Value="_ownerId" Placeholder="Enter owner ID..." />
+                </RadzenFormField>
+                <RadzenFormField Text="Definition Name" Style="max-width: 400px;">
+                    <RadzenTextBox @bind-Value="_name" Placeholder="e.g. Character Sheet" />
+                </RadzenFormField>
+                <RadzenFormField Text="JSON Structure" Style="max-width: 600px;">
+                    <RadzenTextArea @bind-Value="_jsonContent" Placeholder='{"sections": {"field": "type"}}' Rows="6" />
+                </RadzenFormField>
+                <RadzenButton Text="Create Definition"
+                              Icon="add"
+                              ButtonStyle="ButtonStyle.Primary"
+                              Click="HandleCreate"
+                              Disabled="@(!IsValid)" />
+            </RadzenStack>
+        </RadzenCard>
+
+        @if (Definitions.Any())
+        {
+            <RadzenText TextStyle="TextStyle.H6" Text="Existing Definitions" />
+            <RadzenDataGrid Data="@Definitions" TItem="JsonResource" AllowSorting="true">
+                <Columns>
+                    <RadzenDataGridColumn Property="EntityId" Title="Name" />
+                    <RadzenDataGridColumn Property="OwnerId" Title="Owner" />
+                    <RadzenDataGridColumn Property="CreatedAt" Title="Created" FormatString="{0:g}" />
+                </Columns>
+            </RadzenDataGrid>
+        }
+    }
+</RadzenStack>
+
+@code {
+    [Parameter] public IEnumerable<JsonResource> Games { get; set; } = [];
+    [Parameter] public IEnumerable<JsonResource> Definitions { get; set; } = [];
+    [Parameter] public EventCallback<DefinitionSubmission> OnCreate { get; set; }
+    [Parameter] public EventCallback<string> OnGameSelected { get; set; }
+
+    private string _selectedGameId = string.Empty;
+    private string _ownerId = string.Empty;
+    private string _name = string.Empty;
+    private string _jsonContent = string.Empty;
+
+    private bool IsValid =>
+        !string.IsNullOrWhiteSpace(_ownerId) &&
+        !string.IsNullOrWhiteSpace(_name) &&
+        !string.IsNullOrWhiteSpace(_jsonContent) &&
+        !string.IsNullOrWhiteSpace(_selectedGameId) &&
+        IsValidJson(_jsonContent);
+
+    private static bool IsValidJson(string json)
+    {
+        try
+        {
+            JsonSerializer.Deserialize<JsonElement>(json);
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private async Task OnGameChanged()
+    {
+        if (!string.IsNullOrEmpty(_selectedGameId))
+            await OnGameSelected.InvokeAsync(_selectedGameId);
+    }
+
+    private async Task HandleCreate()
+    {
+        if (!IsValid) return;
+        await OnCreate.InvokeAsync(new DefinitionSubmission(_ownerId, _selectedGameId, _name, _jsonContent));
+        _name = string.Empty;
+        _jsonContent = string.Empty;
+    }
+
+    public record DefinitionSubmission(string OwnerId, string GameId, string Name, string JsonContent);
+}

@@ -1,0 +1,70 @@
+﻿@page "/Documents"
+@using MediatR
+@using Mediator.Mediator.Contracts
+@using Models.Resources
+@using UIComponents
+@inject IMediator Mediator
+@inject NotificationService NotificationService
+
+<PageTitle>Documents</PageTitle>
+
+<DocumentManager Games="@_games"
+                 Campaigns="@_campaigns"
+                 Definitions="@_definitions"
+                 Documents="@_documents"
+                 OnCreate="OnCreate"
+                 OnGameSelected="OnGameSelected" />
+
+@code {
+    private IEnumerable<JsonResource> _games = [];
+    private IEnumerable<JsonResource> _campaigns = [];
+    private IEnumerable<JsonResource> _definitions = [];
+    private IEnumerable<JsonResource> _documents = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadGames();
+    }
+
+    private async Task LoadGames()
+    {
+        try
+        {
+            _games = await Mediator.Send(new GetGamesRequest());
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Error loading games", ex.Message);
+        }
+    }
+
+    private async Task OnGameSelected(string gameId)
+    {
+        try
+        {
+            _campaigns = await Mediator.Send(new GetCampaignsRequest(gameId));
+            _definitions = await Mediator.Send(new GetDocumentDefinitionsRequest(gameId));
+            _documents = await Mediator.Send(new GetDocumentsRequest(gameId));
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Error loading data", ex.Message);
+        }
+    }
+
+    private async Task OnCreate(DocumentManager.DocumentSubmission submission)
+    {
+        try
+        {
+            var result = await Mediator.Send(new CreateDocumentRequest(
+                submission.OwnerId, submission.GameId, submission.CampaignId,
+                submission.DocumentDefinitionId, submission.Name, submission.JsonContent));
+            NotificationService.Notify(NotificationSeverity.Success, "Success", $"Document created: {result.EntityId}");
+            await OnGameSelected(submission.GameId);
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Error creating document", ex.Message);
+        }
+    }
+}
