@@ -1,8 +1,7 @@
-﻿using API.Services.Abstraction;
-using DataAccess;
-using Microsoft.Extensions.DependencyInjection;
-using Models.Resources;
+﻿using Microsoft.Extensions.DependencyInjection;
+using ResourceFramework.Server.DataAccess;
 using ResourceFramework.Server.Infrastructure;
+using ResourceFramework.Server.Services;
 
 namespace ResourceFramework.Server.Extensions;
 
@@ -11,7 +10,7 @@ public static class ServiceCollectionExtensions
     /// <summary>
     /// Registers all ResourceFramework server-side services: resource registry, repositories,
     /// generic resource services, and auto-generated API controllers for each registered resource type.
-    /// 
+    ///
     /// Usage:
     /// <code>
     /// builder.Services.AddResourceFramework(registry =>
@@ -51,7 +50,7 @@ public static class ServiceCollectionExtensions
     public static IMvcBuilder AddResourceFramework(
         this IServiceCollection services,
         Action<ResourceRegistry> configureResources,
-        Action<Microsoft.AspNetCore.Mvc.MvcOptions>? configureMvc = null)
+        Action<Microsoft.AspNetCore.Mvc.MvcOptions> configureMvc)
     {
         services.AddScoped(typeof(IResourceService<>), typeof(ResourceService<>));
         services.AddResources(configureResources);
@@ -59,7 +58,7 @@ public static class ServiceCollectionExtensions
         var mvcBuilder = services.AddControllers(options =>
         {
             options.Conventions.Add(new ResourceControllerModelConvention());
-            configureMvc?.Invoke(options);
+            configureMvc.Invoke(options);
         });
 
         mvcBuilder.ConfigureApplicationPartManager(manager =>

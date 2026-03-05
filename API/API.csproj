@@ -15,6 +15,7 @@
     </ItemGroup>
     <ItemGroup>
       <ProjectReference Include="..\AppConstants\AppConstants.csproj" />
+      <ProjectReference Include="..\Models\Models.csproj" />
       <ProjectReference Include="..\ResourceFramework.Server\ResourceFramework.Server.csproj" />
     </ItemGroup>
 </Project>

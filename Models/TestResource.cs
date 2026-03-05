@@ -1,4 +1,4 @@
-﻿using Models.Resources;
+using ResourceFramework.Models;
 
 namespace Models;
 

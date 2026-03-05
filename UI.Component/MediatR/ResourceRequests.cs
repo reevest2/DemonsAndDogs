@@ -1,5 +1,5 @@
-﻿using MediatR;
-using Models.Resources;
+using MediatR;
+using ResourceFramework.Models;
 
 namespace UI.Component.Handlers;
 

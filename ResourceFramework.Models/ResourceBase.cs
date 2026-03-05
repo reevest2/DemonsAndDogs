@@ -1,6 +1,4 @@
-﻿using System.Text.Json;
-
-namespace Models.Resources;
+﻿namespace ResourceFramework.Models;
 
 /// <summary>
 /// Represents the base class for resources in the application.

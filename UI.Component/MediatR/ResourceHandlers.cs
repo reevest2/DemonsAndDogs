@@ -1,6 +1,6 @@
-﻿using System.Net.Http.Json;
+using System.Net.Http.Json;
 using MediatR;
-using Models.Resources;
+using ResourceFramework.Models;
 using UI.Component.Services;
 
 namespace UI.Component.Handlers;

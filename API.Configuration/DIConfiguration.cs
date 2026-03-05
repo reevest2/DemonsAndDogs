@@ -1,7 +1,7 @@
-﻿using API.Services.Abstraction;
-using DataAccess;
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using Models;
+using ResourceFramework.Server.DataAccess;
+using ResourceFramework.Server.Services;
 
 namespace API.Configuration;
 

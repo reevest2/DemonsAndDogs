@@ -1,6 +1,6 @@
-﻿using API.Services.Abstraction;
 using Microsoft.AspNetCore.Mvc;
-using Models.Resources;
+using ResourceFramework.Models;
+using ResourceFramework.Server.Services;
 
 namespace ResourceFramework.Server.Infrastructure;
 
@@ -52,7 +52,6 @@ public class ResourceController<T> : ControllerBase where T : ResourceBase
     public async Task<ActionResult<T>> Upsert([FromBody] UpsertResourceRequest<T> request)
     {
         T result;
-
         if (!string.IsNullOrEmpty(request.Id))
         {
             result = await _service.Update(request.Id, request.Data);
@@ -61,7 +60,6 @@ public class ResourceController<T> : ControllerBase where T : ResourceBase
         {
             result = await _service.Create(request.Data, request.Key1, request.Key2, request.Key3, request.OwnerId);
         }
-
         return Ok(result);
     }
 

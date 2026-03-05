@@ -1,7 +1,7 @@
 ﻿using System.Reflection;
-using DataAccess;
 using Microsoft.AspNetCore.Mvc.ApplicationParts;
 using Microsoft.AspNetCore.Mvc.Controllers;
+using ResourceFramework.Server.DataAccess;
 
 namespace ResourceFramework.Server.Infrastructure;
 

@@ -1,10 +1,9 @@
-﻿using DataAccess;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using AppConstants;
 using Models;
 using Npgsql;
+using ResourceFramework.Server.DataAccess;
 using ResourceFramework.Server.Extensions;
-using DbContext = DataAccess.DbContext;
 
 namespace API;
 
@@ -28,7 +27,8 @@ public class Program
         var dataSourceBuilder = new NpgsqlDataSourceBuilder(cs);
         dataSourceBuilder.EnableDynamicJson();
         var dataSource = dataSourceBuilder.Build();
-        builder.Services.AddDbContext<DbContext>(options =>
+
+        builder.Services.AddDbContext<ResourceDbContext>(options =>
             options.UseNpgsql(dataSource));
 
         var app = builder.Build();
@@ -41,12 +41,8 @@ public class Program
         }
 
         app.UseHttpsRedirection();
-
         app.UseAuthorization();
-
-
         app.MapControllers();
-
         app.Run();
     }
 }

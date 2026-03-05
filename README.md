@@ -6,28 +6,23 @@ A generic, convention-based resource framework built on ASP.NET Core 8, Entity F
 
 ## NuGet Packages
 
-The framework is distributed as a set of NuGet packages that you can install independently:
+The framework is distributed as two NuGet packages:
 
 | Package | Description | Install In |
 |---|---|---|
-| **ResourceFramework.Models** | Shared models: `ResourceBase`, `Resource<T>` | All projects that define or use resources |
-| **ResourceFramework.DataAccess** | EF Core context, `ResourceRepository<T>`, `ResourceRegistry` | Server / API projects |
-| **ResourceFramework.Services** | `IResourceService<T>` / `ResourceService<T>` | Server / API projects |
-| **ResourceFramework.Server** | All-in-one server package — includes Models, DataAccess, Services, plus generic controllers and one-line DI setup | ASP.NET Core Web API projects |
+| **ResourceFramework.Server** | All-in-one server package — includes `ResourceBase`, `Resource<T>`, EF Core repository, CRUD services, generic API controllers, `ResourceRegistry`, `ResourceDbContext`, and one-line DI setup | ASP.NET Core Web API projects |
 | **ResourceFramework.UI** | Blazor WASM components — Radzen DataGrid with CRUD, MediatR handlers, `ResourceUIRegistry` | Blazor WebAssembly projects |
+
+Both packages share **ResourceFramework.Models** (included automatically) which contains the `ResourceBase` and `Resource<T>` base classes.
 
 ### Package Dependency Graph
 
 ```
 ResourceFramework.Models          (standalone, no dependencies)
        │
-       ├── ResourceFramework.DataAccess   (+ EF Core, Identity)
-       │          │
-       │          └── ResourceFramework.Services
-       │                     │
-       │                     └── ResourceFramework.Server  (+ ASP.NET Core MVC)
+       ├── ResourceFramework.Server  (+ EF Core, ASP.NET Core MVC)
        │
-       └── ResourceFramework.UI           (+ Radzen.Blazor, MediatR)
+       └── ResourceFramework.UI     (+ Radzen.Blazor, MediatR)
 ```
 
 ---
@@ -49,7 +44,7 @@ Or reference the project directly:
 ### 2. Define a resource model
 
 ```csharp
-using Models.Resources;
+using ResourceFramework.Models;
 
 namespace MyApp;
 
@@ -64,6 +59,7 @@ public class TodoItem : ResourceBase
 
 ```csharp
 using ResourceFramework.Server.Extensions;
+using ResourceFramework.Server.DataAccess;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -76,8 +72,8 @@ builder.Services.AddResourceFramework(registry =>
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// Configure your DbContext as usual (PostgreSQL example)
-builder.Services.AddDbContext<DataAccess.DbContext>(options =>
+// Configure your DbContext (PostgreSQL example using ResourceDbContext)
+builder.Services.AddDbContext<ResourceDbContext>(options =>
     options.UseNpgsql(dataSource));
 
 var app = builder.Build();
@@ -112,48 +108,19 @@ dotnet add package ResourceFramework.UI
 ```csharp
 using UI.Component.Extensions;
 
-var builder = WebAssemblyHostBuilder.CreateDefault(args);
-
-builder.Services.AddScoped(sp => new HttpClient
-{
-    BaseAddress = new Uri(builder.HostEnvironment.BaseAddress)
-});
-
+builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
 builder.Services.AddResourceUI(registry =>
 {
     registry.AddResource<TodoItem>();
 });
-
-await builder.Build().RunAsync();
 ```
 
-### 3. Add imports to `_Imports.razor`
+### 3. Add a resource page
 
-```razor
-@using Radzen
-@using Radzen.Blazor
-@using UI.Component.Components
-@using UI.Component.Services
-```
-
-### 4. Add Radzen to `index.html`
-
-```html
-<link rel="stylesheet" href="_content/Radzen.Blazor/css/material-base.css">
-<script src="_content/Radzen.Blazor/Radzen.Blazor.js"></script>
-```
-
-### 5. Use the components
-
-**Auto-generated navigation links:**
-```razor
-<!-- In NavMenu.razor -->
-<ResourceNavLinks />
-```
-
-**Resource page (dynamic, route-based):**
 ```razor
 @page "/resources/{ResourceName}"
+@using UI.Component.Components
+@using UI.Component.Services
 @inject ResourceUIRegistry Registry
 
 @if (_resourceType != null)
@@ -184,226 +151,147 @@ await builder.Build().RunAsync();
 }
 ```
 
-**Or use the grid directly for a specific type:**
+### 4. Add navigation links
+
+In your `NavMenu.razor`:
+
 ```razor
-<ResourceGrid TResource="TodoItem" Title="My Todos" />
+<ResourceNavLinks />
 ```
+
+This auto-generates sidebar links for every registered resource.
 
 ---
 
-## Architecture Overview
+## What's Inside ResourceFramework.Server
 
-| Project / Package | Responsibility |
+The server package is fully self-contained. Here's what it provides:
+
+### Models (`ResourceFramework.Models` namespace)
+
+| Class | Description |
 |---|---|
-| **Models** (`ResourceFramework.Models`) | Resource data models — inherit from `ResourceBase` |
-| **DataAccess** (`ResourceFramework.DataAccess`) | EF Core context, generic `ResourceRepository<T>`, and `ResourceRegistry` |
-| **API.Services** (`ResourceFramework.Services`) | Generic `IResourceService<T>` / `ResourceService<T>` |
-| **ResourceFramework.Server** | All-in-one: generic `ResourceController<T>`, feature provider, and `AddResourceFramework()` |
-| **UI.Component** (`ResourceFramework.UI`) | Blazor WASM: Radzen grid, edit dialog, nav links, MediatR handlers |
-| **AppConstants** | Shared constants (table names, config keys) |
+| `ResourceBase` | Base class with `Id`, `OwnerId`, `Key1`–`Key3`, `Version`, `CreatedAt`, `UpdatedAt`, `IsDeleted` |
+| `Resource<T>` | Wrapper that stores `T Data` as a JSONB column |
 
-### How It Fits Together
+### DataAccess (`ResourceFramework.Server.DataAccess` namespace)
 
-```
-Model ──► ResourceRegistry ──► EF ModelBuilder (table + jsonb column)
-                            ──► DI Container   (repository + service)
-                            ──► MVC FeatureProvider (controller endpoints)
+| Class / Interface | Description |
+|---|---|
+| `IResourceRepository<T>` | Repository interface with key-based queries, CRUD, and soft-delete |
+| `ResourceRepository<T>` | EF Core implementation of the repository |
+| `ResourceRegistry` | Fluent registry for adding resources (configures EF model + DI) |
+| `ResourceDbContext` | Base DbContext that auto-applies resource model configurations |
 
-UI:  ResourceUIRegistry ──► MediatR Handlers ──► HttpClient ──► API endpoints
-                        ──► ResourceGrid (Radzen DataGrid with CRUD)
-                        ──► ResourceNavLinks (auto sidebar)
-```
+### Services (`ResourceFramework.Server.Services` namespace)
 
----
+| Class / Interface | Description |
+|---|---|
+| `IResourceService<T>` | Service interface for business logic layer |
+| `ResourceService<T>` | Default implementation delegating to repository |
 
-## ResourceBase — The Foundation
+### Infrastructure (`ResourceFramework.Server.Infrastructure` namespace)
 
-Every resource inherits from `ResourceBase`, which provides:
+| Class | Description |
+|---|---|
+| `ResourceController<T>` | Generic API controller with 5 CRUD endpoints |
+| `GenericResourceControllerFeatureProvider` | Auto-registers controllers for each resource type |
+| `ResourceControllerModelConvention` | Names controllers after the resource type |
 
-```csharp
-public class ResourceBase
-{
-    public string Id { get; set; } = Guid.NewGuid().ToString();
-    public string? OwnerId { get; set; }   // optional owner
-    public string? Key1 { get; set; }       // generic lookup key
-    public string? Key2 { get; set; }       // generic lookup key
-    public string? Key3 { get; set; }       // generic lookup key
-    public int Version { get; set; }
-    public DateTime CreatedAt { get; set; }
-    public DateTime? UpdatedAt { get; set; }
-    public bool IsDeleted { get; set; }     // soft-delete flag
-}
-```
+### Extensions (`ResourceFramework.Server.Extensions` namespace)
 
-Data is stored as a **JSON column** (`jsonb` in PostgreSQL) inside `Resource<T>`:
-
-```csharp
-public class Resource<T> : ResourceBase where T : ResourceBase
-{
-    [Column(TypeName = "jsonb")]
-    public T Data { get; set; }
-}
-```
-
-**Key1 / Key2 / Key3** are generic, optional filter keys. Use them however your domain requires (e.g., Key1 = TenantId, Key2 = CategoryId). **OwnerId** is also optional.
-
----
-
-## Upsert Request Body
-
-```json
-{
-  "data": { /* your resource fields */ },
-  "id": null,
-  "key1": "optional",
-  "key2": "optional",
-  "key3": "optional",
-  "ownerId": "optional"
-}
-```
-
-- **Create**: omit `id` (or set to `null`).
-- **Update**: provide the existing `id`.
+| Method | Description |
+|---|---|
+| `AddResourceFramework(Action<ResourceRegistry>)` | One-line setup: registers services, repos, controllers |
 
 ---
 
 ## Customizing a Resource Service
 
-The default `ResourceService<T>` works for most cases. For custom business logic:
+To add custom business logic for a specific resource, extend `ResourceService<T>`:
 
 ```csharp
-public interface ITodoService : IResourceService<TodoItem>
-{
-    Task<TodoItem> MarkComplete(string id);
-}
+using ResourceFramework.Server.Services;
+using ResourceFramework.Server.DataAccess;
+using ResourceFramework.Models;
 
-public class TodoService : ResourceService<TodoItem>, ITodoService
-{
-    public TodoService(
-        IResourceRepository<TodoItem> repo,
-        ILogger<ResourceService<TodoItem>> logger) : base(repo, logger) { }
+public interface IMyCustomService : IResourceService<MyResource> { }
 
-    public async Task<TodoItem> MarkComplete(string id)
+public class MyCustomService : ResourceService<MyResource>, IMyCustomService
+{
+    public MyCustomService(IResourceRepository<MyResource> repo, ILogger<MyCustomService> logger)
+        : base(repo, logger) { }
+
+    public override async Task<MyResource> Create(MyResource resource, string? key1 = null, ...)
     {
-        var item = await GetById(id);
-        item.IsComplete = true;
-        return await Update(id, item);
+        // custom logic here
+        return await base.Create(resource, key1, ...);
     }
 }
 ```
 
-Register with the three-type-parameter overload:
+Then register it using the overload:
 
 ```csharp
-registry.AddResource<TodoItem, ITodoService, TodoService>("TodoItems");
+registry.AddResource<MyResource, IMyCustomService, MyCustomService>("MyResourcesTable");
 ```
 
 ---
 
-## Building NuGet Packages
+## ResourceBase Properties
 
-All packageable projects have `GeneratePackageOnBuild` enabled. Simply build:
+Every resource inherits these properties:
+
+| Property | Type | Description |
+|---|---|---|
+| `Id` | `string` | Unique identifier (auto-generated GUID) |
+| `OwnerId` | `string?` | Optional owner association |
+| `Key1` | `string?` | Generic lookup key 1 |
+| `Key2` | `string?` | Generic lookup key 2 |
+| `Key3` | `string?` | Generic lookup key 3 |
+| `Version` | `int` | Auto-incremented on update |
+| `CreatedAt` | `DateTime` | Set on creation |
+| `UpdatedAt` | `DateTime?` | Set on every update |
+| `IsDeleted` | `bool` | Soft-delete flag |
+
+---
+
+## Building & Publishing NuGet Packages
 
 ```bash
+# Build all packages
 dotnet build
-```
 
-Packages are generated in each project's `bin/Debug/` (or `bin/Release/`) folder:
+# Pack with a specific version
+dotnet pack ResourceFramework.Models -c Release -p:Version=1.0.0
+dotnet pack ResourceFramework.Server -c Release -p:Version=1.0.0
+dotnet pack UI.Component -c Release -p:Version=1.0.0
 
-```
-Models/bin/Debug/ResourceFramework.Models.1.0.0.nupkg
-DataAccess/bin/Debug/ResourceFramework.DataAccess.1.0.0.nupkg
-API.Services/bin/Debug/ResourceFramework.Services.1.0.0.nupkg
-ResourceFramework.Server/bin/Debug/ResourceFramework.Server.1.0.0.nupkg
-UI.Component/bin/Debug/ResourceFramework.UI.1.0.0.nupkg
-```
-
-To create Release packages:
-
-```bash
-dotnet pack -c Release
-```
-
-To publish to a NuGet feed:
-
-```bash
-dotnet nuget push **/*.nupkg --source https://api.nuget.org/v3/index.json --api-key YOUR_API_KEY
-```
-
-Or push to a local feed for development:
-
-```bash
-# Create a local feed directory
-mkdir C:\LocalNuGet
-
-# Push all packages
-Get-ChildItem -Recurse -Filter *.nupkg | ForEach-Object {
-    dotnet nuget push $_.FullName --source C:\LocalNuGet
-}
-
-# Add the local feed to your NuGet sources
-dotnet nuget add source C:\LocalNuGet --name LocalDev
+# Publish to NuGet.org
+dotnet nuget push ResourceFramework.Models/bin/Release/ResourceFramework.Models.1.0.0.nupkg -k YOUR_API_KEY -s https://api.nuget.org/v3/index.json
+dotnet nuget push ResourceFramework.Server/bin/Release/ResourceFramework.Server.1.0.0.nupkg -k YOUR_API_KEY -s https://api.nuget.org/v3/index.json
+dotnet nuget push UI.Component/bin/Release/ResourceFramework.UI.1.0.0.nupkg -k YOUR_API_KEY -s https://api.nuget.org/v3/index.json
 ```
 
 ---
 
 ## Project Setup (Development)
 
-### Prerequisites
-
-- .NET 8 SDK
-- PostgreSQL (with `jsonb` support)
-
-### Configuration
-
-Set your connection string in `API/appsettings.json`:
-
-```json
-{
-  "ConnectionStrings": {
-    "Default": "Host=localhost;Database=demonsanddogs;Username=...;Password=..."
-  }
-}
-```
-
-### Running
-
 ```bash
-dotnet run --project API
+git clone <repo-url>
+cd DemonsAndDogs
+dotnet restore
+dotnet build
 ```
 
-Swagger UI is available in Development mode at `/swagger`.
-
-### EF Migrations
-
+To run the API:
 ```bash
-dotnet ef migrations add AddMyResource --project DataAccess --startup-project API
-dotnet ef database update --project DataAccess --startup-project API
+cd API
+dotnet run
 ```
 
----
-
-## Key Components Reference
-
-### ResourceRegistry (`DataAccess/ResourceRegistry.cs`)
-
-Central registration hub. `AddResource<T>(tableName)`:
-- Configures EF `ModelBuilder` to map `Resource<T>` to the given table with `jsonb` Data column.
-- Registers `IResourceRepository<T>` → `ResourceRepository<T>` in DI.
-- Tracks the type for MVC feature provider.
-
-### AddResourceFramework (`ResourceFramework.Server/Extensions/`)
-
-Single extension method that wires everything together:
-- Registers `IResourceService<T>` → `ResourceService<T>` (open generic).
-- Calls `AddResources` (registry + repositories).
-- Adds MVC controllers with naming convention.
-- Adds feature provider for auto-generated controllers.
-
-### ResourceUIRegistry (`UI.Component/Services/`)
-
-Client-side registry mapping resource types to route names and display names. Used by `ResourceGrid`, `ResourceNavLinks`, and MediatR handlers to construct API URLs.
-
-### AddResourceUI (`UI.Component/Extensions/`)
-
-Registers `ResourceUIRegistry`, MediatR, `NotificationService`, and all open-generic MediatR handlers in one call.
+To run the Blazor WASM app:
+```bash
+cd DemonsAndDogs
+dotnet run
+```
