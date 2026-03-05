@@ -16,7 +16,7 @@ public static class DIConfiguration
     
     public static void ConfigureRepositories(this IServiceCollection services)
     {
-        services.AddScoped<IResourceRepository.IResourceRepository<TestResource>, ResourceRepository<TestResource>>();
+        services.AddScoped<IResourceRepository<TestResource>, ResourceRepository<TestResource>>();
     }
 
     public static void ConfigureServices(this IServiceCollection services)

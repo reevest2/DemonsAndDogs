@@ -3,13 +3,13 @@ using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Models;
 using Models.Resources;
-using Newtonsoft.Json;
 
 namespace DataAccess;
 
-public class DbContext(DbContextOptions<DbContext> options)
+public class DbContext(DbContextOptions<DbContext> options )
     : IdentityDbContext<IdentityUser, IdentityRole, string>(options)
 {
+    
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -18,7 +18,7 @@ public class DbContext(DbContextOptions<DbContext> options)
     
     public DbSet<Resource<TestResource>> TestResources { get; set; }
 
-    private static void ConfigureResource<T>(ModelBuilder modelBuilder, string tableName)
+    private static void ConfigureResource<T>(ModelBuilder modelBuilder, string tableName) where T : ResourceBase
     {
         modelBuilder.Entity<Resource<T>>(b =>
         {

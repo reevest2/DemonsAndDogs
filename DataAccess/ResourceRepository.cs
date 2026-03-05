@@ -5,7 +5,7 @@ using Models.Resources;
 
 namespace DataAccess;
 
-     public class ResourceRepository<TResource> : IResourceRepository.IResourceRepository<TResource>
+     public class ResourceRepository<TResource> : IResourceRepository<TResource> where TResource : ResourceBase
     {
         protected readonly DbContext _context;
 
@@ -16,6 +16,17 @@ namespace DataAccess;
 
         public DbSet<Resource<TResource>> GetDbSet() => _context.Set<Resource<TResource>>();
         public IQueryable<Resource<TResource>> GetQuery() => _context.Set<Resource<TResource>>().AsQueryable();
+
+        private IQueryable<Resource<TResource>> ApplyKeyFilters(IQueryable<Resource<TResource>> query, string? key1, string? key2, string? key3)
+        {
+            if (key1 != null)
+                query = query.Where(r => r.Key1 == key1);
+            if (key2 != null)
+                query = query.Where(r => r.Key2 == key2);
+            if (key3 != null)
+                query = query.Where(r => r.Key3 == key3);
+            return query;
+        }
 
         public virtual async Task<List<TResource>> GetAllAsync(params Expression<Func<Resource<TResource>, bool>>[] filters)
         {
@@ -37,80 +48,65 @@ namespace DataAccess;
             return resource.Data;
         }
 
-        public virtual async Task<TResource> GetByOwnerAsync(string ownerId, params Expression<Func<Resource<TResource>, bool>>[] filters)
+        public virtual async Task<TResource> GetByKeysAsync(string? key1 = null, string? key2 = null, string? key3 = null)
         {
             var query = _context.Set<Resource<TResource>>().AsQueryable();
-            if (filters is { Length: > 0 })
-            {
-              query = filters.Aggregate(query, (current, filter) => current.Where(filter));
-            }
-            var resource = await query.FirstOrDefaultAsync(r => r.OwnerId == ownerId);
-            if (resource == null || resource.IsDeleted)
+            query = ApplyKeyFilters(query, key1, key2, key3);
+            var resource = await query.FirstOrDefaultAsync(r => !r.IsDeleted);
+            if (resource == null)
             {
                 throw new NotImplementedException();
             }
             return resource.Data;
         }
         
-        public virtual async Task<TResource> FirstOrDefaultAsync(string ownerId, params Expression<Func<Resource<TResource>, bool>>[] filters)
+        public virtual async Task<TResource> FirstOrDefaultAsync(string? key1 = null, string? key2 = null, string? key3 = null, params Expression<Func<Resource<TResource>, bool>>[] filters)
         {
             var query = _context.Set<Resource<TResource>>().AsQueryable();
+            query = ApplyKeyFilters(query, key1, key2, key3);
             if (filters is { Length: > 0 })
             {
                 query = filters.Aggregate(query, (current, filter) => current.Where(filter));
             }
-            var resource = await query.FirstOrDefaultAsync(r => r.OwnerId == ownerId);
-            if (resource == null || resource.IsDeleted)
+            var resource = await query.FirstOrDefaultAsync(r => !r.IsDeleted);
+            if (resource == null)
             {
                 return default;
             }
             return resource.Data;
         }
         
-        public virtual async Task<List<TResource>> GetListByOwnerAsync(string ownerId)
+        public virtual async Task<List<TResource>> GetListByKeysAsync(string? key1 = null, string? key2 = null, string? key3 = null)
         {
-          return await _context.Set<Resource<TResource>>().Where(r => r.OwnerId == ownerId && !r.IsDeleted)
-              .OrderByDescending(r => r.UpdatedAt)
-              .Select(r => r.Data).ToListAsync();
-        }
-        
-        public async Task<int> GetCountByOwnerAsync(string ownerId, bool includeDeleted = false)
-        {
-            var resources = _context.Set<Resource<TResource>>()
-                .Where(r => r.OwnerId == ownerId);
-            
-            if (!includeDeleted)
-                resources = resources.Where(r => !r.IsDeleted);
-            
-            return await resources.CountAsync();
-        }
-
-        public virtual async Task<List<TResource>> GetBySubjectId(string subjectId)
-        {
-            return await _context.Set<Resource<TResource>>().Where(r => r.SubjectId == subjectId && !r.IsDeleted)
+            var query = _context.Set<Resource<TResource>>().Where(r => !r.IsDeleted);
+            query = ApplyKeyFilters(query, key1, key2, key3);
+            return await query
+                .OrderByDescending(r => r.UpdatedAt)
                 .Select(r => r.Data).ToListAsync();
         }
-
-        public virtual async Task<TResource> GetByOwnerIdAndSubjectId(string ownerId, string subjectId)
+        
+        public async Task<int> GetCountByKeysAsync(string? key1 = null, string? key2 = null, string? key3 = null, bool includeDeleted = false)
         {
-            var resource = await _context.Set<Resource<TResource>>().FirstOrDefaultAsync(r => r.OwnerId == ownerId && r.SubjectId == subjectId);
-            if (resource == null || resource.IsDeleted)
-            {
-                throw new NotImplementedException();
-            }
-            return resource.Data;
+            var query = _context.Set<Resource<TResource>>().AsQueryable();
+            query = ApplyKeyFilters(query, key1, key2, key3);
+            
+            if (!includeDeleted)
+                query = query.Where(r => !r.IsDeleted);
+            
+            return await query.CountAsync();
         }
 
-        public virtual async Task<TResource> CreateResourceAsync(TResource data, string ownerId, string subjectId, string entityId)
+        public virtual async Task<TResource> CreateResourceAsync(TResource data, string? key1 = null, string? key2 = null, string? key3 = null, string? ownerId = null)
         {
             var timestamp = DateTime.UtcNow;
 
             var resource = new Resource<TResource>
             {
                 Id = Guid.NewGuid().ToString(),
-                EntityId = entityId,
+                Key1 = key1,
+                Key2 = key2,
+                Key3 = key3,
                 OwnerId = ownerId,
-                SubjectId = subjectId,
                 CreatedAt = timestamp,
                 UpdatedAt = timestamp,
                 Version = 1,
@@ -122,7 +118,7 @@ namespace DataAccess;
             await _context.SaveChangesAsync();
             return resource.Data;
         }
-        public virtual async Task<TResource> UpdateResourceAsync(string id, TResource data, bool isDeleted)
+        public virtual async Task<TResource> UpdateResourceAsync(string id, TResource data, bool isDeleted = false)
         {
             var storedResource = await _context.Set<Resource<TResource>>().FindAsync(id);
             if (storedResource == null || storedResource.IsDeleted)

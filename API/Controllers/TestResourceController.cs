@@ -8,11 +8,12 @@ namespace API.Controllers;
 [Route("api/[controller]")]
 public class TestResourceController(ITestResourceService testResourceService) : ControllerBase
 {
-    public record CreateTestResourceRequest(string OwnerId, TestResource Data);
+    public record CreateTestResourceRequest(TestResource Data, string? Key1 = null, string? Key2 = null, string? Key3 = null, string? OwnerId = null);
+
     [HttpPost]
     public async Task<ActionResult<TestResource>> Create(CreateTestResourceRequest request)
     {
-        var result = await testResourceService.Create(request.OwnerId, request.Data);
+        var result = await testResourceService.Create(request.Data, request.Key1, request.Key2, request.Key3, request.OwnerId);
         return Ok(result);
     }
 
