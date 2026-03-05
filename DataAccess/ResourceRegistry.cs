@@ -9,9 +9,14 @@ public class ResourceRegistry
 {
     private readonly List<Action<ModelBuilder>> _modelConfigurations = new();
     private readonly List<Action<IServiceCollection>> _serviceRegistrations = new();
+    private readonly List<Type> _resourceTypes = new();
+
+    public IReadOnlyList<Type> ResourceTypes => _resourceTypes.AsReadOnly();
 
     public ResourceRegistry AddResource<TResource>(string tableName) where TResource : ResourceBase
     {
+        _resourceTypes.Add(typeof(TResource));
+
         _modelConfigurations.Add(mb =>
         {
             mb.Entity<Resource<TResource>>(b =>

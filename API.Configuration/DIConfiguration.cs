@@ -1,5 +1,4 @@
-﻿using API.Services;
-using API.Services.Abstraction;
+﻿using API.Services.Abstraction;
 using DataAccess;
 using Microsoft.Extensions.DependencyInjection;
 using Models;
@@ -15,10 +14,11 @@ public static class DIConfiguration
 
     public static void ConfigureResources(this IServiceCollection services)
     {
+        services.AddScoped(typeof(IResourceService<>), typeof(ResourceService<>));
+
         services.AddResources(registry =>
         {
-            registry.AddResource<TestResource, ITestResourceService, TestResourceService>(
-                AppConstants.ResourceTableNames.TestResources);
+            registry.AddResource<TestResource>(AppConstants.ResourceTableNames.TestResources);
         });
     }
 }

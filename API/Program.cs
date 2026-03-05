@@ -1,4 +1,5 @@
-using API.Configuration;
+﻿using API.Configuration;
+using API.Infrastructure;
 using DataAccess;
 using Microsoft.EntityFrameworkCore;
 using AppConstants;
@@ -14,19 +15,27 @@ public class Program
         var builder = WebApplication.CreateBuilder(args);
 
         // Add services to the container.
+        builder.Services.ConfigureResources();
 
-        builder.Services.AddControllers();
+        builder.Services.AddControllers(options =>
+        {
+            options.Conventions.Add(new ResourceControllerModelConvention());
+        }).ConfigureApplicationPartManager(manager =>
+        {
+            var registry = builder.Services.BuildServiceProvider().GetRequiredService<ResourceRegistry>();
+            manager.FeatureProviders.Add(new GenericResourceControllerFeatureProvider(registry));
+        });
+
         // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen();
-        
+
         var cs = builder.Configuration.GetConnectionString(AppConstants.Configuration.Default);
         var dataSourceBuilder = new NpgsqlDataSourceBuilder(cs);
         dataSourceBuilder.EnableDynamicJson();
         var dataSource = dataSourceBuilder.Build();
         builder.Services.AddDbContext<DbContext>(options =>
             options.UseNpgsql(dataSource));
-        builder.Services.ConfigureResources();
 
         var app = builder.Build();
 
