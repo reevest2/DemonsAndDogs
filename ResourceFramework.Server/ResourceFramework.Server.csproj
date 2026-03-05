@@ -1,0 +1,32 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+
+        <!-- NuGet Package Metadata -->
+        <PackageId>ResourceFramework.Server</PackageId>
+        <Version>1.0.0</Version>
+        <Authors>DemonsAndDogs</Authors>
+        <Description>All-in-one server package for the ResourceFramework. Provides generic CRUD API controllers, resource services, EF Core repository, and one-line DI registration for any ResourceBase model. Install this in your ASP.NET Core Web API project.</Description>
+        <PackageTags>resource;crud;api;efcore;aspnetcore;generic-controller</PackageTags>
+        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+        <IsPackable>true</IsPackable>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.13" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\API.Services\API.Services.csproj" />
+        <ProjectReference Include="..\DataAccess\DataAccess.csproj" />
+        <ProjectReference Include="..\Models\Models.csproj" />
+    </ItemGroup>
+
+</Project>

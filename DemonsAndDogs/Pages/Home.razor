@@ -1,7 +1,235 @@
 ﻿@page "/"
 
-<PageTitle>Home</PageTitle>
+<PageTitle>DemonsAndDogs — Resource Framework Guide</PageTitle>
 
-<h1>Hello, world!</h1>
+<div class="container mt-4">
+    <h1>DemonsAndDogs — Generic Resource Framework</h1>
+    <p class="lead">
+        A generic, convention-based resource framework built on ASP.NET Core 8 and Entity Framework Core.
+        Define a model, register it in one line, and get a full set of CRUD API endpoints automatically.
+    </p>
 
-Welcome to your new app.
+    <hr />
+
+    <h2>Architecture Overview</h2>
+    <table class="table table-bordered">
+        <thead>
+            <tr><th>Project</th><th>Responsibility</th></tr>
+        </thead>
+        <tbody>
+            <tr><td><strong>Models</strong></td><td>Resource data models (inherit from <code>ResourceBase</code>)</td></tr>
+            <tr><td><strong>DataAccess</strong></td><td>EF Core context, generic <code>ResourceRepository&lt;T&gt;</code>, and <code>ResourceRegistry</code></td></tr>
+            <tr><td><strong>API.Services</strong></td><td>Generic <code>IResourceService&lt;T&gt;</code> / <code>ResourceService&lt;T&gt;</code></td></tr>
+            <tr><td><strong>API.Configuration</strong></td><td>DI wiring — single <code>ConfigureResources()</code> extension method</td></tr>
+            <tr><td><strong>API</strong></td><td>Generic <code>ResourceController&lt;T&gt;</code> and auto-discovery infrastructure</td></tr>
+            <tr><td><strong>AppConstants</strong></td><td>Shared constants (table names, configuration keys)</td></tr>
+            <tr><td><strong>DemonsAndDogs</strong></td><td>Blazor WASM front-end</td></tr>
+        </tbody>
+    </table>
+
+    <h3>How It Fits Together</h3>
+    <pre><code>Model ──► ResourceRegistry ──► EF ModelBuilder (table + jsonb column)
+                            ──► DI Container   (repository + service)
+                            ──► MVC FeatureProvider (controller endpoints)</code></pre>
+    <ol>
+        <li>You define a <strong>model</strong> that extends <code>ResourceBase</code>.</li>
+        <li>You <strong>register</strong> it in <code>DIConfiguration.ConfigureResources()</code>.</li>
+        <li>The <code>ResourceRegistry</code> configures the EF table mapping, registers the repository and service in DI, and exposes the type so the MVC feature provider can create a controller for it.</li>
+    </ol>
+
+    <hr />
+
+    <h2>ResourceBase — The Foundation</h2>
+    <p>Every resource inherits from <code>ResourceBase</code>, which provides:</p>
+    <pre><code>public class ResourceBase
+{
+    public string Id { get; set; } = Guid.NewGuid().ToString();
+    public string? OwnerId { get; set; }   // optional owner
+    public string? Key1 { get; set; }       // generic lookup key
+    public string? Key2 { get; set; }       // generic lookup key
+    public string? Key3 { get; set; }       // generic lookup key
+    public int Version { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public DateTime? UpdatedAt { get; set; }
+    public bool IsDeleted { get; set; }     // soft-delete flag
+}</code></pre>
+    <p>
+        The actual data is stored as a <strong>JSON column</strong> (<code>jsonb</code> in PostgreSQL) inside a <code>Resource&lt;T&gt;</code> wrapper.
+    </p>
+    <p>
+        <strong>Key1 / Key2 / Key3</strong> are generic, optional filter keys. Use them however your domain requires
+        (e.g., Key1 = TenantId, Key2 = CategoryId). <strong>OwnerId</strong> is also optional — resources <em>can</em> have owners, but it is not required.
+    </p>
+
+    <hr />
+
+    <h2>How to Create a New Resource</h2>
+
+    <h3>Step 1 — Define the Model</h3>
+    <p>Create a new class in <code>Models/</code> that inherits from <code>ResourceBase</code>:</p>
+    <pre><code>// Models/MyNewResource.cs
+using Models.Resources;
+
+namespace Models;
+
+public class MyNewResource : ResourceBase
+{
+    public string Title { get; set; }
+    public int Priority { get; set; }
+}</code></pre>
+
+    <h3>Step 2 — Add a Table Name Constant</h3>
+    <p>Add an entry in <code>AppConstants/ResourceTableNames.cs</code>:</p>
+    <pre><code>public static class ResourceTableNames
+{
+    public const string TestResources = "TestResources";
+    public const string MyNewResources = "MyNewResources";   // ← add this
+}</code></pre>
+
+    <h3>Step 3 — Register the Resource</h3>
+    <p>Open <code>API.Configuration/DIConfiguration.cs</code> and add one line inside <code>ConfigureResources()</code>:</p>
+    <pre><code>public static void ConfigureResources(this IServiceCollection services)
+{
+    services.AddScoped(typeof(IResourceService&lt;&gt;), typeof(ResourceService&lt;&gt;));
+
+    services.AddResources(registry =>
+    {
+        registry.AddResource&lt;TestResource&gt;(ResourceTableNames.TestResources);
+        registry.AddResource&lt;MyNewResource&gt;(ResourceTableNames.MyNewResources);  // ← add this
+    });
+}</code></pre>
+
+    <h3>Step 4 — Create an EF Migration (if needed)</h3>
+    <pre><code>dotnet ef migrations add AddMyNewResource --project DataAccess --startup-project API
+dotnet ef database update --project DataAccess --startup-project API</code></pre>
+
+    <h3>That's it!</h3>
+    <p>The framework automatically provides:</p>
+    <ul>
+        <li><strong>Repository</strong>: <code>IResourceRepository&lt;MyNewResource&gt;</code> / <code>ResourceRepository&lt;MyNewResource&gt;</code></li>
+        <li><strong>Service</strong>: <code>IResourceService&lt;MyNewResource&gt;</code> / <code>ResourceService&lt;MyNewResource&gt;</code></li>
+        <li><strong>Controller</strong>: <code>ResourceController&lt;MyNewResource&gt;</code> mapped to <code>api/MyNewResource</code></li>
+    </ul>
+
+    <hr />
+
+    <h2>Auto-Generated API Endpoints</h2>
+    <p>For every registered resource, the following endpoints are created:</p>
+    <table class="table table-bordered table-striped">
+        <thead>
+            <tr><th>Method</th><th>Route</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+            <tr><td><code>GET</code></td><td><code>api/{Resource}/{id}</code></td><td>Get a single resource by its ID</td></tr>
+            <tr><td><code>GET</code></td><td><code>api/{Resource}/filter?key1=...&amp;key2=...&amp;key3=...</code></td><td>Get a filtered list by Key1/Key2/Key3</td></tr>
+            <tr><td><code>GET</code></td><td><code>api/{Resource}</code></td><td>Get all (non-deleted) resources</td></tr>
+            <tr><td><code>POST</code></td><td><code>api/{Resource}</code></td><td>Upsert — create (no Id) or update (with Id)</td></tr>
+            <tr><td><code>DELETE</code></td><td><code>api/{Resource}/{id}</code></td><td>Soft-delete a resource</td></tr>
+        </tbody>
+    </table>
+
+    <h3>Upsert Request Body</h3>
+    <pre><code>{
+  "data": { /* your resource fields */ },
+  "id": null,
+  "key1": "optional",
+  "key2": "optional",
+  "key3": "optional",
+  "ownerId": "optional"
+}</code></pre>
+    <ul>
+        <li><strong>Create</strong>: omit <code>id</code> (or set to <code>null</code>). <code>key1</code>–<code>key3</code> and <code>ownerId</code> are stored on the wrapper row.</li>
+        <li><strong>Update</strong>: provide the existing <code>id</code>. Only the <code>data</code> payload is updated.</li>
+    </ul>
+
+    <hr />
+
+    <h2>Customizing a Resource Service</h2>
+    <p>The default <code>ResourceService&lt;T&gt;</code> is registered as an open generic. If you need custom business logic for a specific resource, you can:</p>
+    <ol>
+        <li>
+            <p>Create a custom service interface and implementation:</p>
+            <pre><code>public interface IMyNewResourceService : IResourceService&lt;MyNewResource&gt;
+{
+    Task&lt;MyNewResource&gt; DoSomethingSpecial();
+}
+
+public class MyNewResourceService : ResourceService&lt;MyNewResource&gt;, IMyNewResourceService
+{
+    public MyNewResourceService(
+        IResourceRepository&lt;MyNewResource&gt; repo,
+        ILogger&lt;ResourceService&lt;MyNewResource&gt;&gt; logger) : base(repo, logger) { }
+
+    public async Task&lt;MyNewResource&gt; DoSomethingSpecial()
+    {
+        // custom logic here
+    }
+}</code></pre>
+        </li>
+        <li>
+            <p>Register it using the three-type-parameter overload:</p>
+            <pre><code>registry.AddResource&lt;MyNewResource, IMyNewResourceService, MyNewResourceService&gt;(
+    ResourceTableNames.MyNewResources);</code></pre>
+        </li>
+    </ol>
+
+    <hr />
+
+    <h2>Key Components Reference</h2>
+
+    <h3>ResourceRegistry <small class="text-muted">DataAccess/ResourceRegistry.cs</small></h3>
+    <p>Central registration hub. Calling <code>AddResource&lt;T&gt;(tableName)</code>:</p>
+    <ul>
+        <li>Configures the EF <code>ModelBuilder</code> to map <code>Resource&lt;T&gt;</code> to the given table with a <code>jsonb</code> Data column.</li>
+        <li>Registers <code>IResourceRepository&lt;T&gt;</code> → <code>ResourceRepository&lt;T&gt;</code> in DI.</li>
+        <li>Tracks the resource type so the MVC feature provider can create a controller.</li>
+    </ul>
+
+    <h3>ResourceRepository <small class="text-muted">DataAccess/ResourceRepository.cs</small></h3>
+    <p>Generic repository providing:</p>
+    <ul>
+        <li><code>GetAllAsync</code> — returns all non-deleted resources, with optional expression filters.</li>
+        <li><code>GetByIdAsync</code> — single lookup by primary key.</li>
+        <li><code>GetByKeysAsync</code> / <code>GetListByKeysAsync</code> / <code>GetCountByKeysAsync</code> — filter by Key1/Key2/Key3.</li>
+        <li><code>FirstOrDefaultAsync</code> — key filters + expression filters, returns default if not found.</li>
+        <li><code>CreateResourceAsync</code> — creates a new row with optional keys and owner.</li>
+        <li><code>UpdateResourceAsync</code> — increments version, updates timestamp and data.</li>
+        <li><code>DeleteResourceAsync</code> — hard-deletes the row.</li>
+    </ul>
+
+    <h3>ResourceService <small class="text-muted">API.Services/Abstraction/IResourceService.cs</small></h3>
+    <p>Thin service layer wrapping the repository. All methods are <code>virtual</code>, so subclasses can override individual operations:</p>
+    <ul>
+        <li><code>GetAll</code>, <code>GetById</code>, <code>GetByKeys</code>, <code>GetListByKeys</code>, <code>GetCountByKeys</code></li>
+        <li><code>Create</code> — delegates to repository with key/owner params</li>
+        <li><code>Update</code> — fetches then updates</li>
+        <li><code>Delete</code> — soft-delete by default; pass <code>hardDelete: true</code> for permanent removal</li>
+    </ul>
+
+    <h3>GenericResourceControllerFeatureProvider <small class="text-muted">API/Infrastructure/</small></h3>
+    <p>An MVC <code>IApplicationFeatureProvider&lt;ControllerFeature&gt;</code> that iterates <code>ResourceRegistry.ResourceTypes</code> and registers a closed <code>ResourceController&lt;T&gt;</code> for each one.</p>
+
+    <h3>ResourceControllerModelConvention <small class="text-muted">API/Infrastructure/</small></h3>
+    <p>An <code>IControllerModelConvention</code> that sets the controller route name to the resource type name (e.g., <code>ResourceController&lt;TestResource&gt;</code> → route <code>api/TestResource</code>).</p>
+
+    <hr />
+
+    <h2>Project Setup</h2>
+    <h3>Prerequisites</h3>
+    <ul>
+        <li>.NET 8 SDK</li>
+        <li>PostgreSQL (with <code>jsonb</code> support)</li>
+    </ul>
+
+    <h3>Configuration</h3>
+    <p>Set your connection string in <code>API/appsettings.json</code>:</p>
+    <pre><code>{
+  "ConnectionStrings": {
+    "Default": "Host=localhost;Database=demonsanddogs;Username=...;Password=..."
+  }
+}</code></pre>
+
+    <h3>Running</h3>
+    <pre><code>dotnet run --project API</code></pre>
+    <p>Swagger UI is available in Development mode at <code>/swagger</code>.</p>
+</div>

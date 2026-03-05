@@ -1,9 +1,9 @@
-﻿using API.Configuration;
-using API.Infrastructure;
-using DataAccess;
+﻿using DataAccess;
 using Microsoft.EntityFrameworkCore;
 using AppConstants;
+using Models;
 using Npgsql;
+using ResourceFramework.Server.Extensions;
 using DbContext = DataAccess.DbContext;
 
 namespace API;
@@ -14,23 +14,17 @@ public class Program
     {
         var builder = WebApplication.CreateBuilder(args);
 
-        // Add services to the container.
-        builder.Services.ConfigureResources();
-
-        builder.Services.AddControllers(options =>
+        // Register all resource framework services, repositories, and auto-generated controllers
+        builder.Services.AddResourceFramework(registry =>
         {
-            options.Conventions.Add(new ResourceControllerModelConvention());
-        }).ConfigureApplicationPartManager(manager =>
-        {
-            var registry = builder.Services.BuildServiceProvider().GetRequiredService<ResourceRegistry>();
-            manager.FeatureProviders.Add(new GenericResourceControllerFeatureProvider(registry));
+            registry.AddResource<TestResource>(ResourceTableNames.TestResources);
         });
 
         // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen();
 
-        var cs = builder.Configuration.GetConnectionString(AppConstants.Configuration.Default);
+        var cs = builder.Configuration.GetConnectionString(Configuration.Default);
         var dataSourceBuilder = new NpgsqlDataSourceBuilder(cs);
         dataSourceBuilder.EnableDynamicJson();
         var dataSource = dataSourceBuilder.Build();

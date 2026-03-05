@@ -3,7 +3,7 @@ using DataAccess;
 using Microsoft.AspNetCore.Mvc.ApplicationParts;
 using Microsoft.AspNetCore.Mvc.Controllers;
 
-namespace API.Infrastructure;
+namespace ResourceFramework.Server.Infrastructure;
 
 public class GenericResourceControllerFeatureProvider : IApplicationFeatureProvider<ControllerFeature>
 {

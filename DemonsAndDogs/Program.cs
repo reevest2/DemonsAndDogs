@@ -1,5 +1,7 @@
-using Microsoft.AspNetCore.Components.Web;
+﻿using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
+using Models;
+using UI.Component.Extensions;
 
 namespace DemonsAndDogs;
 
@@ -12,6 +14,11 @@ public class Program
         builder.RootComponents.Add<HeadOutlet>("head::after");
 
         builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
+
+        builder.Services.AddResourceUI(registry =>
+        {
+            registry.AddResource<TestResource>();
+        });
 
         await builder.Build().RunAsync();
     }

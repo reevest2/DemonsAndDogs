@@ -4,6 +4,15 @@
         <TargetFramework>net8.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
+
+        <!-- NuGet Package Metadata -->
+        <PackageId>ResourceFramework.Models</PackageId>
+        <Version>1.0.0</Version>
+        <Authors>DemonsAndDogs</Authors>
+        <Description>Shared resource models (ResourceBase, Resource&lt;T&gt;) for the ResourceFramework generic CRUD system.</Description>
+        <PackageTags>resource;crud;models;blazor</PackageTags>
+        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+        <IsPackable>true</IsPackable>
     </PropertyGroup>
 
 </Project>

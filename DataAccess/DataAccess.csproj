@@ -4,17 +4,26 @@
         <TargetFramework>net8.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
+
+        <!-- NuGet Package Metadata -->
+        <PackageId>ResourceFramework.DataAccess</PackageId>
+        <Version>1.0.0</Version>
+        <Authors>DemonsAndDogs</Authors>
+        <Description>Data access layer for the ResourceFramework: generic repository, resource registry, and EF Core DbContext configuration.</Description>
+        <PackageTags>resource;crud;dataaccess;efcore;repository</PackageTags>
+        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+        <IsPackable>true</IsPackable>
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.24" />
-      <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.13" />
-      <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
+        <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.24" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.13" />
+        <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\AppConstants\AppConstants.csproj" />
-      <ProjectReference Include="..\Models\Models.csproj" />
+        <ProjectReference Include="..\AppConstants\AppConstants.csproj" />
+        <ProjectReference Include="..\Models\Models.csproj" />
     </ItemGroup>
 
 </Project>

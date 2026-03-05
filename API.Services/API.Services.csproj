@@ -4,11 +4,20 @@
         <TargetFramework>net8.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
+
+        <!-- NuGet Package Metadata -->
+        <PackageId>ResourceFramework.Services</PackageId>
+        <Version>1.0.0</Version>
+        <Authors>DemonsAndDogs</Authors>
+        <Description>Generic resource service layer for the ResourceFramework: IResourceService&lt;T&gt; and ResourceService&lt;T&gt; implementations.</Description>
+        <PackageTags>resource;crud;services</PackageTags>
+        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+        <IsPackable>true</IsPackable>
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\DataAccess\DataAccess.csproj" />
-      <ProjectReference Include="..\Models\Models.csproj" />
+        <ProjectReference Include="..\DataAccess\DataAccess.csproj" />
+        <ProjectReference Include="..\Models\Models.csproj" />
     </ItemGroup>
 
 </Project>

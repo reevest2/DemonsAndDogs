@@ -1,0 +1,37 @@
+﻿@page "/resources/{ResourceName}"
+@using UI.Component.Components
+@using UI.Component.Services
+@inject ResourceUIRegistry Registry
+
+@if (_resourceType != null)
+{
+    <RadzenNotification />
+    @_gridFragment
+}
+else
+{
+    <h3>Resource "@ResourceName" not found.</h3>
+    <p>This resource type is not registered in the UI registry.</p>
+}
+
+@code {
+    [Parameter] public string ResourceName { get; set; } = string.Empty;
+
+    private Type? _resourceType;
+    private RenderFragment? _gridFragment;
+
+    protected override void OnParametersSet()
+    {
+        _resourceType = Registry.GetResourceType(ResourceName);
+        if (_resourceType != null)
+        {
+            var gridType = typeof(ResourceGrid<>).MakeGenericType(_resourceType);
+            _gridFragment = builder =>
+            {
+                builder.OpenComponent(0, gridType);
+                builder.AddAttribute(1, "Title", ResourceName);
+                builder.CloseComponent();
+            };
+        }
+    }
+}

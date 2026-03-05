@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc.ApplicationModels;
 
-namespace API.Infrastructure;
+namespace ResourceFramework.Server.Infrastructure;
 
 public class ResourceControllerModelConvention : IControllerModelConvention
 {

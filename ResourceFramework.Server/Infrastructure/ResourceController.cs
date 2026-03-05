@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Models.Resources;
 
-namespace API.Infrastructure;
+namespace ResourceFramework.Server.Infrastructure;
 
 public record UpsertResourceRequest<T>(
     T Data,
