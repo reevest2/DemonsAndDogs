@@ -1,7 +1,6 @@
 ﻿using API.Services;
 using API.Services.Abstraction;
 using DataAccess;
-using DataAccess.Abstraction;
 using Microsoft.Extensions.DependencyInjection;
 using Models;
 
@@ -13,14 +12,13 @@ public static class DIConfiguration
     {
         
     }
-    
-    public static void ConfigureRepositories(this IServiceCollection services)
-    {
-        services.AddScoped<IResourceRepository<TestResource>, ResourceRepository<TestResource>>();
-    }
 
-    public static void ConfigureServices(this IServiceCollection services)
+    public static void ConfigureResources(this IServiceCollection services)
     {
-        services.AddScoped<ITestResourceService, TestResourceService>();
+        services.AddResources(registry =>
+        {
+            registry.AddResource<TestResource, ITestResourceService, TestResourceService>(
+                AppConstants.ResourceTableNames.TestResources);
+        });
     }
 }

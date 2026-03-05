@@ -1,29 +1,15 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using Models;
-using Models.Resources;
 
 namespace DataAccess;
 
-public class DbContext(DbContextOptions<DbContext> options )
+public class DbContext(DbContextOptions<DbContext> options, ResourceRegistry resourceRegistry)
     : IdentityDbContext<IdentityUser, IdentityRole, string>(options)
 {
-    
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
-        ConfigureResource<TestResource>(modelBuilder, AppConstants.ResourceTableNames.TestResources);
-    }
-    
-    public DbSet<Resource<TestResource>> TestResources { get; set; }
-
-    private static void ConfigureResource<T>(ModelBuilder modelBuilder, string tableName) where T : ResourceBase
-    {
-        modelBuilder.Entity<Resource<T>>(b =>
-        {
-            b.ToTable(tableName);
-            b.Property(x => x.Data).HasColumnType("jsonb");
-        });
+        resourceRegistry.ApplyModelConfigurations(modelBuilder);
     }
 }

@@ -26,8 +26,7 @@ public class Program
         var dataSource = dataSourceBuilder.Build();
         builder.Services.AddDbContext<DbContext>(options =>
             options.UseNpgsql(dataSource));
-        builder.Services.ConfigureRepositories();
-        builder.Services.ConfigureServices();
+        builder.Services.ConfigureResources();
 
         var app = builder.Build();
 
