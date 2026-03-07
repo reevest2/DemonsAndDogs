@@ -1,0 +1,5526 @@
+﻿# Claude Project Context
+# Generated: 2026-03-07 14:24:24
+# Solution: DemonsAndDogs
+# ================================================================
+
+## FILE: .aiassistant\rules\GeneralRules.md
+```md
+---
+apply: always
+---
+
+# DemonsAndDogs – Rider Junie Enforcement Rules
+
+This document defines non-negotiable architectural constraints for the DemonsAndDogs solution.
+
+Rider Junie must treat these as hard constraints, not suggestions.
+
+These rules apply to:
+
+- All new code
+- All refactored code
+- All generated code
+- All modifications to existing code
+
+---
+
+## 1. Resource Model Constraint (JsonResource Only)
+
+### Forbidden
+
+Rider Junie must NOT:
+
+- Create new resource model types
+- Create new Resource<T> specializations
+- Create new resource tables
+- Introduce alternative resource storage mechanisms
+
+### Required
+
+All resources MUST:
+
+- Use JsonResource
+- Be stored in the JsonResources table
+- Be accessed via:
+
+```csharp
+DbSet<Resource<JsonResource>> JsonResources
+```
+
+### Extending Resource Shape
+
+If a new resource structure is required:
+
+- The structure MUST be represented as JSON inside JsonResource
+- No database schema changes are allowed
+- No additional EF entities are allowed
+
+Database schema stability is mandatory.
+
+---
+
+## 2. UI Architecture Constraint
+
+### Page Definition
+
+Every UI page MUST:
+
+- Be implemented as a parameterized component
+- Accept required inputs via parameters (id, filters, paging, etc.)
+
+A page MUST NOT:
+
+- Access the database directly
+- Reference repositories
+- Contain embedded data access logic
+
+### Required Data Flow
+
+All data retrieval MUST follow this exact flow:
+
+```
+UI Component
+→ Mediator Query
+→ API Endpoint
+→ Handler
+→ Data Layer
+```
+
+Direct UI → Database access is forbidden.
+
+### Component Location
+
+Reusable UI components MUST exist in:
+
+```
+UIComponentsLibrary
+```
+
+---
+
+## 3. Component-First Enforcement
+
+Before creating new UI markup or logic:
+
+1. Check for an existing reusable component.
+2. If functionality appears more than once, it MUST be extracted into a component.
+
+This applies to:
+
+- Forms
+- Grids
+- Dialogs
+- Layout sections
+- Validation logic
+
+Duplication is not permitted when componentization is possible.
+
+---
+
+## 4. Controller Parameter Constraint (Records Only)
+
+Controller methods MUST:
+
+- Accept a single record type as input
+- Not use multiple primitive parameters
+
+Applies to:
+
+- Query parameters
+- Request bodies
+- Filters
+- Paging
+- Search criteria
+- Command payloads
+
+### Correct
+
+```csharp
+public async Task<IActionResult> Get(GetDogsQuery request)
+```
+
+### Incorrect
+
+```csharp
+public async Task<IActionResult> Get(Guid id, int page, string filter)
+```
+
+---
+
+## 5. One Type Per File Rule
+
+Each of the following MUST exist in its own file:
+
+- Service
+- Repository
+- Contract
+- Handler
+- Record
+- Interface
+
+Forbidden:
+
+- Multiple handlers in one file
+- Grouped contracts
+- Multiple services in one file
+
+File name MUST match type name.
+
+---
+
+## 6. No Hard-Coded Strings
+
+Rider Junie must NOT introduce hard-coded strings for:
+
+- Routes
+- Policy names
+- Claim types
+- Cache keys
+- Resource keys
+- Header names
+- Cross-layer identifiers
+- Any value reused across layers
+
+All shared string values must come from the AppConstants class library.
+
+If a string could be reused, it belongs in AppConstants.
+
+---
+
+## 7. Unit Test Integrity
+
+All unit tests MUST pass.
+
+Rider Junie must NOT:
+
+- Introduce changes that break existing tests
+- Leave failing tests unresolved
+- Introduce functionality without appropriate tests (when applicable)
+
+Test stability is mandatory.
+
+---
+
+## Enforcement Priority
+
+If a requested implementation conflicts with these rules:
+
+1. These rules take priority.
+2. The architecture must not be violated.
+3. An alternative compliant implementation must be used.
+
+These constraints are architectural invariants of the DemonsAndDogs solution.
+```
+
+## FILE: .junie\guidelines.md
+```md
+# DemonsAndDogs — Developer Guidelines
+
+## Stack
+- Blazor WASM (.NET 10), ASP.NET Core Web API, Azure
+- MediatR for all request/response flows
+- Records for all DTOs and domain models
+
+## Solution Structure
+
+```
+Apps/
+  DemonsAndDogs        — Blazor WASM, pages and layouts only
+
+API/
+  API                  — Thin ASP.NET Core controllers
+  API.Client           — Typed HTTP client for Blazor → API calls
+  API.Configuration    — DI registration, config binding, startup
+  API.Services         — Business logic, interfaces in /Abstraction
+
+Infrastructure/
+  Models               — Interfaces, domain models, DTOs, JsonResources
+  Mediator             — MediatR contracts in /Contracts, handlers in /Handlers
+  DataAccess           — EF Core, repositories, interfaces in /Abstraction
+  AppConstants         — Enums, string constants, ResourceKinds — no logic
+  UIComponents         — Shared Blazor components
+  Documentation        — Embedded .md docs served by MCPServer
+  MCPServer            — MCP server exposing docs to AI tools
+
+Tests/
+  DemonsAndDogs.Tests
+  DemonsAndDogs.API.Tests
+  DemonsAndDogs.PlaywrightTests
+```
+
+## Architecture Rules
+
+### General
+- Controllers are one line: `return await _mediator.Send(request)`
+- Business logic in `API.Services` handlers only
+- Blazor pages use `API.Client` exclusively — never inject services directly
+- All interfaces go in their project's `Abstraction` folder
+- Services injected by interface only, never concrete type
+- No magic strings — use constants from `AppConstants`
+
+### Blazor WASM
+- All Blazor components live in the UIComponents project, not in DemonsAndDogs. Pages in DemonsAndDogs reference components from UIComponents. The only files in DemonsAndDogs are pages, layouts, and Program.cs.
+
+### DTOs and Models
+- Use records for all DTOs and domain models — no classes for data transfer
+- All API resources are `JsonResource` classes defined in `Models`
+- Resource kinds are constants defined in `AppConstants/ResourceKinds.cs`
+
+### Pages
+- Each page has a single encapsulating component
+- Component parameters are defined as properties on the component
+
+### MediatR Pattern
+- Requests are records defined in `Mediator/Contracts/`
+- Handlers live in `Mediator/Handlers/`
+- One handler per request
+- Controllers send, never handle
+
+```csharp
+// Mediator/Contracts/GameSystems/ResolveSkillCheckRequest.cs
+public record ResolveSkillCheckRequest(string SystemId, SkillCheckContext Context)
+    : IRequest<CheckResult>;
+
+// Mediator/Handlers/GameSystems/ResolveSkillCheckHandler.cs
+public class ResolveSkillCheckHandler(GameSystemRegistry registry)
+    : IRequestHandler<ResolveSkillCheckRequest, CheckResult> { ... }
+```
+
+## TTRPG Game Engine
+
+### Key Extension Points
+- `IRuleBook` in `Models/Interfaces/` — implement to add a new game system
+- `GameSystemRegistry` in `API.Services/` — register new systems here
+- `INarrator` in `Models/Interfaces/` — AI narration abstraction
+- `ICharacterSheetFactory` in `Models/Interfaces/` — dynamic sheet generation
+
+### How to Add a New Game System
+1. Add models/contracts to `Models/GameSystems/{Name}/`
+2. Implement `IRuleBook` in `API.Services/GameSystems/{Name}/{Name}RuleBook.cs`
+3. Decorate with `[GameSystem("system-id")]`
+4. Register in `API.Services/GameSystemRegistry`
+5. Add MediatR contracts to `Mediator/Contracts/GameSystems/`
+6. Add handlers to `Mediator/Handlers/GameSystems/`
+7. Add a doc to `docs/game-systems/{name}.md`
+
+## Documentation & MCP
+- Docs live as `.md` files in `docs/` at the repo root — easy to find and edit
+- `Documentation` project embeds them as assembly resources at build time
+- `MCPServer` exposes them via MCP tools to Junie on demand
+- When adding a significant feature, add a corresponding doc in `docs/`
+
+## Prompt Template
+Use this structure for every Junie prompt:
+
+**Context:** [existing file or pattern to reference]
+**Goal:** [what to add or change]
+**Constraints:** [patterns to follow, what not to touch]
+**Output:** [expected files and which projects they live in]
+```
+
+## FILE: API.Client\Abstraction\ICampaignClient.cs
+```cs
+using Models.Common;
+
+namespace API.Client.Abstraction;
+
+public interface ICampaignClient
+{
+    Task<IEnumerable<CampaignResource>> GetAllAsync(CancellationToken ct = default);
+    Task<CampaignResource?> GetByIdAsync(string id, CancellationToken ct = default);
+}
+```
+
+## FILE: API.Client\Abstraction\ICharacterClient.cs
+```cs
+using Models.Common;
+
+namespace API.Client.Abstraction;
+
+public interface ICharacterClient
+{
+    Task<IEnumerable<CharacterResource>> GetAllAsync(CancellationToken ct = default);
+    Task<CharacterResource?> GetByIdAsync(string id, CancellationToken ct = default);
+    Task<IEnumerable<CharacterResource>> GetBySystemIdAsync(string systemId, CancellationToken ct = default);
+}
+```
+
+## FILE: API.Client\Abstraction\IGameSystemClient.cs
+```cs
+using Models.GameSystems;
+
+namespace API.Client.Abstraction;
+
+public interface IGameSystemClient
+{
+    Task<IEnumerable<GameSystemDescriptor>> GetAllAsync(CancellationToken ct = default);
+    Task<CharacterSheetSchema> GetSchemaAsync(string systemId, CancellationToken ct = default);
+}
+```
+
+## FILE: API.Client\Abstraction\ISessionClient.cs
+```cs
+using Mediator.Mediator.Contracts.Session;
+using Models.Session;
+
+namespace API.Client.Abstraction;
+
+public interface ISessionClient
+{
+    Task<SessionState> StartSessionAsync(StartSessionRequest request, CancellationToken ct = default);
+    Task<SessionEvent> PerformActionAsync(PerformActionRequest request, CancellationToken ct = default);
+    Task<SessionState> GetSessionAsync(string sessionId, CancellationToken ct = default);
+}
+```
+
+## FILE: API.Client\API.Client.csproj
+```csproj
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Models\Models.csproj" />
+      <ProjectReference Include="..\Mediator\Mediator.csproj" />
+    </ItemGroup>
+
+</Project>
+```
+
+## FILE: API.Client\ApiClient.cs
+```cs
+using System.Net.Http.Json;
+using System.Runtime.CompilerServices;
+using System.Text.Json;
+
+namespace API.Client;
+
+public sealed class ApiClient : IApiClient
+{
+    private readonly HttpClient _http;
+
+    public ApiClient(HttpClient http)
+    {
+        _http = http;
+    }
+
+    public async Task<T> Get<T>(string path, CancellationToken ct = default)
+    {
+        var result = await _http.GetFromJsonAsync<T>(path, ct);
+        if (result is null) throw new HttpRequestException($"Null response for GET {path}");
+        return result;
+    }
+
+    public async IAsyncEnumerable<string> GetStream(string path, [EnumeratorCancellation] CancellationToken ct = default)
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Get, path);
+        using var response = await _http.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, ct);
+        response.EnsureSuccessStatusCode();
+
+        using var stream = await response.Content.ReadAsStreamAsync(ct);
+        using var reader = new StreamReader(stream);
+
+        while (!reader.EndOfStream && !ct.IsCancellationRequested)
+        {
+            var line = await reader.ReadLineAsync(ct);
+            if (string.IsNullOrWhiteSpace(line)) continue;
+            if (line.StartsWith("data: "))
+            {
+                var data = line["data: ".Length..].Trim();
+                if (data == "[DONE]") break;
+
+                string? token = null;
+                try
+                {
+                    using var json = JsonDocument.Parse(data);
+                    if (json.RootElement.TryGetProperty("choices", out var choices) &&
+                        choices.GetArrayLength() > 0 &&
+                        choices[0].TryGetProperty("delta", out var delta) &&
+                        delta.TryGetProperty("content", out var content))
+                    {
+                        token = content.GetString();
+                    }
+                }
+                catch (JsonException)
+                {
+                    // Skip malformed chunks
+                }
+
+                if (!string.IsNullOrEmpty(token))
+                {
+                    yield return token;
+                }
+            }
+        }
+    }
+
+    public async Task<TOut> Post<TIn, TOut>(string path, TIn body, CancellationToken ct = default)
+    {
+        var res = await _http.PostAsJsonAsync(path, body, ct);
+        res.EnsureSuccessStatusCode();
+        var result = await res.Content.ReadFromJsonAsync<TOut>(cancellationToken: ct);
+        if (result is null) throw new HttpRequestException($"Null response for POST {path}");
+        return result;
+    }
+
+    public async Task Post<TIn>(string path, TIn body, CancellationToken ct = default)
+    {
+        var res = await _http.PostAsJsonAsync(path, body, ct);
+        res.EnsureSuccessStatusCode();
+    }
+
+    public async Task Put<TIn>(string path, TIn body, CancellationToken ct = default)
+    {
+        var res = await _http.PutAsJsonAsync(path, body, ct);
+        res.EnsureSuccessStatusCode();
+    }
+
+    public async Task Delete(string path, CancellationToken ct = default)
+    {
+        var res = await _http.DeleteAsync(path, ct);
+        res.EnsureSuccessStatusCode();
+    }
+}
+```
+
+## FILE: API.Client\CampaignClient.cs
+```cs
+using API.Client.Abstraction;
+using Models.Common;
+
+namespace API.Client;
+
+public class CampaignClient(IApiClient apiClient) : ICampaignClient
+{
+    public async Task<IEnumerable<CampaignResource>> GetAllAsync(CancellationToken ct = default)
+    {
+        return await apiClient.Get<IEnumerable<CampaignResource>>("api/campaign", ct);
+    }
+
+    public async Task<CampaignResource?> GetByIdAsync(string id, CancellationToken ct = default)
+    {
+        return await apiClient.Get<CampaignResource>($"api/campaign/{id}", ct);
+    }
+}
+```
+
+## FILE: API.Client\CharacterClient.cs
+```cs
+using API.Client.Abstraction;
+using Models.Common;
+
+namespace API.Client;
+
+public class CharacterClient(IApiClient apiClient) : ICharacterClient
+{
+    public async Task<IEnumerable<CharacterResource>> GetAllAsync(CancellationToken ct = default)
+    {
+        return await apiClient.Get<IEnumerable<CharacterResource>>("api/character", ct);
+    }
+
+    public async Task<CharacterResource?> GetByIdAsync(string id, CancellationToken ct = default)
+    {
+        return await apiClient.Get<CharacterResource>($"api/character/{id}", ct);
+    }
+
+    public async Task<IEnumerable<CharacterResource>> GetBySystemIdAsync(string systemId, CancellationToken ct = default)
+    {
+        return await apiClient.Get<IEnumerable<CharacterResource>>($"api/character/system/{systemId}", ct);
+    }
+}
+```
+
+## FILE: API.Client\GameSystemClient.cs
+```cs
+using API.Client.Abstraction;
+using Models.GameSystems;
+
+namespace API.Client;
+
+public class GameSystemClient(IApiClient apiClient) : IGameSystemClient
+{
+    public async Task<IEnumerable<GameSystemDescriptor>> GetAllAsync(CancellationToken ct = default)
+    {
+        return await apiClient.Get<IEnumerable<GameSystemDescriptor>>("api/GameSystem", ct);
+    }
+
+    public async Task<CharacterSheetSchema> GetSchemaAsync(string systemId, CancellationToken ct = default)
+    {
+        return await apiClient.Get<CharacterSheetSchema>($"api/GameSystem/{systemId}/schema", ct);
+    }
+}
+```
+
+## FILE: API.Client\IApiClient.cs
+```cs
+namespace API.Client;
+
+public interface IApiClient
+{
+    Task<T> Get<T>(string path, CancellationToken ct = default);
+    IAsyncEnumerable<string> GetStream(string path, CancellationToken ct = default);
+    Task<TOut> Post<TIn, TOut>(string path, TIn body, CancellationToken ct = default);
+    Task Post<TIn>(string path, TIn body, CancellationToken ct = default);
+    Task Put<TIn>(string path, TIn body, CancellationToken ct = default);
+    Task Delete(string path, CancellationToken ct = default);
+}
+```
+
+## FILE: API.Client\SessionClient.cs
+```cs
+using API.Client.Abstraction;
+using Mediator.Mediator.Contracts.Session;
+using Models.Session;
+
+namespace API.Client;
+
+public class SessionClient(IApiClient apiClient) : ISessionClient
+{
+    public async Task<SessionState> StartSessionAsync(StartSessionRequest request, CancellationToken ct = default)
+    {
+        return await apiClient.Post<StartSessionRequest, SessionState>("api/session/start", request, ct);
+    }
+
+    public async Task<SessionEvent> PerformActionAsync(PerformActionRequest request, CancellationToken ct = default)
+    {
+        return await apiClient.Post<PerformActionRequest, SessionEvent>("api/session/action", request, ct);
+    }
+
+    public async Task<SessionState> GetSessionAsync(string sessionId, CancellationToken ct = default)
+    {
+        return await apiClient.Get<SessionState>($"api/session/{sessionId}", ct);
+    }
+}
+```
+
+## FILE: API.Configuration\API.Configuration.csproj
+```csproj
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="MediatR" Version="14.0.0" />
+      <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.0" />
+      <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="10.0.0" />
+      <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\API.Services.Mock\API.Services.Mock.csproj" />
+      <ProjectReference Include="..\API.Services\API.Services.csproj" />
+      <ProjectReference Include="..\DataAccess\DataAccess.csproj" />
+      <ProjectReference Include="..\Mediator\Mediator.csproj" />
+    </ItemGroup>
+
+</Project>
+```
+
+## FILE: API.Configuration\DIConfiguration.cs
+```cs
+using API.Services;
+using API.Services.Abstraction;
+using API.Services.Mock;
+using DataAccess;
+using DataAccess.Abstraction;
+using Mediator;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Models.Common;
+
+using API.Services.Narration;
+using Models.Interfaces;
+
+namespace API.Configuration;
+
+public static class DIConfiguration
+{
+    public static void ConfigureClients(this IServiceCollection services)
+    {
+        
+    }
+    
+    public static void ConfigureRepositories(this IServiceCollection services)
+    {
+        services.AddScoped<IJsonResourceRepository, JsonResourceRepository>();
+    }
+
+    public static void ConfigureServices(this IServiceCollection services, IConfiguration configuration)
+    {
+        services.Configure<LocalLlmOptions>(configuration.GetSection("LocalLlm"));
+        services.AddHttpClient<INarrator, LocalLlmNarrator>();
+
+        var useMockData = configuration.GetValue<bool>("UseMockData");
+
+        if (useMockData)
+        {
+            services.AddScoped<ICampaignService, MockCampaignService>();
+            services.AddScoped<ICharacterService, MockCharacterService>();
+        }
+        else
+        {
+            // Real implementations will be registered here when they exist
+        }
+
+        services.AddSingleton<IGameSystemRegistry, GameSystemRegistry>();
+        services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(MediatorAssemblyMarker).Assembly));
+    }
+}
+```
+
+## FILE: API.Services.Mock\API.Services.Mock.csproj
+```csproj
+<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><TargetFramework>net10.0</TargetFramework><ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable></PropertyGroup><ItemGroup><ProjectReference Include="..\API.Services\API.Services.csproj" /><ProjectReference Include="..\Models\Models.csproj" /></ItemGroup></Project>
+```
+
+## FILE: API.Services.Mock\MockCampaignService.cs
+```cs
+using API.Services.Abstraction;
+using Models.Common;
+using System.Text.Json;
+using AppConstants;
+
+namespace API.Services.Mock;
+
+public class MockCampaignService : ICampaignService
+{
+    private static readonly List<CampaignResource> _campaigns = new()
+    {
+        new()
+        {
+            Id = "mock-campaign-1",
+            EntityId = "Lost Mine of Phandelver",
+            GameId = "dnd5e",
+            ResourceKind = ResourceKinds.Campaign,
+            Theme = "fantasy",
+            Data = JsonSerializer.Deserialize<JsonElement>(@"{ ""name"": ""Lost Mine of Phandelver"", ""description"": ""A classic D&D 5e starter adventure."" }")
+        },
+        new()
+        {
+            Id = "mock-campaign-2",
+            EntityId = "Curse of Strahd",
+            GameId = "dnd5e",
+            ResourceKind = ResourceKinds.Campaign,
+            Theme = "steampunk",
+            Data = JsonSerializer.Deserialize<JsonElement>(@"{ ""name"": ""Curse of Strahd"", ""description"": ""A gothic horror adventure in Barovia."" }")
+        }
+    };
+
+    public Task<IEnumerable<CampaignResource>> GetAllAsync() => Task.FromResult<IEnumerable<CampaignResource>>(_campaigns);
+
+    public Task<CampaignResource?> GetByIdAsync(string id) => Task.FromResult(_campaigns.FirstOrDefault(c => c.Id == id));
+}
+```
+
+## FILE: API.Services.Mock\MockCharacterService.cs
+```cs
+using API.Services.Abstraction;
+using Models.Common;
+using System.Text.Json;
+using AppConstants;
+
+namespace API.Services.Mock;
+
+public class MockCharacterService : ICharacterService
+{
+    private static readonly List<CharacterResource> _characters = new()
+    {
+        new()
+        {
+            Id = "mock-char-1",
+            EntityId = "Gimli",
+            GameId = "dnd5e",
+            ResourceKind = ResourceKinds.Character,
+            Data = JsonSerializer.Deserialize<JsonElement>(@"{
+                ""name"": ""Gimli"",
+                ""race"": ""Dwarf"",
+                ""class"": ""Fighter"",
+                ""stats"": { ""str"": 18, ""dex"": 12, ""con"": 16, ""int"": 10, ""wis"": 12, ""cha"": 8 }
+            }")
+        },
+        new()
+        {
+            Id = "mock-char-2",
+            EntityId = "Legolas",
+            GameId = "dnd5e",
+            ResourceKind = ResourceKinds.Character,
+            Data = JsonSerializer.Deserialize<JsonElement>(@"{
+                ""name"": ""Legolas"",
+                ""race"": ""Elf"",
+                ""class"": ""Ranger"",
+                ""stats"": { ""str"": 12, ""dex"": 18, ""con"": 14, ""int"": 12, ""wis"": 14, ""cha"": 12 }
+            }")
+        }
+    };
+
+    public Task<IEnumerable<CharacterResource>> GetAllAsync() => Task.FromResult<IEnumerable<CharacterResource>>(_characters);
+
+    public Task<CharacterResource?> GetByIdAsync(string id) => Task.FromResult(_characters.FirstOrDefault(c => c.Id == id));
+
+    public Task<IEnumerable<CharacterResource>> GetBySystemIdAsync(string systemId) =>
+        Task.FromResult(_characters.Where(c => c.GameId == systemId));
+}
+```
+
+## FILE: API.Services\Abstraction\ICampaignService.cs
+```cs
+using Models.Common;
+
+namespace API.Services.Abstraction;
+
+public interface ICampaignService
+{
+    Task<IEnumerable<CampaignResource>> GetAllAsync();
+    Task<CampaignResource?> GetByIdAsync(string id);
+}
+```
+
+## FILE: API.Services\Abstraction\ICharacterService.cs
+```cs
+using Models.Common;
+
+namespace API.Services.Abstraction;
+
+public interface ICharacterService
+{
+    Task<IEnumerable<CharacterResource>> GetAllAsync();
+    Task<CharacterResource?> GetByIdAsync(string id);
+    Task<IEnumerable<CharacterResource>> GetBySystemIdAsync(string systemId);
+}
+```
+
+## FILE: API.Services\Abstraction\IGameSystemRegistry.cs
+```cs
+using Models.Interfaces;
+
+namespace API.Services.Abstraction;
+
+public interface IGameSystemRegistry
+{
+    IRuleBook Get(string systemId);
+    IEnumerable<IRuleBook> GetAll();
+}
+```
+
+## FILE: API.Services\API.Services.csproj
+```csproj
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\DataAccess\DataAccess.csproj" />
+      <ProjectReference Include="..\Models\Models.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Microsoft.Extensions.Options" Version="10.0.0" />
+      <PackageReference Include="System.Net.Http.Json" Version="10.0.0" />
+    </ItemGroup>
+
+</Project>
+```
+
+## FILE: API.Services\GameSystemRegistry.cs
+```cs
+using System.Reflection;
+using API.Services.Abstraction;
+using Models.Attributes;
+using Models.Interfaces;
+
+namespace API.Services;
+
+public class GameSystemRegistry : IGameSystemRegistry
+{
+    private readonly Dictionary<string, IRuleBook> _systems = new(StringComparer.OrdinalIgnoreCase);
+
+    public GameSystemRegistry()
+    {
+        DiscoverSystems();
+    }
+
+    private void DiscoverSystems()
+    {
+        var types = typeof(GameSystemRegistry).Assembly.GetTypes()
+            .Where(t => t.GetCustomAttribute<GameSystemAttribute>() != null && 
+                        typeof(IRuleBook).IsAssignableFrom(t) && 
+                        !t.IsInterface && !t.IsAbstract);
+
+        foreach (var type in types)
+        {
+            var attribute = type.GetCustomAttribute<GameSystemAttribute>()!;
+            var system = (IRuleBook)Activator.CreateInstance(type)!;
+            _systems[attribute.SystemId] = system;
+        }
+    }
+
+    public IRuleBook Get(string systemId)
+    {
+        if (!_systems.TryGetValue(systemId, out var system))
+        {
+            throw new KeyNotFoundException($"Game system '{systemId}' not found.");
+        }
+        return system;
+    }
+
+    public IEnumerable<IRuleBook> GetAll()
+    {
+        return _systems.Values;
+    }
+}
+```
+
+## FILE: API.Services\GameSystems\DnD5e\DnD5eRuleBook.cs
+```cs
+using Models.Attributes;
+using Models.GameSystems;
+using Models.Interfaces;
+
+namespace API.Services.GameSystems.DnD5e;
+
+[GameSystem("dnd5e")]
+public class DnD5eRuleBook : IRuleBook
+{
+    public string SystemId => "dnd5e";
+    public string DisplayName => "Dungeons & Dragons 5th Edition";
+
+    public CheckResult ResolveSkillCheck(SkillCheckContext context)
+    {
+        var roll = RollD20();
+        var total = roll + context.AbilityModifier + context.ProficiencyBonus;
+
+        if (context.AdditionalModifiers != null)
+        {
+            foreach (var mod in context.AdditionalModifiers.Values)
+            {
+                total += mod;
+            }
+        }
+
+        var isSuccess = roll == 20 || (roll != 1 && (context.DifficultyClass == null || total >= context.DifficultyClass));
+        var message = isSuccess ? "Success" : "Failure";
+        
+        if (roll == 20) message = "Natural 20! " + message;
+        else if (roll == 1) message = "Natural 1! " + message;
+
+        return new CheckResult(roll, total, isSuccess, message);
+    }
+
+    public AttackResult ResolveAttack(AttackContext context)
+    {
+        var roll = RollD20();
+        var total = roll + context.AttackModifier;
+
+        if (context.AdditionalModifiers != null)
+        {
+            foreach (var mod in context.AdditionalModifiers.Values)
+            {
+                total += mod;
+            }
+        }
+
+        var isCriticalHit = roll == 20;
+        var isCriticalMiss = roll == 1;
+        var isHit = isCriticalHit || (!isCriticalMiss && (context.TargetArmorClass == null || total >= context.TargetArmorClass));
+        var message = isHit ? "Hit" : "Miss";
+
+        if (isCriticalHit) message = "Critical Hit!";
+        else if (isCriticalMiss) message = "Critical Miss!";
+
+        return new AttackResult(
+            AttackRoll: roll,
+            TotalAttackResult: total,
+            IsHit: isHit,
+            IsCriticalHit: isCriticalHit,
+            Message: message);
+    }
+
+    protected virtual int RollD20()
+    {
+        return Random.Shared.Next(1, 21);
+    }
+
+    public CharacterSheetSchema GetCharacterSheetSchema()
+    {
+        return new CharacterSheetSchema(
+            SystemId,
+            [
+                new SheetSection("Abilities", "Ability Scores", [
+                    new SheetField("strength", "Strength", "number", true, 10),
+                    new SheetField("dexterity", "Dexterity", "number", true, 10),
+                    new SheetField("constitution", "Constitution", "number", true, 10),
+                    new SheetField("intelligence", "Intelligence", "number", true, 10),
+                    new SheetField("wisdom", "Wisdom", "number", true, 10),
+                    new SheetField("charisma", "Charisma", "number", true, 10)
+                ]),
+                new SheetSection("Combat", "Combat Stats", [
+                    new SheetField("hp", "Hit Points", "number", true, 10),
+                    new SheetField("ac", "Armor Class", "number", true, 10)
+                ])
+            ]
+        );
+    }
+}
+```
+
+## FILE: API.Services\Narration\LocalLlmNarrator.cs
+```cs
+using System.Net.Http.Json;
+using System.Text.Json.Nodes;
+using Microsoft.Extensions.Options;
+using Models.Interfaces;
+using Models.Narration;
+namespace API.Services.Narration;
+
+public class LocalLlmNarrator(HttpClient httpClient, IOptions<LocalLlmOptions> options) : INarrator
+{
+    private readonly LocalLlmOptions _options = options.Value;
+
+    public async Task<NarrationResult> NarrateAsync(GameEvent gameEvent, string? Tone = "neutral")
+    {
+        var metadataStr = gameEvent.Metadata != null 
+            ? string.Join(", ", gameEvent.Metadata.Select(m => $"{m.Key}: {m.Value}")) 
+            : "None";
+
+        var prompt = $"Character: {gameEvent.SubjectId}\nAction: {gameEvent.EventType}\nOutcome: {gameEvent.Description}\nDetails: {metadataStr}\nTone: {Tone}";
+        
+        var request = new
+        {
+            model = _options.ModelId,
+            messages = new[]
+            {
+                new { role = "system", content = _options.SystemPrompt },
+                new { role = "user", content = prompt }
+            },
+            stream = true
+        };
+
+        var url = _options.BaseUrl + "/v1/chat/completions";
+        var response = await httpClient.PostAsJsonAsync(url, request);
+        response.EnsureSuccessStatusCode();
+
+        var stream = await response.Content.ReadAsStreamAsync();
+        
+        return new NarrationResult(
+            Text: string.Empty,
+            TokenStream: StreamTokensAsync(stream));
+    }
+
+    private async IAsyncEnumerable<string> StreamTokensAsync(Stream stream)
+    {
+        using var reader = new StreamReader(stream);
+        while (!reader.EndOfStream)
+        {
+            var line = await reader.ReadLineAsync();
+            if (string.IsNullOrWhiteSpace(line)) continue;
+            if (line == "data: [DONE]") break;
+
+            if (line.StartsWith("data: "))
+            {
+                var json = line.Substring(6);
+                JsonNode? node;
+                try 
+                {
+                    node = JsonNode.Parse(json);
+                }
+                catch
+                {
+                    continue;
+                }
+                
+                var token = node?["choices"]?[0]?["delta"]?["content"]?.ToString();
+                if (!string.IsNullOrEmpty(token))
+                {
+                    yield return token;
+                }
+            }
+        }
+    }
+}
+```
+
+## FILE: API.Services\Narration\LocalLlmOptions.cs
+```cs
+namespace API.Services.Narration;
+
+public class LocalLlmOptions
+{
+    public string BaseUrl { get; set; } = string.Empty;
+    public string ModelId { get; set; } = string.Empty;
+    public string SystemPrompt { get; set; } = string.Empty;
+}
+```
+
+## FILE: API\API.csproj
+```csproj
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.0" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.0">
+          <PrivateAssets>all</PrivateAssets>
+          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.0" />
+        <PackageReference Include="Swashbuckle.AspNetCore" Version="6.4.0"/>
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\API.Configuration\API.Configuration.csproj" />
+      <ProjectReference Include="..\AppConstants\AppConstants.csproj" />
+      <ProjectReference Include="..\DataAccess\DataAccess.csproj" />
+      <ProjectReference Include="..\Mediator\Mediator.csproj" />
+    </ItemGroup>
+
+</Project>
+```
+
+## FILE: API\appsettings.Development.json
+```json
+{
+  "UseMockData": true,
+  "LocalLlm": {
+    "BaseUrl": "http://127.0.0.1:1234/api",
+    "ModelId": "google/gemma-3-4b",
+    "SystemPrompt": "You are Mordecai, the dramatic and slightly unhinged narrator of a tabletop RPG adventure. You describe the outcome of player actions in 2-3 vivid sentences. You are theatrical, use rich sensory detail, and occasionally break the fourth wall with dry wit. When players succeed, celebrate it. When they fail, make it entertainingly catastrophic. Never break character. Never explain game mechanics. Just narrate."
+  },
+  "Cors": {
+    "AllowedOrigins": [ "http://localhost:5150" ]
+  },
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning"
+    }
+  }
+}
+```
+
+## FILE: API\appsettings.json
+```json
+{
+  "ConnectionStrings": {
+    "Default": "Host=localhost;Port=5432;Database=demonsanddogs;Username=postgres;Password=\" \";"
+  },
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning"
+    }
+  },
+  "LocalLlm": {
+    "BaseUrl": "http://127.0.0.1:1234/api",
+    "ModelId": "google/gemma-3-4b",
+    "SystemPrompt": "You are Mordecai, the dramatic and slightly unhinged narrator of a tabletop RPG adventure. You describe the outcome of player actions in 2-3 vivid sentences. You are theatrical, use rich sensory detail, and occasionally break the fourth wall with dry wit. When players succeed, celebrate it. When they fail, make it entertainingly catastrophic. Never break character. Never explain game mechanics. Just narrate."
+  },
+  "Cors": {
+    "AllowedOrigins": [ "http://localhost:5150" ]
+  },
+  "AllowedHosts": "*"
+}
+```
+
+## FILE: API\Controllers\CampaignController.cs
+```cs
+using MediatR;
+using Microsoft.AspNetCore.Mvc;
+using Models.Common;
+using Mediator.Mediator.Contracts.Campaigns;
+
+namespace API.Controllers;
+
+[ApiController]
+[Route("api/[controller]")]
+public class CampaignController(IMediator mediator) : ControllerBase
+{
+    [HttpGet]
+    public async Task<ActionResult<IEnumerable<CampaignResource>>> GetAll()
+    {
+        return Ok(await mediator.Send(new GetCampaignsRequest()));
+    }
+
+    [HttpGet("{id}")]
+    public async Task<ActionResult<CampaignResource>> GetById(string id)
+    {
+        var result = await mediator.Send(new GetCampaignRequest(id));
+        return result != null ? Ok(result) : NotFound();
+    }
+}
+```
+
+## FILE: API\Controllers\CharacterController.cs
+```cs
+using MediatR;
+using Microsoft.AspNetCore.Mvc;
+using Models.Common;
+using Mediator.Mediator.Contracts.Characters;
+
+namespace API.Controllers;
+
+[ApiController]
+[Route("api/[controller]")]
+public class CharacterController(IMediator mediator) : ControllerBase
+{
+    [HttpGet]
+    public async Task<ActionResult<IEnumerable<CharacterResource>>> GetAll()
+    {
+        return Ok(await mediator.Send(new GetCharactersRequest()));
+    }
+
+    [HttpGet("{id}")]
+    public async Task<ActionResult<CharacterResource>> GetById(string id)
+    {
+        var result = await mediator.Send(new GetCharacterRequest(id));
+        return result != null ? Ok(result) : NotFound();
+    }
+
+    [HttpGet("system/{systemId}")]
+    public async Task<ActionResult<IEnumerable<CharacterResource>>> GetBySystem(string systemId)
+    {
+        return Ok(await mediator.Send(new GetCharactersBySystemRequest(systemId)));
+    }
+}
+```
+
+## FILE: API\Controllers\GameSystemController.cs
+```cs
+using MediatR;
+using Microsoft.AspNetCore.Mvc;
+using Mediator.Mediator.Contracts.GameSystems;
+using Models.GameSystems;
+
+namespace API.Controllers;
+
+[ApiController]
+[Route("api/[controller]")]
+public class GameSystemController(IMediator mediator) : ControllerBase
+{
+    [HttpGet]
+    public async Task<ActionResult<IEnumerable<GameSystemDescriptor>>> GetAll()
+    {
+        return Ok(await mediator.Send(new GetGameSystemsRequest()));
+    }
+
+    [HttpGet("{systemId}/schema")]
+    public async Task<ActionResult<CharacterSheetSchema>> GetSchema(string systemId)
+    {
+        return Ok(await mediator.Send(new GetCharacterSheetSchemaRequest(systemId)));
+    }
+}
+```
+
+## FILE: API\Controllers\NarrationController.cs
+```cs
+using MediatR;
+using Microsoft.AspNetCore.Mvc;
+using Mediator.Mediator.Contracts.Session;
+using Microsoft.AspNetCore.Http;
+using System.Threading.Tasks;
+
+namespace API.Controllers;
+
+[ApiController]
+[Route("api/[controller]")]
+public class NarrationController(IMediator mediator) : ControllerBase
+{
+    [HttpGet("stream/{sessionId}")]
+    public async Task GetNarrationStream(string sessionId)
+    {
+        Response.ContentType = "text/event-stream";
+        Response.Headers.Append("Cache-Control", "no-cache");
+        Response.Headers.Append("Connection", "keep-alive");
+
+        var result = await mediator.Send(new NarrateActionRequest(sessionId));
+
+        if (result.TokenStream != null)
+        {
+            await foreach (var token in result.TokenStream.WithCancellation(HttpContext.RequestAborted))
+            {
+                await Response.WriteAsync($"data: {token}\n\n");
+                await Response.Body.FlushAsync();
+            }
+        }
+        else if (!string.IsNullOrEmpty(result.Text))
+        {
+            await Response.WriteAsync($"data: {result.Text}\n\n");
+            await Response.Body.FlushAsync();
+        }
+    }
+}
+```
+
+## FILE: API\Controllers\SessionController.cs
+```cs
+using MediatR;
+using Microsoft.AspNetCore.Mvc;
+using Mediator.Mediator.Contracts.Session;
+using Models.Session;
+
+namespace API.Controllers;
+
+[ApiController]
+[Route("api/[controller]")]
+public class SessionController(IMediator mediator) : ControllerBase
+{
+    [HttpPost("start")]
+    public async Task<ActionResult<SessionState>> Start([FromBody] StartSessionRequest request)
+    {
+        var result = await mediator.Send(request);
+        return Ok(result);
+    }
+    [HttpPost("action")]
+    public async Task<ActionResult<SessionEvent>> Action([FromBody] PerformActionRequest request)
+    {
+        var result = await mediator.Send(request);
+        return Ok(result);
+    }
+
+    [HttpGet("{sessionId}")]
+    public async Task<ActionResult<SessionState>> GetSession(string sessionId)
+    {
+        var result = await mediator.Send(new GetSessionRequest(sessionId));
+        return Ok(result);
+    }
+}
+```
+
+## FILE: API\Program.cs
+```cs
+using API.Configuration;
+using DataAccess;
+using Microsoft.EntityFrameworkCore;
+using AppConstants;
+using Npgsql;
+using DbContext = DataAccess.DbContext;
+
+namespace API;
+
+public class Program
+{
+    public static void Main(string[] args)
+    {
+        var builder = WebApplication.CreateBuilder(args);
+        
+        var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? Array.Empty<string>();
+        builder.Services.AddCors(options =>
+        {
+            options.AddPolicy(AppConstants.Cors.PolicyName, policy =>
+            {
+                policy
+                    .WithOrigins(allowedOrigins)
+                    .AllowAnyHeader()
+                    .AllowAnyMethod();
+            });
+        });
+
+        // Add services to the container.
+
+        builder.Services.AddControllers();
+        // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+        builder.Services.AddEndpointsApiExplorer();
+        builder.Services.AddSwaggerGen();
+        
+        var cs = builder.Configuration.GetConnectionString(AppConstants.Configuration.Default);
+        var dataSourceBuilder = new NpgsqlDataSourceBuilder(cs);
+        dataSourceBuilder.EnableDynamicJson();
+        var dataSource = dataSourceBuilder.Build();
+        builder.Services.AddDbContext<DbContext>(options =>
+            options.UseNpgsql(dataSource));
+        builder.Services.ConfigureRepositories();
+        builder.Services.ConfigureServices(builder.Configuration);
+
+        var app = builder.Build();
+        app.UseCors(AppConstants.Cors.PolicyName);
+
+        if (app.Environment.IsDevelopment())
+        {
+            app.UseSwagger();
+            app.UseSwaggerUI();
+        }
+        else
+        {
+            app.UseHttpsRedirection();
+        }
+        app.UseAuthorization();
+
+
+        app.MapControllers();
+
+        app.Run();
+    }
+}
+```
+
+## FILE: AppConstants\AppConstants.csproj
+```csproj
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+</Project>
+```
+
+## FILE: AppConstants\Configuration.cs
+```cs
+namespace AppConstants;
+
+public static class Configuration
+{
+    public const string Default = "Default"; //Default connection string name
+}
+```
+
+## FILE: AppConstants\Cors.cs
+```cs
+namespace AppConstants;
+
+public static class Cors
+{
+    public const string PolicyName = "AppCors";
+}
+```
+
+## FILE: AppConstants\PropertyTypes.cs
+```cs
+namespace AppConstants;
+
+public static class PropertyTypes
+{
+    public const string String = "string";
+    public const string Int = "int";
+    public const string Decimal = "decimal";
+    public const string Bool = "bool";
+    public const string Enum = "enum";
+    public const string DateTime = "datetime";
+
+    public static readonly string[] All =
+    [
+        String,
+        Int,
+        Decimal,
+        Bool,
+        Enum,
+        DateTime
+    ];
+}
+```
+
+## FILE: AppConstants\ResourceKeys.cs
+```cs
+namespace AppConstants;
+```
+
+## FILE: AppConstants\ResourceKinds.cs
+```cs
+namespace AppConstants;
+
+public static class ResourceKinds
+{
+    public const string Schema = "schema";
+    public const string Character = "character";
+    public const string Consumable = "consumable";
+    public const string Game = "game";
+    public const string DocumentDefinition = "document_definition";
+    public const string Document = "document";
+    public const string Campaign = "campaign";
+
+    public static readonly string[] All =
+    [
+        Schema,
+        Character,
+        Consumable,
+        Game,
+        DocumentDefinition,
+        Document,
+        Campaign
+    ];
+}
+```
+
+## FILE: DataAccess\Abstraction\IJsonResourceRepository.cs
+```cs
+using Models.Common;
+
+namespace DataAccess.Abstraction;
+
+public interface IJsonResourceRepository
+{
+    Task<JsonResource?> GetByIdAsync(string id);
+    Task<IEnumerable<JsonResource>> GetAllAsync();
+    Task<IEnumerable<JsonResource>> GetByResourceKindAsync(string resourceKind);
+    Task<IEnumerable<JsonResource>> QueryAsync(Func<IQueryable<JsonResource>, IQueryable<JsonResource>> query);
+    Task<JsonResource> CreateAsync(JsonResource resource);
+    Task<JsonResource> UpdateAsync(JsonResource resource);
+    Task DeleteAsync(string id);
+}
+```
+
+## FILE: DataAccess\DataAccess.csproj
+```csproj
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.0.0" />
+      <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.0" />
+      <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
+      <PackageReference Include="Pgvector" Version="0.3.2" />
+      <PackageReference Include="Pgvector.EntityFrameworkCore" Version="0.3.0" />
+      <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\AppConstants\AppConstants.csproj" />
+      <ProjectReference Include="..\Models\Models.csproj" />
+    </ItemGroup>
+
+
+</Project>
+```
+
+## FILE: DataAccess\DemonsAndDogsContext.cs
+```cs
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
+using Models.Common;
+
+namespace DataAccess;
+
+public class DbContext(DbContextOptions<DbContext> options)
+    : IdentityDbContext<IdentityUser, IdentityRole, string>(options)
+{
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        base.OnModelCreating(modelBuilder);
+
+        modelBuilder.Entity<JsonResource>(b =>
+        {
+            b.HasKey(r => r.Id);
+            b.Property<DateTime>("CreatedAt").HasDefaultValueSql("CURRENT_TIMESTAMP");
+            b.Property<DateTime?>("UpdatedAt");
+            b.Property<bool>("IsDeleted").HasDefaultValue(false);
+            b.Property<int>("Version").HasDefaultValue(1);
+
+            b.HasDiscriminator<string>("Kind")
+                .HasValue<CampaignResource>("campaign")
+                .HasValue<GameResource>("game")
+                .HasValue<SchemaResource>("schema")
+                .HasValue<DocumentDefinitionResource>("document_definition")
+                .HasValue<DocumentResource>("document")
+                .HasValue<CharacterResource>("character");
+            
+            b.HasQueryFilter(r => !EF.Property<bool>(r, "IsDeleted"));
+        });
+    }
+    public DbSet<JsonResource> JsonResources { get; set; }
+    
+}
+```
+
+## FILE: DataAccess\JsonResourceRepository.cs
+```cs
+using DataAccess.Abstraction;
+using Microsoft.EntityFrameworkCore;
+using Models.Common;
+
+namespace DataAccess;
+
+public class JsonResourceRepository(DbContext context) : IJsonResourceRepository
+{
+    public async Task<JsonResource?> GetByIdAsync(string id)
+    {
+        return await context.JsonResources.FirstOrDefaultAsync(r => r.Id == id);
+    }
+
+    public async Task<IEnumerable<JsonResource>> GetAllAsync()
+    {
+        return await context.JsonResources.ToListAsync();
+    }
+
+    public async Task<IEnumerable<JsonResource>> GetByResourceKindAsync(string resourceKind)
+    {
+        return await context.JsonResources
+            .Where(r => r.ResourceKind == resourceKind)
+            .ToListAsync();
+    }
+
+    public async Task<IEnumerable<JsonResource>> QueryAsync(Func<IQueryable<JsonResource>, IQueryable<JsonResource>> query)
+    {
+        return await query(context.JsonResources.AsQueryable()).ToListAsync();
+    }
+
+    public async Task<JsonResource> CreateAsync(JsonResource resource)
+    {
+        context.Entry(resource).Property<DateTime>("CreatedAt").CurrentValue = DateTime.UtcNow;
+        context.JsonResources.Add(resource);
+        await context.SaveChangesAsync();
+        return resource;
+    }
+
+    public async Task<JsonResource> UpdateAsync(JsonResource resource)
+    {
+        var existing = await context.JsonResources.FirstOrDefaultAsync(r => r.Id == resource.Id);
+        if (existing == null)
+            throw new KeyNotFoundException($"JsonResource with Id '{resource.Id}' not found.");
+
+        context.Entry(existing).Property<DateTime?>("UpdatedAt").CurrentValue = DateTime.UtcNow;
+        context.Entry(existing).CurrentValues.SetValues(resource);
+        await context.SaveChangesAsync();
+        return existing;
+    }
+
+    public async Task DeleteAsync(string id)
+    {
+        var resource = await context.JsonResources.FirstOrDefaultAsync(r => r.Id == id);
+        if (resource == null)
+            throw new KeyNotFoundException($"JsonResource with Id '{id}' not found.");
+
+        context.Entry(resource).Property<bool>("IsDeleted").CurrentValue = true;
+        context.Entry(resource).Property<DateTime?>("UpdatedAt").CurrentValue = DateTime.UtcNow;
+        await context.SaveChangesAsync();
+    }
+}
+```
+
+## FILE: DemonsAndDogs.API.Tests\DemonsAndDogs.API.Tests.csproj
+```csproj
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="coverlet.collector" Version="6.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.0.0" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.8.0" />
+    <PackageReference Include="NSubstitute" Version="5.1.0" />
+    <PackageReference Include="xunit" Version="2.5.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.5.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\API\API.csproj" />
+    <ProjectReference Include="..\API.Services\API.Services.csproj" />
+    <ProjectReference Include="..\Models\Models.csproj" />
+    <ProjectReference Include="..\AppConstants\AppConstants.csproj" />
+  </ItemGroup>
+
+</Project>
+```
+
+## FILE: DemonsAndDogs.API.Tests\GameSystems\DnD5eRuleBookTests.cs
+```cs
+using API.Services.GameSystems.DnD5e;
+using Models.GameSystems;
+using Xunit;
+
+namespace DemonsAndDogs.API.Tests.GameSystems;
+
+public class DnD5eRuleBookTests
+{
+    private const string DnD5eSystemId = "dnd5e";
+
+    private class FakeDnD5eRuleBook : DnD5eRuleBook
+    {
+        public int FixedRoll { get; set; } = 10;
+        protected override int RollD20() => FixedRoll;
+    }
+
+    [Fact]
+    public void ResolveSkillCheck_TotalMeetsDC_Succeeds()
+    {
+        // Arrange
+        var ruleBook = new FakeDnD5eRuleBook { FixedRoll = 10 };
+        var context = new SkillCheckContext("char1", "stealth", 2, 2, 14);
+
+        // Act
+        var result = ruleBook.ResolveSkillCheck(context);
+
+        // Assert
+        Assert.True(result.IsSuccess);
+        Assert.Equal(14, result.TotalResult);
+    }
+
+    [Fact]
+    public void ResolveSkillCheck_TotalBelowDC_Fails()
+    {
+        // Arrange
+        var ruleBook = new FakeDnD5eRuleBook { FixedRoll = 5 };
+        var context = new SkillCheckContext("char1", "stealth", 2, 2, 10);
+
+        // Act
+        var result = ruleBook.ResolveSkillCheck(context);
+
+        // Assert
+        Assert.False(result.IsSuccess);
+        Assert.Equal(9, result.TotalResult);
+    }
+
+    [Fact]
+    public void ResolveSkillCheck_Natural20_AlwaysSucceeds()
+    {
+        // Arrange
+        var ruleBook = new FakeDnD5eRuleBook { FixedRoll = 20 };
+        var context = new SkillCheckContext("char1", "stealth", 0, 0, 30);
+
+        // Act
+        var result = ruleBook.ResolveSkillCheck(context);
+
+        // Assert
+        Assert.True(result.IsSuccess);
+        Assert.Contains("Natural 20!", result.Message);
+    }
+
+    [Fact]
+    public void ResolveSkillCheck_Natural1_AlwaysFails()
+    {
+        // Arrange
+        var ruleBook = new FakeDnD5eRuleBook { FixedRoll = 1 };
+        var context = new SkillCheckContext("char1", "stealth", 10, 10, 5);
+
+        // Act
+        var result = ruleBook.ResolveSkillCheck(context);
+
+        // Assert
+        Assert.False(result.IsSuccess);
+        Assert.Contains("Natural 1!", result.Message);
+    }
+
+    [Fact]
+    public void ResolveSkillCheck_NoDC_AlwaysSucceeds()
+    {
+        // Arrange
+        var ruleBook = new FakeDnD5eRuleBook { FixedRoll = 5 };
+        var context = new SkillCheckContext("char1", "stealth", 0, 0, null);
+
+        // Act
+        var result = ruleBook.ResolveSkillCheck(context);
+
+        // Assert
+        Assert.True(result.IsSuccess);
+    }
+
+    [Fact]
+    public void ResolveAttack_TotalMeetsAC_Hits()
+    {
+        // Arrange
+        var ruleBook = new FakeDnD5eRuleBook { FixedRoll = 10 };
+        var context = new AttackContext("sword", 5, 15);
+
+        // Act
+        var result = ruleBook.ResolveAttack(context);
+
+        // Assert
+        Assert.True(result.IsHit);
+        Assert.Equal(15, result.TotalAttackResult);
+    }
+
+    [Fact]
+    public void ResolveAttack_TotalBelowAC_Misses()
+    {
+        // Arrange
+        var ruleBook = new FakeDnD5eRuleBook { FixedRoll = 5 };
+        var context = new AttackContext("sword", 5, 11);
+
+        // Act
+        var result = ruleBook.ResolveAttack(context);
+
+        // Assert
+        Assert.False(result.IsHit);
+        Assert.Equal(10, result.TotalAttackResult);
+    }
+
+    [Fact]
+    public void ResolveAttack_Natural20_IsCriticalHit()
+    {
+        // Arrange
+        var ruleBook = new FakeDnD5eRuleBook { FixedRoll = 20 };
+        var context = new AttackContext("sword", 0, 30);
+
+        // Act
+        var result = ruleBook.ResolveAttack(context);
+
+        // Assert
+        Assert.True(result.IsHit);
+        Assert.True(result.IsCriticalHit);
+        Assert.Equal("Critical Hit!", result.Message);
+    }
+
+    [Fact]
+    public void ResolveAttack_Natural1_IsCriticalMiss()
+    {
+        // Arrange
+        var ruleBook = new FakeDnD5eRuleBook { FixedRoll = 1 };
+        var context = new AttackContext("sword", 20, 10);
+
+        // Act
+        var result = ruleBook.ResolveAttack(context);
+
+        // Assert
+        Assert.False(result.IsHit);
+        Assert.Equal("Critical Miss!", result.Message);
+    }
+
+    [Fact]
+    public void GetCharacterSheetSchema_ReturnsCorrectSections()
+    {
+        // Arrange
+        var ruleBook = new DnD5eRuleBook();
+
+        // Act
+        var schema = ruleBook.GetCharacterSheetSchema();
+
+        // Assert
+        Assert.Equal(DnD5eSystemId, schema.SystemId);
+        Assert.Contains(schema.Sections, s => s.Name == "Abilities");
+        Assert.Contains(schema.Sections, s => s.Name == "Combat");
+        var abilitySection = schema.Sections.First(s => s.Name == "Abilities");
+        Assert.Contains(abilitySection.Fields, f => f.Key == "strength");
+    }
+}
+```
+
+## FILE: DemonsAndDogs.API.Tests\GameSystems\GameSystemRegistryTests.cs
+```cs
+using API.Services;
+using API.Services.GameSystems.DnD5e;
+using Xunit;
+
+namespace DemonsAndDogs.API.Tests.GameSystems;
+
+public class GameSystemRegistryTests
+{
+    private const string DnD5eSystemId = "dnd5e";
+
+    [Fact]
+    public void Registry_DiscoversDnD5eRuleBook_ViaReflection()
+    {
+        // Arrange & Act
+        var registry = new GameSystemRegistry();
+        var systems = registry.GetAll();
+
+        // Assert
+        Assert.Contains(systems, s => s is DnD5eRuleBook);
+    }
+
+    [Fact]
+    public void Get_DnD5e_ReturnsDnD5eRuleBook()
+    {
+        // Arrange
+        var registry = new GameSystemRegistry();
+
+        // Act
+        var system = registry.Get(DnD5eSystemId);
+
+        // Assert
+        Assert.IsType<DnD5eRuleBook>(system);
+        Assert.Equal(DnD5eSystemId, system.SystemId);
+    }
+
+    [Fact]
+    public void Get_IsCaseInsensitive()
+    {
+        // Arrange
+        var registry = new GameSystemRegistry();
+
+        // Act
+        var system = registry.Get("DND5E");
+
+        // Assert
+        Assert.IsType<DnD5eRuleBook>(system);
+    }
+
+    [Fact]
+    public void Get_UnknownSystem_ThrowsKeyNotFoundException()
+    {
+        // Arrange
+        var registry = new GameSystemRegistry();
+
+        // Act & Assert
+        Assert.Throws<KeyNotFoundException>(() => registry.Get("unknown"));
+    }
+
+    [Fact]
+    public void GetAll_ReturnsAtLeastOneSystem()
+    {
+        // Arrange
+        var registry = new GameSystemRegistry();
+
+        // Act
+        var systems = registry.GetAll();
+
+        // Assert
+        Assert.NotEmpty(systems);
+    }
+}
+```
+
+## FILE: DemonsAndDogs.API.Tests\Session\PerformActionHandlerTests.cs
+```cs
+using API.Services.Abstraction;
+using API.Services.GameSystems.DnD5e;
+using Mediator.Mediator.Contracts.Session;
+using Mediator.Mediator.Handlers.Session;
+using Models.GameSystems;
+using Models.Interfaces;
+using Models.Session;
+using Xunit;
+
+namespace DemonsAndDogs.API.Tests.Session;
+
+public class PerformActionHandlerTests
+{
+    private const string DnD5eSystemId = "dnd5e";
+
+    private class FakeRegistry : IGameSystemRegistry
+    {
+        public IRuleBook Get(string systemId) => new DnD5eRuleBook();
+        public IEnumerable<IRuleBook> GetAll() => new[] { new DnD5eRuleBook() };
+    }
+
+    private SessionState CreateInitialState(string sessionId)
+    {
+        return new SessionState(
+            sessionId,
+            "Hero",
+            DnD5eSystemId,
+            new CharacterSheetSchema(DnD5eSystemId, new()),
+            new List<SessionEvent>());
+    }
+
+    [Fact]
+    public async Task Handle_SkillCheckAction_ReturnsCorrectEventType()
+    {
+        // Arrange
+        var sessionId = Guid.NewGuid().ToString();
+        SessionStore.Sessions[sessionId] = CreateInitialState(sessionId);
+        var registry = new FakeRegistry();
+        var handler = new PerformActionHandler(registry);
+        var context = new SkillCheckContext("char1", "stealth", 0, 0, 10);
+        var request = new PerformActionRequest(sessionId, ActionType.SkillCheck, context);
+
+        // Act
+        var sessionEvent = await handler.Handle(request, default);
+
+        // Assert
+        Assert.Equal("SkillCheck", sessionEvent.EventType);
+        Assert.NotNull(sessionEvent.CheckResult);
+    }
+
+    [Fact]
+    public async Task Handle_AttackAction_ReturnsCorrectEventType()
+    {
+        // Arrange
+        var sessionId = Guid.NewGuid().ToString();
+        SessionStore.Sessions[sessionId] = CreateInitialState(sessionId);
+        var registry = new FakeRegistry();
+        var handler = new PerformActionHandler(registry);
+        var context = new AttackContext("sword", 0, 10);
+        var request = new PerformActionRequest(sessionId, ActionType.Attack, null, context);
+
+        // Act
+        var sessionEvent = await handler.Handle(request, default);
+
+        // Assert
+        Assert.Equal("Attack", sessionEvent.EventType);
+        Assert.NotNull(sessionEvent.AttackResult);
+    }
+
+    [Fact]
+    public async Task Handle_UnknownSessionId_ThrowsKeyNotFoundException()
+    {
+        // Arrange
+        var registry = new FakeRegistry();
+        var handler = new PerformActionHandler(registry);
+        var request = new PerformActionRequest("unknown", ActionType.SkillCheck, new SkillCheckContext("c", "s", 0, 0));
+
+        // Act & Assert
+        await Assert.ThrowsAsync<KeyNotFoundException>(() => handler.Handle(request, default));
+    }
+}
+```
+
+## FILE: DemonsAndDogs.API.Tests\Session\StartSessionHandlerTests.cs
+```cs
+using API.Services.Abstraction;
+using API.Services.GameSystems.DnD5e;
+using Mediator.Mediator.Contracts.Session;
+using Mediator.Mediator.Handlers.Session;
+using Models.Interfaces;
+using Xunit;
+
+namespace DemonsAndDogs.API.Tests.Session;
+
+public class StartSessionHandlerTests
+{
+    private const string DnD5eSystemId = "dnd5e";
+
+    private class FakeRegistry : IGameSystemRegistry
+    {
+        public IRuleBook Get(string systemId) => new DnD5eRuleBook();
+        public IEnumerable<IRuleBook> GetAll() => new[] { new DnD5eRuleBook() };
+    }
+
+    [Fact]
+    public async Task Handle_StartSession_CreatesSessionWithCorrectSystemId()
+    {
+        // Arrange
+        var registry = new FakeRegistry();
+        var handler = new StartSessionHandler(registry);
+        var request = new StartSessionRequest("Hero", DnD5eSystemId);
+
+        // Act
+        var state = await handler.Handle(request, default);
+
+        // Assert
+        Assert.Equal(DnD5eSystemId, state.SystemId);
+    }
+
+    [Fact]
+    public async Task Handle_StartSession_CreatesSessionWithCorrectCharacterName()
+    {
+        // Arrange
+        var registry = new FakeRegistry();
+        var handler = new StartSessionHandler(registry);
+        var request = new StartSessionRequest("Hero", DnD5eSystemId);
+
+        // Act
+        var state = await handler.Handle(request, default);
+
+        // Assert
+        Assert.Equal("Hero", state.CharacterName);
+    }
+
+    [Fact]
+    public async Task Handle_StartSession_HasNonEmptySessionId()
+    {
+        // Arrange
+        var registry = new FakeRegistry();
+        var handler = new StartSessionHandler(registry);
+        var request = new StartSessionRequest("Hero", DnD5eSystemId);
+
+        // Act
+        var state = await handler.Handle(request, default);
+
+        // Assert
+        Assert.False(string.IsNullOrEmpty(state.SessionId));
+    }
+
+    [Fact]
+    public async Task Handle_StartSession_SchemaMatchesGameSystem()
+    {
+        // Arrange
+        var registry = new FakeRegistry();
+        var handler = new StartSessionHandler(registry);
+        var request = new StartSessionRequest("Hero", DnD5eSystemId);
+
+        // Act
+        var state = await handler.Handle(request, default);
+
+        // Assert
+        Assert.NotNull(state.CharacterSheetSchema);
+        Assert.Equal(DnD5eSystemId, state.CharacterSheetSchema.SystemId);
+    }
+}
+```
+
+## FILE: DemonsAndDogs.sln
+```sln
+
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DemonsAndDogs", "DemonsAndDogs\DemonsAndDogs.csproj", "{8854E278-BD0E-47AE-88E1-69AE93846F66}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Models", "Models\Models.csproj", "{9CF96288-416F-4FC8-A765-332F32CF6EB6}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "API", "API\API.csproj", "{8CF902CC-6F52-4A64-8BDE-8CDA43A2DBF6}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "API.Services", "API.Services\API.Services.csproj", "{58206C90-77B2-42F9-AFAE-723143FAD56F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DataAccess", "DataAccess\DataAccess.csproj", "{31FBBF4E-1E41-45F5-A573-8BF3F1656883}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "API.Configuration", "API.Configuration\API.Configuration.csproj", "{C7D365DB-9B40-473A-85DD-C802ECE2D172}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AppConstants", "AppConstants\AppConstants.csproj", "{3499C5B8-0050-486F-ACF6-D6A7076012FD}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UIComponents", "UIComponents\UIComponents.csproj", "{1DFEA14A-FBD4-4574-9AAE-4D64B1DBBB6C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mediator", "Mediator\Mediator.csproj", "{221A5EEF-3FF4-4ED7-B9BC-0BEB130A02FB}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "API.Client", "API.Client\API.Client.csproj", "{5F7E5976-57A0-4FC5-BDB9-2565F0B4ABB8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DemonsAndDogs.Tests", "DemonsAndDogs.Tests\DemonsAndDogs.Tests.csproj", "{36E72839-F9CD-45CB-ABA3-C6ED5EBCCC42}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DemonsAndDogs.API.Tests", "DemonsAndDogs.API.Tests\DemonsAndDogs.API.Tests.csproj", "{D0679832-0A48-4F37-8259-C2647DFB03F9}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "API", "API", "{69D9140C-8933-4C52-8653-FB59303FE68B}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{376B709B-B2D7-4304-A94C-B1BEB2C6082E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MCPServer", "MCPServer\MCPServer.csproj", "{EBEE38C0-B5CA-450F-B00C-1DCECE1B17A4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Documentation", "Documentation\Documentation.csproj", "{2481D033-8E9E-4371-82ED-D2EB389A5AE4}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Infastructure", "Infastructure", "{C885B0FD-0420-4AD2-91BB-E1ABAE2EB534}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Apps", "Apps", "{F49004BA-ECC1-4F81-AF6E-A0FE46C92A5F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "API.Services.Mock", "API.Services.Mock\API.Services.Mock.csproj", "{79ADB7A4-E2B8-4796-B9D2-1FAACC4607F5}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
+		Release|Any CPU = Release|Any CPU
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{8854E278-BD0E-47AE-88E1-69AE93846F66}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8854E278-BD0E-47AE-88E1-69AE93846F66}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8854E278-BD0E-47AE-88E1-69AE93846F66}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{8854E278-BD0E-47AE-88E1-69AE93846F66}.Debug|x64.Build.0 = Debug|Any CPU
+		{8854E278-BD0E-47AE-88E1-69AE93846F66}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{8854E278-BD0E-47AE-88E1-69AE93846F66}.Debug|x86.Build.0 = Debug|Any CPU
+		{8854E278-BD0E-47AE-88E1-69AE93846F66}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8854E278-BD0E-47AE-88E1-69AE93846F66}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8854E278-BD0E-47AE-88E1-69AE93846F66}.Release|x64.ActiveCfg = Release|Any CPU
+		{8854E278-BD0E-47AE-88E1-69AE93846F66}.Release|x64.Build.0 = Release|Any CPU
+		{8854E278-BD0E-47AE-88E1-69AE93846F66}.Release|x86.ActiveCfg = Release|Any CPU
+		{8854E278-BD0E-47AE-88E1-69AE93846F66}.Release|x86.Build.0 = Release|Any CPU
+		{9CF96288-416F-4FC8-A765-332F32CF6EB6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9CF96288-416F-4FC8-A765-332F32CF6EB6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9CF96288-416F-4FC8-A765-332F32CF6EB6}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{9CF96288-416F-4FC8-A765-332F32CF6EB6}.Debug|x64.Build.0 = Debug|Any CPU
+		{9CF96288-416F-4FC8-A765-332F32CF6EB6}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{9CF96288-416F-4FC8-A765-332F32CF6EB6}.Debug|x86.Build.0 = Debug|Any CPU
+		{9CF96288-416F-4FC8-A765-332F32CF6EB6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9CF96288-416F-4FC8-A765-332F32CF6EB6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9CF96288-416F-4FC8-A765-332F32CF6EB6}.Release|x64.ActiveCfg = Release|Any CPU
+		{9CF96288-416F-4FC8-A765-332F32CF6EB6}.Release|x64.Build.0 = Release|Any CPU
+		{9CF96288-416F-4FC8-A765-332F32CF6EB6}.Release|x86.ActiveCfg = Release|Any CPU
+		{9CF96288-416F-4FC8-A765-332F32CF6EB6}.Release|x86.Build.0 = Release|Any CPU
+		{8CF902CC-6F52-4A64-8BDE-8CDA43A2DBF6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8CF902CC-6F52-4A64-8BDE-8CDA43A2DBF6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8CF902CC-6F52-4A64-8BDE-8CDA43A2DBF6}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{8CF902CC-6F52-4A64-8BDE-8CDA43A2DBF6}.Debug|x64.Build.0 = Debug|Any CPU
+		{8CF902CC-6F52-4A64-8BDE-8CDA43A2DBF6}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{8CF902CC-6F52-4A64-8BDE-8CDA43A2DBF6}.Debug|x86.Build.0 = Debug|Any CPU
+		{8CF902CC-6F52-4A64-8BDE-8CDA43A2DBF6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8CF902CC-6F52-4A64-8BDE-8CDA43A2DBF6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8CF902CC-6F52-4A64-8BDE-8CDA43A2DBF6}.Release|x64.ActiveCfg = Release|Any CPU
+		{8CF902CC-6F52-4A64-8BDE-8CDA43A2DBF6}.Release|x64.Build.0 = Release|Any CPU
+		{8CF902CC-6F52-4A64-8BDE-8CDA43A2DBF6}.Release|x86.ActiveCfg = Release|Any CPU
+		{8CF902CC-6F52-4A64-8BDE-8CDA43A2DBF6}.Release|x86.Build.0 = Release|Any CPU
+		{58206C90-77B2-42F9-AFAE-723143FAD56F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{58206C90-77B2-42F9-AFAE-723143FAD56F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{58206C90-77B2-42F9-AFAE-723143FAD56F}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{58206C90-77B2-42F9-AFAE-723143FAD56F}.Debug|x64.Build.0 = Debug|Any CPU
+		{58206C90-77B2-42F9-AFAE-723143FAD56F}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{58206C90-77B2-42F9-AFAE-723143FAD56F}.Debug|x86.Build.0 = Debug|Any CPU
+		{58206C90-77B2-42F9-AFAE-723143FAD56F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{58206C90-77B2-42F9-AFAE-723143FAD56F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{58206C90-77B2-42F9-AFAE-723143FAD56F}.Release|x64.ActiveCfg = Release|Any CPU
+		{58206C90-77B2-42F9-AFAE-723143FAD56F}.Release|x64.Build.0 = Release|Any CPU
+		{58206C90-77B2-42F9-AFAE-723143FAD56F}.Release|x86.ActiveCfg = Release|Any CPU
+		{58206C90-77B2-42F9-AFAE-723143FAD56F}.Release|x86.Build.0 = Release|Any CPU
+		{31FBBF4E-1E41-45F5-A573-8BF3F1656883}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{31FBBF4E-1E41-45F5-A573-8BF3F1656883}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{31FBBF4E-1E41-45F5-A573-8BF3F1656883}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{31FBBF4E-1E41-45F5-A573-8BF3F1656883}.Debug|x64.Build.0 = Debug|Any CPU
+		{31FBBF4E-1E41-45F5-A573-8BF3F1656883}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{31FBBF4E-1E41-45F5-A573-8BF3F1656883}.Debug|x86.Build.0 = Debug|Any CPU
+		{31FBBF4E-1E41-45F5-A573-8BF3F1656883}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{31FBBF4E-1E41-45F5-A573-8BF3F1656883}.Release|Any CPU.Build.0 = Release|Any CPU
+		{31FBBF4E-1E41-45F5-A573-8BF3F1656883}.Release|x64.ActiveCfg = Release|Any CPU
+		{31FBBF4E-1E41-45F5-A573-8BF3F1656883}.Release|x64.Build.0 = Release|Any CPU
+		{31FBBF4E-1E41-45F5-A573-8BF3F1656883}.Release|x86.ActiveCfg = Release|Any CPU
+		{31FBBF4E-1E41-45F5-A573-8BF3F1656883}.Release|x86.Build.0 = Release|Any CPU
+		{C7D365DB-9B40-473A-85DD-C802ECE2D172}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C7D365DB-9B40-473A-85DD-C802ECE2D172}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C7D365DB-9B40-473A-85DD-C802ECE2D172}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{C7D365DB-9B40-473A-85DD-C802ECE2D172}.Debug|x64.Build.0 = Debug|Any CPU
+		{C7D365DB-9B40-473A-85DD-C802ECE2D172}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{C7D365DB-9B40-473A-85DD-C802ECE2D172}.Debug|x86.Build.0 = Debug|Any CPU
+		{C7D365DB-9B40-473A-85DD-C802ECE2D172}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C7D365DB-9B40-473A-85DD-C802ECE2D172}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C7D365DB-9B40-473A-85DD-C802ECE2D172}.Release|x64.ActiveCfg = Release|Any CPU
+		{C7D365DB-9B40-473A-85DD-C802ECE2D172}.Release|x64.Build.0 = Release|Any CPU
+		{C7D365DB-9B40-473A-85DD-C802ECE2D172}.Release|x86.ActiveCfg = Release|Any CPU
+		{C7D365DB-9B40-473A-85DD-C802ECE2D172}.Release|x86.Build.0 = Release|Any CPU
+		{3499C5B8-0050-486F-ACF6-D6A7076012FD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3499C5B8-0050-486F-ACF6-D6A7076012FD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3499C5B8-0050-486F-ACF6-D6A7076012FD}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{3499C5B8-0050-486F-ACF6-D6A7076012FD}.Debug|x64.Build.0 = Debug|Any CPU
+		{3499C5B8-0050-486F-ACF6-D6A7076012FD}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{3499C5B8-0050-486F-ACF6-D6A7076012FD}.Debug|x86.Build.0 = Debug|Any CPU
+		{3499C5B8-0050-486F-ACF6-D6A7076012FD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3499C5B8-0050-486F-ACF6-D6A7076012FD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3499C5B8-0050-486F-ACF6-D6A7076012FD}.Release|x64.ActiveCfg = Release|Any CPU
+		{3499C5B8-0050-486F-ACF6-D6A7076012FD}.Release|x64.Build.0 = Release|Any CPU
+		{3499C5B8-0050-486F-ACF6-D6A7076012FD}.Release|x86.ActiveCfg = Release|Any CPU
+		{3499C5B8-0050-486F-ACF6-D6A7076012FD}.Release|x86.Build.0 = Release|Any CPU
+		{1DFEA14A-FBD4-4574-9AAE-4D64B1DBBB6C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1DFEA14A-FBD4-4574-9AAE-4D64B1DBBB6C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1DFEA14A-FBD4-4574-9AAE-4D64B1DBBB6C}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{1DFEA14A-FBD4-4574-9AAE-4D64B1DBBB6C}.Debug|x64.Build.0 = Debug|Any CPU
+		{1DFEA14A-FBD4-4574-9AAE-4D64B1DBBB6C}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{1DFEA14A-FBD4-4574-9AAE-4D64B1DBBB6C}.Debug|x86.Build.0 = Debug|Any CPU
+		{1DFEA14A-FBD4-4574-9AAE-4D64B1DBBB6C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1DFEA14A-FBD4-4574-9AAE-4D64B1DBBB6C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1DFEA14A-FBD4-4574-9AAE-4D64B1DBBB6C}.Release|x64.ActiveCfg = Release|Any CPU
+		{1DFEA14A-FBD4-4574-9AAE-4D64B1DBBB6C}.Release|x64.Build.0 = Release|Any CPU
+		{1DFEA14A-FBD4-4574-9AAE-4D64B1DBBB6C}.Release|x86.ActiveCfg = Release|Any CPU
+		{1DFEA14A-FBD4-4574-9AAE-4D64B1DBBB6C}.Release|x86.Build.0 = Release|Any CPU
+		{221A5EEF-3FF4-4ED7-B9BC-0BEB130A02FB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{221A5EEF-3FF4-4ED7-B9BC-0BEB130A02FB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{221A5EEF-3FF4-4ED7-B9BC-0BEB130A02FB}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{221A5EEF-3FF4-4ED7-B9BC-0BEB130A02FB}.Debug|x64.Build.0 = Debug|Any CPU
+		{221A5EEF-3FF4-4ED7-B9BC-0BEB130A02FB}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{221A5EEF-3FF4-4ED7-B9BC-0BEB130A02FB}.Debug|x86.Build.0 = Debug|Any CPU
+		{221A5EEF-3FF4-4ED7-B9BC-0BEB130A02FB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{221A5EEF-3FF4-4ED7-B9BC-0BEB130A02FB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{221A5EEF-3FF4-4ED7-B9BC-0BEB130A02FB}.Release|x64.ActiveCfg = Release|Any CPU
+		{221A5EEF-3FF4-4ED7-B9BC-0BEB130A02FB}.Release|x64.Build.0 = Release|Any CPU
+		{221A5EEF-3FF4-4ED7-B9BC-0BEB130A02FB}.Release|x86.ActiveCfg = Release|Any CPU
+		{221A5EEF-3FF4-4ED7-B9BC-0BEB130A02FB}.Release|x86.Build.0 = Release|Any CPU
+		{5F7E5976-57A0-4FC5-BDB9-2565F0B4ABB8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5F7E5976-57A0-4FC5-BDB9-2565F0B4ABB8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5F7E5976-57A0-4FC5-BDB9-2565F0B4ABB8}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{5F7E5976-57A0-4FC5-BDB9-2565F0B4ABB8}.Debug|x64.Build.0 = Debug|Any CPU
+		{5F7E5976-57A0-4FC5-BDB9-2565F0B4ABB8}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{5F7E5976-57A0-4FC5-BDB9-2565F0B4ABB8}.Debug|x86.Build.0 = Debug|Any CPU
+		{5F7E5976-57A0-4FC5-BDB9-2565F0B4ABB8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5F7E5976-57A0-4FC5-BDB9-2565F0B4ABB8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5F7E5976-57A0-4FC5-BDB9-2565F0B4ABB8}.Release|x64.ActiveCfg = Release|Any CPU
+		{5F7E5976-57A0-4FC5-BDB9-2565F0B4ABB8}.Release|x64.Build.0 = Release|Any CPU
+		{5F7E5976-57A0-4FC5-BDB9-2565F0B4ABB8}.Release|x86.ActiveCfg = Release|Any CPU
+		{5F7E5976-57A0-4FC5-BDB9-2565F0B4ABB8}.Release|x86.Build.0 = Release|Any CPU
+		{36E72839-F9CD-45CB-ABA3-C6ED5EBCCC42}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{36E72839-F9CD-45CB-ABA3-C6ED5EBCCC42}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{36E72839-F9CD-45CB-ABA3-C6ED5EBCCC42}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{36E72839-F9CD-45CB-ABA3-C6ED5EBCCC42}.Debug|x64.Build.0 = Debug|Any CPU
+		{36E72839-F9CD-45CB-ABA3-C6ED5EBCCC42}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{36E72839-F9CD-45CB-ABA3-C6ED5EBCCC42}.Debug|x86.Build.0 = Debug|Any CPU
+		{36E72839-F9CD-45CB-ABA3-C6ED5EBCCC42}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{36E72839-F9CD-45CB-ABA3-C6ED5EBCCC42}.Release|Any CPU.Build.0 = Release|Any CPU
+		{36E72839-F9CD-45CB-ABA3-C6ED5EBCCC42}.Release|x64.ActiveCfg = Release|Any CPU
+		{36E72839-F9CD-45CB-ABA3-C6ED5EBCCC42}.Release|x64.Build.0 = Release|Any CPU
+		{36E72839-F9CD-45CB-ABA3-C6ED5EBCCC42}.Release|x86.ActiveCfg = Release|Any CPU
+		{36E72839-F9CD-45CB-ABA3-C6ED5EBCCC42}.Release|x86.Build.0 = Release|Any CPU
+		{D0679832-0A48-4F37-8259-C2647DFB03F9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D0679832-0A48-4F37-8259-C2647DFB03F9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D0679832-0A48-4F37-8259-C2647DFB03F9}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{D0679832-0A48-4F37-8259-C2647DFB03F9}.Debug|x64.Build.0 = Debug|Any CPU
+		{D0679832-0A48-4F37-8259-C2647DFB03F9}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{D0679832-0A48-4F37-8259-C2647DFB03F9}.Debug|x86.Build.0 = Debug|Any CPU
+		{D0679832-0A48-4F37-8259-C2647DFB03F9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D0679832-0A48-4F37-8259-C2647DFB03F9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D0679832-0A48-4F37-8259-C2647DFB03F9}.Release|x64.ActiveCfg = Release|Any CPU
+		{D0679832-0A48-4F37-8259-C2647DFB03F9}.Release|x64.Build.0 = Release|Any CPU
+		{D0679832-0A48-4F37-8259-C2647DFB03F9}.Release|x86.ActiveCfg = Release|Any CPU
+		{D0679832-0A48-4F37-8259-C2647DFB03F9}.Release|x86.Build.0 = Release|Any CPU
+		{EBEE38C0-B5CA-450F-B00C-1DCECE1B17A4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EBEE38C0-B5CA-450F-B00C-1DCECE1B17A4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EBEE38C0-B5CA-450F-B00C-1DCECE1B17A4}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{EBEE38C0-B5CA-450F-B00C-1DCECE1B17A4}.Debug|x64.Build.0 = Debug|Any CPU
+		{EBEE38C0-B5CA-450F-B00C-1DCECE1B17A4}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{EBEE38C0-B5CA-450F-B00C-1DCECE1B17A4}.Debug|x86.Build.0 = Debug|Any CPU
+		{EBEE38C0-B5CA-450F-B00C-1DCECE1B17A4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EBEE38C0-B5CA-450F-B00C-1DCECE1B17A4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EBEE38C0-B5CA-450F-B00C-1DCECE1B17A4}.Release|x64.ActiveCfg = Release|Any CPU
+		{EBEE38C0-B5CA-450F-B00C-1DCECE1B17A4}.Release|x64.Build.0 = Release|Any CPU
+		{EBEE38C0-B5CA-450F-B00C-1DCECE1B17A4}.Release|x86.ActiveCfg = Release|Any CPU
+		{EBEE38C0-B5CA-450F-B00C-1DCECE1B17A4}.Release|x86.Build.0 = Release|Any CPU
+		{2481D033-8E9E-4371-82ED-D2EB389A5AE4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2481D033-8E9E-4371-82ED-D2EB389A5AE4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2481D033-8E9E-4371-82ED-D2EB389A5AE4}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{2481D033-8E9E-4371-82ED-D2EB389A5AE4}.Debug|x64.Build.0 = Debug|Any CPU
+		{2481D033-8E9E-4371-82ED-D2EB389A5AE4}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{2481D033-8E9E-4371-82ED-D2EB389A5AE4}.Debug|x86.Build.0 = Debug|Any CPU
+		{2481D033-8E9E-4371-82ED-D2EB389A5AE4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2481D033-8E9E-4371-82ED-D2EB389A5AE4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2481D033-8E9E-4371-82ED-D2EB389A5AE4}.Release|x64.ActiveCfg = Release|Any CPU
+		{2481D033-8E9E-4371-82ED-D2EB389A5AE4}.Release|x64.Build.0 = Release|Any CPU
+		{2481D033-8E9E-4371-82ED-D2EB389A5AE4}.Release|x86.ActiveCfg = Release|Any CPU
+		{2481D033-8E9E-4371-82ED-D2EB389A5AE4}.Release|x86.Build.0 = Release|Any CPU
+		{79ADB7A4-E2B8-4796-B9D2-1FAACC4607F5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{79ADB7A4-E2B8-4796-B9D2-1FAACC4607F5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{79ADB7A4-E2B8-4796-B9D2-1FAACC4607F5}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{79ADB7A4-E2B8-4796-B9D2-1FAACC4607F5}.Debug|x64.Build.0 = Debug|Any CPU
+		{79ADB7A4-E2B8-4796-B9D2-1FAACC4607F5}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{79ADB7A4-E2B8-4796-B9D2-1FAACC4607F5}.Debug|x86.Build.0 = Debug|Any CPU
+		{79ADB7A4-E2B8-4796-B9D2-1FAACC4607F5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{79ADB7A4-E2B8-4796-B9D2-1FAACC4607F5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{79ADB7A4-E2B8-4796-B9D2-1FAACC4607F5}.Release|x64.ActiveCfg = Release|Any CPU
+		{79ADB7A4-E2B8-4796-B9D2-1FAACC4607F5}.Release|x64.Build.0 = Release|Any CPU
+		{79ADB7A4-E2B8-4796-B9D2-1FAACC4607F5}.Release|x86.ActiveCfg = Release|Any CPU
+		{79ADB7A4-E2B8-4796-B9D2-1FAACC4607F5}.Release|x86.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{8854E278-BD0E-47AE-88E1-69AE93846F66} = {F49004BA-ECC1-4F81-AF6E-A0FE46C92A5F}
+		{9CF96288-416F-4FC8-A765-332F32CF6EB6} = {C885B0FD-0420-4AD2-91BB-E1ABAE2EB534}
+		{8CF902CC-6F52-4A64-8BDE-8CDA43A2DBF6} = {69D9140C-8933-4C52-8653-FB59303FE68B}
+		{58206C90-77B2-42F9-AFAE-723143FAD56F} = {69D9140C-8933-4C52-8653-FB59303FE68B}
+		{31FBBF4E-1E41-45F5-A573-8BF3F1656883} = {C885B0FD-0420-4AD2-91BB-E1ABAE2EB534}
+		{C7D365DB-9B40-473A-85DD-C802ECE2D172} = {69D9140C-8933-4C52-8653-FB59303FE68B}
+		{3499C5B8-0050-486F-ACF6-D6A7076012FD} = {C885B0FD-0420-4AD2-91BB-E1ABAE2EB534}
+		{1DFEA14A-FBD4-4574-9AAE-4D64B1DBBB6C} = {C885B0FD-0420-4AD2-91BB-E1ABAE2EB534}
+		{221A5EEF-3FF4-4ED7-B9BC-0BEB130A02FB} = {C885B0FD-0420-4AD2-91BB-E1ABAE2EB534}
+		{5F7E5976-57A0-4FC5-BDB9-2565F0B4ABB8} = {69D9140C-8933-4C52-8653-FB59303FE68B}
+		{36E72839-F9CD-45CB-ABA3-C6ED5EBCCC42} = {376B709B-B2D7-4304-A94C-B1BEB2C6082E}
+		{D0679832-0A48-4F37-8259-C2647DFB03F9} = {376B709B-B2D7-4304-A94C-B1BEB2C6082E}
+		{EBEE38C0-B5CA-450F-B00C-1DCECE1B17A4} = {C885B0FD-0420-4AD2-91BB-E1ABAE2EB534}
+		{2481D033-8E9E-4371-82ED-D2EB389A5AE4} = {C885B0FD-0420-4AD2-91BB-E1ABAE2EB534}
+		{79ADB7A4-E2B8-4796-B9D2-1FAACC4607F5} = {C885B0FD-0420-4AD2-91BB-E1ABAE2EB534}
+	EndGlobalSection
+EndGlobal
+```
+
+## FILE: DemonsAndDogs.Tests\Components\ActionLogComponentTests.cs
+```cs
+using Bunit;
+using Models.Session;
+using Models.GameSystems;
+using System;
+using System.Collections.Generic;
+using UIComponents;
+using Xunit;
+using System.Linq;
+
+namespace DemonsAndDogs.Tests.Components;
+
+public class ActionLogComponentTests : TestContext
+{
+    [Fact]
+    public void ActionLog_NoEvents_RendersEmptyState()
+    {
+        // Arrange
+        var events = new List<SessionEvent>();
+
+        // Act
+        var cut = Render<ActionLogComponent>(parameters => parameters
+            .Add(p => p.Events, events));
+
+        // Assert
+        cut.Find("p").MarkupMatches("<p class=\"mt-2\">No actions performed yet.</p>");
+    }
+
+    [Fact]
+    public void ActionLog_WithEvents_RendersCorrectNumber()
+    {
+        // Arrange
+        var events = new List<SessionEvent>
+        {
+            new SessionEvent("SkillCheck", "Climbed a wall", DateTime.UtcNow.AddMinutes(-5)),
+            new SessionEvent("Attack", "Swung a sword", DateTime.UtcNow)
+        };
+
+        // Act
+        var cut = Render<ActionLogComponent>(parameters => parameters
+            .Add(p => p.Events, events));
+
+        // Assert
+        var eventItems = cut.FindAll(".mb-3.p-3");
+        Assert.Equal(2, eventItems.Count);
+    }
+
+    [Fact]
+    public void ActionLog_WithEvents_ShowsDescriptions()
+    {
+        // Arrange
+        var events = new List<SessionEvent>
+        {
+            new SessionEvent("SkillCheck", "Climbed a wall", DateTime.UtcNow)
+        };
+
+        // Act
+        var cut = Render<ActionLogComponent>(parameters => parameters
+            .Add(p => p.Events, events));
+
+        // Assert
+        Assert.Contains("Climbed a wall", cut.Markup);
+    }
+
+    [Fact]
+    public void ActionLog_WithEvents_OrderedByTimestampDescending()
+    {
+        // Arrange
+        var older = new SessionEvent("SkillCheck", "Older Event", DateTime.UtcNow.AddMinutes(-10));
+        var newer = new SessionEvent("Attack", "Newer Event", DateTime.UtcNow);
+        var events = new List<SessionEvent> { older, newer };
+
+        // Act
+        var cut = Render<ActionLogComponent>(parameters => parameters
+            .Add(p => p.Events, events));
+
+        // Assert
+        var eventItems = cut.FindAll(".mb-3.p-3");
+        Assert.Contains("Newer Event", eventItems[0].InnerHtml);
+        Assert.Contains("Older Event", eventItems[1].InnerHtml);
+    }
+}
+```
+
+## FILE: DemonsAndDogs.Tests\Components\CampaignsComponentTests.cs
+```cs
+using Bunit;
+using Microsoft.Extensions.DependencyInjection;
+using Models.Common;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text.Json;
+using UIComponents;
+using Xunit;
+using DemonsAndDogs.Tests.Fakes;
+using System.Threading.Tasks;
+
+namespace DemonsAndDogs.Tests.Components;
+
+public class CampaignsComponentTests : TestContext
+{
+    private readonly FakeCampaignClient _fakeClient;
+
+    public CampaignsComponentTests()
+    {
+        _fakeClient = new FakeCampaignClient();
+        Services.AddSingleton<API.Client.Abstraction.ICampaignClient>(_fakeClient);
+    }
+
+    [Fact]
+    public void Campaigns_InitialState_ShowsLoading()
+    {
+        // Arrange - Client returns a task that doesn't complete immediately
+        var tcs = new TaskCompletionSource<IEnumerable<CampaignResource>>();
+        _fakeClient.CustomTask = tcs.Task;
+        
+        // Act
+        var cut = Render<CampaignsComponent>();
+
+        // Assert
+        Assert.Contains("Loading campaigns...", cut.Markup);
+    }
+
+    [Fact]
+    public void Campaigns_WithData_RendersCards()
+    {
+        // Arrange
+        var data = JsonDocument.Parse("{\"description\":\"The Frozen North description\"}").RootElement;
+        _fakeClient.Campaigns = new List<CampaignResource>
+        {
+            new CampaignResource { EntityId = "The Frozen North", Data = data }
+        };
+
+        // Act
+        var cut = Render<CampaignsComponent>();
+        // Assert
+        var cards = cut.FindAll(".campaign-card");
+        Assert.Single(cards);
+        Assert.Contains("The Frozen North", cut.Markup);
+        Assert.Contains("The Frozen North description", cut.Markup);
+    }
+
+    [Fact]
+    public void Campaigns_NoData_RendersEmptyMessage()
+    {
+        // Arrange
+        _fakeClient.Campaigns = new List<CampaignResource>();
+
+        // Act
+        var cut = Render<CampaignsComponent>();
+        // Assert
+        Assert.Contains("No campaigns found", cut.Markup);
+    }
+}
+```
+
+## FILE: DemonsAndDogs.Tests\Components\CharacterSheetComponentTests.cs
+```cs
+using Bunit;
+using Models.GameSystems;
+using System.Collections.Generic;
+using UIComponents;
+using Xunit;
+
+namespace DemonsAndDogs.Tests.Components;
+
+public class CharacterSheetComponentTests : TestContext
+{
+    [Fact]
+    public void CharacterSheet_RendersAllSections()
+    {
+        // Arrange
+        var schema = new CharacterSheetSchema("dnd5e", new List<SheetSection>
+        {
+            new SheetSection("Attributes", "Attributes", new List<SheetField>()),
+            new SheetSection("Skills", "Skills", new List<SheetField>())
+        });
+
+        // Act
+        var cut = Render<CharacterSheetComponent>(parameters => parameters
+            .Add(p => p.Schema, schema));
+
+        // Assert
+        var headers = cut.FindAll("h4");
+        Assert.Equal(2, headers.Count);
+        Assert.Equal("Attributes", headers[0].TextContent);
+        Assert.Equal("Skills", headers[1].TextContent);
+    }
+
+    [Fact]
+    public void CharacterSheet_RendersFields()
+    {
+        // Arrange
+        var schema = new CharacterSheetSchema("dnd5e", new List<SheetSection>
+        {
+            new SheetSection("Attributes", "Attributes", new List<SheetField>
+            {
+                new SheetField("Strength", "STR", "number", true, 15),
+                new SheetField("Dexterity", "DEX", "number", true, 12)
+            })
+        });
+
+        // Act
+        var cut = Render<CharacterSheetComponent>(parameters => parameters
+            .Add(p => p.Schema, schema));
+
+        // Assert
+        var fieldLabels = cut.FindAll(".small.opacity-75");
+        Assert.Equal(2, fieldLabels.Count);
+        Assert.Equal("STR", fieldLabels[0].TextContent);
+        Assert.Equal("DEX", fieldLabels[1].TextContent);
+
+        var fieldValues = cut.FindAll(".text-center.py-1");
+        Assert.Contains("15", fieldValues[0].TextContent);
+        Assert.Contains("12", fieldValues[1].TextContent);
+
+        // Verify read-only: no inputs should be present
+        var inputs = cut.FindAll("input");
+        Assert.Empty(inputs);
+    }
+
+    [Fact]
+    public void CharacterSheet_NoSchema_RendersEmpty()
+    {
+        // Act
+        var cut = Render<CharacterSheetComponent>(parameters => parameters
+            .Add(p => p.Schema, null));
+
+        // Assert
+        Assert.Contains("No schema loaded.", cut.Markup);
+    }
+}
+```
+
+## FILE: DemonsAndDogs.Tests\Components\NavMenuTests.cs
+```cs
+using Bunit;
+using Microsoft.Extensions.DependencyInjection;
+using UIComponents.Shared;
+using UIComponents.Services;
+using Xunit;
+using System.Linq;
+
+namespace DemonsAndDogs.Tests.Components;
+
+public class NavMenuTests : TestContext
+{
+    public NavMenuTests()
+    {
+        Services.AddSingleton<ThemeService>();
+    }
+
+    [Fact]
+    public void NavMenu_ContainsHomeLink()
+    {
+        // Act
+        var cut = Render<NavMenu>();
+        // Assert
+        var brandLink = cut.Find("a.brand");
+        Assert.Equal("/", brandLink.GetAttribute("href"));
+        Assert.Contains("Demons &amp; Dogs", brandLink.InnerHtml);
+    }
+
+    [Fact]
+    public void NavMenu_ContainsNavigationLinks()
+    {
+        // Act
+        var cut = Render<NavMenu>();
+        // Assert
+        var links = cut.FindAll("a.nav-link");
+        
+        var hrefs = links.Select(l => l.GetAttribute("href")).ToList();
+        Assert.Contains("/campaigns", hrefs);
+        Assert.Contains("/characters", hrefs);
+        Assert.Contains("/systems", hrefs);
+    }
+
+    [Fact]
+    public void NavMenu_ThemeToggle_ChangesTheme()
+    {
+        // Arrange
+        var themeService = Services.GetRequiredService<ThemeService>();
+        var cut = Render<NavMenu>();
+        Assert.Equal("fantasy", themeService.CurrentTheme);
+
+        // Act
+        var button = cut.Find(".theme-toggle button");
+        button.Click();
+
+        // Assert
+        Assert.Equal("steampunk", themeService.CurrentTheme);
+        Assert.Contains("📜 Fantasy", button.InnerHtml); // Button text should change to the other theme option
+    }
+}
+```
+
+## FILE: DemonsAndDogs.Tests\DemonsAndDogs.Tests.csproj
+```csproj
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="bunit" Version="2.6.2" />
+    <PackageReference Include="coverlet.collector" Version="6.0.0" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.8.0" />
+    <PackageReference Include="NSubstitute" Version="5.1.0" />
+    <PackageReference Include="xunit" Version="2.5.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.5.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\API.Services\API.Services.csproj" />
+    <ProjectReference Include="..\Models\Models.csproj" />
+    <ProjectReference Include="..\AppConstants\AppConstants.csproj" />
+    <ProjectReference Include="..\Mediator\Mediator.csproj" />
+    <ProjectReference Include="..\API.Client\API.Client.csproj" />
+    <ProjectReference Include="..\UIComponents\UIComponents.csproj" />
+    <ProjectReference Include="..\DemonsAndDogs\DemonsAndDogs.csproj" />
+  </ItemGroup>
+
+</Project>
+```
+
+## FILE: DemonsAndDogs.Tests\Fakes\FakeCampaignClient.cs
+```cs
+using API.Client.Abstraction;
+using Models.Common;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace DemonsAndDogs.Tests.Fakes;
+
+public class FakeCampaignClient : ICampaignClient
+{
+    public IEnumerable<CampaignResource>? Campaigns { get; set; }
+    public Task<IEnumerable<CampaignResource>>? CustomTask { get; set; }
+
+    public Task<IEnumerable<CampaignResource>> GetAllAsync(CancellationToken ct = default)
+    {
+        return CustomTask ?? Task.FromResult(Campaigns ?? new List<CampaignResource>());
+    }
+
+    public Task<CampaignResource?> GetByIdAsync(string id, CancellationToken ct = default)
+    {
+        throw new System.NotImplementedException();
+    }
+}
+```
+
+## FILE: DemonsAndDogs.Tests\GameSystemsTests.cs
+```cs
+using API.Services;
+using API.Services.GameSystems.DnD5e;
+using Models.GameSystems;
+using Xunit;
+
+namespace DemonsAndDogs.Tests;
+
+public class GameSystemsTests
+{
+    [Fact]
+    public void DnD5eRuleBook_SkillCheck_ReturnsValidResult()
+    {
+        var ruleBook = new DnD5eRuleBook();
+        var context = new SkillCheckContext("test-char", "stealth", 3, 2, 15);
+        
+        var result = ruleBook.ResolveSkillCheck(context);
+        
+        Assert.InRange(result.RollValue, 1, 20);
+        Assert.Equal(result.RollValue + 3 + 2, result.TotalResult);
+        Assert.Equal(result.TotalResult >= 15, result.IsSuccess);
+    }
+
+    [Fact]
+    public void DnD5eRuleBook_Attack_ReturnsValidResult()
+    {
+        var ruleBook = new DnD5eRuleBook();
+        var context = new AttackContext("longsword", 5, 14);
+        
+        var result = ruleBook.ResolveAttack(context);
+        
+        Assert.InRange(result.AttackRoll, 1, 20);
+        Assert.Equal(result.AttackRoll + 5, result.TotalAttackResult);
+        if (result.AttackRoll == 20) Assert.True(result.IsCriticalHit);
+        if (result.IsCriticalHit) Assert.True(result.IsHit);
+        else Assert.Equal(result.TotalAttackResult >= 14, result.IsHit);
+    }
+
+    [Fact]
+    public void GameSystemRegistry_DiscoversDnD5e()
+    {
+        var registry = new GameSystemRegistry();
+        var ruleBook = registry.Get("dnd5e");
+        
+        Assert.NotNull(ruleBook);
+        Assert.IsType<DnD5eRuleBook>(ruleBook);
+        Assert.Equal("dnd5e", ruleBook.SystemId);
+    }
+}
+```
+
+## FILE: DemonsAndDogs.Tests\PropertyTypesTests.cs
+```cs
+using AppConstants;
+
+namespace DemonsAndDogs.Tests;
+
+public class PropertyTypesTests
+{
+    [Fact]
+    public void All_ContainsAllDefinedTypes()
+    {
+        var expected = new[] { "string", "int", "decimal", "bool", "enum", "datetime" };
+        Assert.Equal(expected, PropertyTypes.All);
+    }
+
+    [Fact]
+    public void All_HasNoDuplicates()
+    {
+        Assert.Equal(PropertyTypes.All.Length, PropertyTypes.All.Distinct().Count());
+    }
+}
+```
+
+## FILE: DemonsAndDogs\_Imports.razor
+```razor
+@using System.Net.Http
+@using System.Net.Http.Json
+@using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.AspNetCore.Components.Routing
+@using Microsoft.AspNetCore.Components.Web
+@using Microsoft.AspNetCore.Components.Web.Virtualization
+@using Microsoft.AspNetCore.Components.WebAssembly.Http
+@using Microsoft.JSInterop
+@using DemonsAndDogs
+@using DemonsAndDogs.Layout
+@using UIComponents
+@using UIComponents.Services
+@using UIComponents.Shared
+@using Radzen.Blazor
+@using Radzen.Blazor.Rendering
+@using Radzen
+```
+
+## FILE: DemonsAndDogs\App.razor
+```razor
+<Router AppAssembly="@typeof(App).Assembly">
+    <Found Context="routeData">
+        <RouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)"/>
+        <FocusOnNavigate RouteData="@routeData" Selector="h1"/>
+    </Found>
+    <NotFound>
+        <PageTitle>Not found</PageTitle>
+        <LayoutView Layout="@typeof(MainLayout)">
+            <p role="alert">Sorry, there's nothing at this address.</p>
+        </LayoutView>
+    </NotFound>
+</Router>
+```
+
+## FILE: DemonsAndDogs\DemonsAndDogs.csproj
+```csproj
+<Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="10.0.0"/>
+        <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="10.0.0" PrivateAssets="all"/>
+        <PackageReference Include="Radzen.Blazor" Version="9.0.5" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\API.Client\API.Client.csproj" />
+      <ProjectReference Include="..\UIComponents\UIComponents.csproj" />
+    </ItemGroup>
+
+</Project>
+```
+
+## FILE: DemonsAndDogs\Layout\MainLayout.razor
+```razor
+@inherits LayoutComponentBase
+@inject UIComponents.Services.ThemeService ThemeService
+@inject NavigationManager NavigationManager
+@implements IDisposable
+
+<div class="main-layout" data-theme="@ThemeService.CurrentTheme">
+    <NavMenu />
+
+    <RadzenDialog />
+    <RadzenNotification />
+    <RadzenTooltip />
+    <RadzenContextMenu />
+
+    <main>
+        <div class="container page-fade-in">
+            @Body
+        </div>
+    </main>
+
+    <footer class="text-center p-4">
+        <div class="divider"></div>
+        <p>&copy; @DateTime.Now.Year — Demons & Dogs — Your AI-powered TTRPG companion</p>
+    </footer>
+</div>
+
+@code {
+    protected override void OnInitialized()
+    {
+        ThemeService.OnThemeChanged += StateHasChanged;
+        NavigationManager.LocationChanged += OnLocationChanged;
+    }
+
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        var relativePath = NavigationManager.ToBaseRelativePath(e.Location);
+        // Revert to fantasy if leaving a session page
+        if (!relativePath.StartsWith("session", StringComparison.OrdinalIgnoreCase) && 
+            ThemeService.CurrentTheme != "fantasy")
+        {
+            ThemeService.SetTheme("fantasy");
+        }
+    }
+
+    public void Dispose()
+    {
+        ThemeService.OnThemeChanged -= StateHasChanged;
+        NavigationManager.LocationChanged -= OnLocationChanged;
+    }
+}
+```
+
+## FILE: DemonsAndDogs\Pages\CampaignDetail.razor
+```razor
+@page "/campaigns/{CampaignId}"
+
+<PageTitle>Campaign Details - Demons & Dogs</PageTitle>
+
+<CampaignDetailComponent CampaignId="@CampaignId" />
+
+@code {
+    [Parameter] public string CampaignId { get; set; } = "";
+}
+```
+
+## FILE: DemonsAndDogs\Pages\Campaigns.razor
+```razor
+@page "/campaigns"
+
+<PageTitle>Campaigns - Demons & Dogs</PageTitle>
+
+<CampaignsComponent />
+```
+
+## FILE: DemonsAndDogs\Pages\CharacterDetail.razor
+```razor
+@page "/characters/{CharacterId}"
+
+<PageTitle>Character Sheet - Demons & Dogs</PageTitle>
+
+<CharacterDetailComponent CharacterId="@CharacterId" />
+
+@code {
+    [Parameter] public string CharacterId { get; set; } = "";
+}
+```
+
+## FILE: DemonsAndDogs\Pages\Characters.razor
+```razor
+@page "/characters"
+
+<PageTitle>Characters - Demons & Dogs</PageTitle>
+
+<CharactersComponent />
+```
+
+## FILE: DemonsAndDogs\Pages\GameSystems.razor
+```razor
+@page "/systems"
+
+<PageTitle>Game Systems - Demons & Dogs</PageTitle>
+
+<GameSystemsComponent />
+```
+
+## FILE: DemonsAndDogs\Pages\Home.razor
+```razor
+@page "/"
+
+<PageTitle>Demons & Dogs - AI-powered TTRPG companion</PageTitle>
+
+<HomeComponent />
+```
+
+## FILE: DemonsAndDogs\Pages\NewSession.razor
+```razor
+@page "/session/new"
+
+<PageTitle>New Session - Demons & Dogs</PageTitle>
+
+<NewSessionComponent PreSelectedCampaignId="@CampaignId" />
+
+@code {
+    [Parameter, SupplyParameterFromQuery] public string? CampaignId { get; set; }
+}
+```
+
+## FILE: DemonsAndDogs\Pages\Session.razor
+```razor
+@page "/session/{SessionId}"
+
+<PageTitle>Game Session - Demons & Dogs</PageTitle>
+
+<SessionComponent SessionId="@SessionId" />
+
+@code {
+    [Parameter] public string SessionId { get; set; } = "";
+}
+```
+
+## FILE: DemonsAndDogs\Program.cs
+```cs
+using API.Client;
+using API.Client.Abstraction;
+using Microsoft.AspNetCore.Components.Web;
+using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
+using Radzen;
+using UIComponents.Services;
+
+namespace DemonsAndDogs;
+
+public class Program
+{
+    public static async Task Main(string[] args)
+    {
+        var builder = WebAssemblyHostBuilder.CreateDefault(args);
+        builder.RootComponents.Add<App>("#app");
+        builder.RootComponents.Add<HeadOutlet>("head::after");
+
+        builder.Services.AddScoped<DialogService>();
+        builder.Services.AddScoped<NotificationService>();
+        builder.Services.AddScoped<TooltipService>();
+        builder.Services.AddScoped<ContextMenuService>();
+        builder.Services.AddScoped<ApiClient>();
+        builder.Services.AddScoped<IApiClient>(sp => sp.GetRequiredService<ApiClient>());
+        builder.Services.AddScoped<ISessionClient, SessionClient>();
+        builder.Services.AddScoped<ICampaignClient, CampaignClient>();
+        builder.Services.AddScoped<ICharacterClient, CharacterClient>();
+        builder.Services.AddScoped<IGameSystemClient, GameSystemClient>();
+        builder.Services.AddScoped<UIComponents.Services.ThemeService>();
+        //Http client to the API
+        builder.Services.AddScoped(_ => new HttpClient { BaseAddress = new Uri("https://localhost:44390/") }); //TODO: Put in settings somewhere
+
+        await builder.Build().RunAsync();
+    }
+}
+```
+
+## FILE: DemonsAndDogs\wwwroot\sample-data\weather.json
+```json
+[
+  {
+    "date": "2022-01-06",
+    "temperatureC": 1,
+    "summary": "Freezing"
+  },
+  {
+    "date": "2022-01-07",
+    "temperatureC": 14,
+    "summary": "Bracing"
+  },
+  {
+    "date": "2022-01-08",
+    "temperatureC": -13,
+    "summary": "Freezing"
+  },
+  {
+    "date": "2022-01-09",
+    "temperatureC": -16,
+    "summary": "Balmy"
+  },
+  {
+    "date": "2022-01-10",
+    "temperatureC": -2,
+    "summary": "Chilly"
+  }
+]
+```
+
+## FILE: docs\architecture.md
+```md
+# Architecture
+
+## Project Structure
+
+The Demons and Dogs solution is organized into the following projects:
+
+### Apps
+- **DemonsAndDogs** — Blazor WASM front-end. Pages and layouts only, no business logic.
+  Pages delegate to `API.Client`. Each page has a single encapsulating component.
+- **UIComponents** — Reusable Razor/Blazor UI components shared across the front-end.
+
+### API Layer
+- **API** — ASP.NET Core Web API with thin controllers. One line per action: `return await _mediator.Send(request)`.
+- **API.Client** — Typed HTTP client for consuming the API from Blazor. Only way Blazor talks to the backend.
+- **API.Configuration** — DI registration, config binding, and startup helpers.
+- **API.Services** — Business logic services. Interfaces live in `API.Services/Abstraction`.
+
+### Infrastructure
+- **Models** — Shared domain models, DTOs, contracts, interfaces, and JsonResource definitions.
+- **DataAccess** — Data access layer. Interfaces in `DataAccess/Abstraction`. No DbContext outside this project.
+- **AppConstants** — Shared constant values, enums, and ResourceKinds. No logic.
+- **Mediator** — MediatR request contracts in `/Contracts`, handlers in `/Handlers`.
+- **UIComponents** — Shared Blazor components reused across pages.
+- **Documentation** — Class library containing embedded Markdown documentation files.
+- **MCPServer** — MCP server that serves project documentation to AI tools on demand.
+
+### Tests
+- **DemonsAndDogs.Tests** — Unit tests for the Blazor front-end.
+- **DemonsAndDogs.API.Tests** — Unit tests for the API layer.
+- **DemonsAndDogs.PlaywrightTests** — End-to-end browser tests using Playwright.
+
+## Key Patterns
+
+### Mediator Pattern
+Requests are defined as records in `Mediator/Contracts` and handled by corresponding
+handlers in `Mediator/Handlers`. Controllers only call `_mediator.Send()`.
+This decouples request initiation from handling and keeps controllers thin.
+
+### Service Abstraction
+API services define interfaces in `Abstraction` folders, allowing for dependency
+injection and testability. Never inject concrete types.
+
+### Records for DTOs
+Records are used for all DTOs and domain models to ensure immutability and type safety.
+Controllers, handlers, and services pass records between layers.
+
+### JsonResource Pattern
+All API resources are defined as `JsonResource` classes in the `Models` project.
+Resource kinds are constants defined in `AppConstants/ResourceKinds.cs`.
+This ensures consistent serialization and easy discoverability.
+
+### Pages Have a Single Component
+Each page in the Blazor app has a single component that encapsulates the page's
+logic and UI. Parameters are defined as properties on the component.
+
+### No Magic Strings
+Avoid magic strings throughout. Use constants from the `AppConstants` project.
+Resource kinds, route segments, claim types, and error codes are all constants.
+
+### Embedded Documentation
+Documentation is stored as `.md` files in `docs/` at the repo root and linked
+into the `Documentation` class library as embedded assembly resources.
+The `MCPServer` project exposes these via MCP tools so AI assistants can
+retrieve project guidance on demand.
+```
+
+## FILE: docs\best-practices.md
+```md
+# Best Practices
+
+## C# / .NET
+- Use records for all DTOs and domain models — no classes for data transfer
+- Use primary constructors for services: `public class MyService(IRepo repo)`
+- Prefer `IReadOnlyList<T>` over `List<T>` for return types
+- Use `sealed` on classes that aren't designed for inheritance
+- Cancellation tokens on every async public method signature
+
+## Blazor WASM
+- Pages have one component — logic and UI in a single encapsulating component
+- Component parameters are properties, not constructor args
+- Use `API.Client` exclusively — never inject services directly into pages
+- Avoid `StateHasChanged()` calls — prefer proper reactive patterns
+
+## API
+- Controllers are one line: `return await _mediator.Send(request)`
+- Return `IActionResult` not concrete types from controllers
+- Use `[ProducesResponseType]` attributes on all controller actions
+- Validate at the handler level using FluentValidation, not in controllers
+
+## MediatR
+- Requests are records in `Mediator/Contracts/`
+- One handler per request — no handler does two things
+- Handlers are thin orchestrators — real logic in services
+- Use notifications for cross-cutting events (not requests)
+
+## Data Access
+- Repositories abstract all EF Core — no DbContext outside DataAccess
+- Use interfaces from `DataAccess/Abstraction` everywhere
+- No raw SQL unless in a named query class
+
+## TTRPG Specific
+- All game rule resolution goes through IRuleBook — never hardcode rules
+- No game system logic in API.Services directly — only in GameSystems/{Name}/
+- Character sheet schema is always driven by IRuleBook.GetCharacterSheetSchema()
+```
+
+## FILE: docs\data-model.md
+```md
+# Data Model
+
+## Design Decision: Hybrid Typed Shell + JSON Stats
+
+### The Problem
+Different TTRPG game systems have completely incompatible data shapes:
+- D&D 5e: `Strength`, `Dexterity`, `SpellSlots`, `HP`
+- Call of Cthulhu: `Sanity`, `Luck`, `Mythos`, `Occupation`
+- Pathfinder: `BAB`, `CMB`, `CMD`, `Feats`
+
+A fixed relational schema can't support arbitrary game systems without
+constant migrations. But fully untyped JSON loses queryability and type safety.
+
+### The Solution: Hybrid Entities
+Fixed columns for common fields, `JsonDocument` column for system-specific data.
+
+```csharp
+public class CharacterEntity
+{
+    public string Id { get; set; }
+    public string Name { get; set; }
+    public string SystemId { get; set; }      // "dnd5e", "cthulhu", "pathfinder"
+    public string CampaignId { get; set; }
+    public string OwnerId { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public DateTime? UpdatedAt { get; set; }
+    public bool IsDeleted { get; set; }
+    public JsonDocument Stats { get; set; }   // system-specific stats blob
+    public string SchemaVersion { get; set; } // for future migrations
+}
+```
+
+### Why This Works
+- Queryable on common fields: `WHERE SystemId = 'dnd5e' AND CampaignId = '...'`
+- Flexible stats: any game system works with zero schema migrations
+- PDF export: stats are already JSON, map to sheet template via CharacterSheetSchema
+- Type-safe at API boundary: IRuleBook validates and interprets the stats blob
+
+### IRuleBook as Stats Interpreter
+IRuleBook is the bridge between raw JSON stats and typed game logic:
+
+```csharp
+public interface IRuleBook
+{
+    // Validates a stats blob is well-formed for this system
+    bool ValidateStats(JsonDocument stats);
+
+    // Builds a typed context from raw stats for resolution
+    SkillCheckContext BuildSkillCheckContext(JsonDocument stats, string skillId);
+    AttackContext BuildAttackContext(JsonDocument stats, string weaponId);
+}
+```
+
+D&D 5e knows: Strength modifier = (strength - 10) / 2
+Call of Cthulhu knows: skill check = roll under skill value
+The database just stores the blob. Each rulebook owns interpretation.
+
+### API Boundary
+Controllers return concrete resource types, never the abstract JsonResource base:
+
+```csharp
+// ✅ Correct
+IEnumerable<CampaignResource> GetCampaigns()
+
+// ❌ Wrong — client can't deserialize abstract type
+IEnumerable<JsonResource> GetCampaigns()
+```
+
+JsonResource uses [JsonPolymorphic] + [JsonDerivedType] as a safety net
+for any endpoints that must return mixed resource types.
+
+## Entity Summary
+
+| Entity | Fixed Fields | Stats Blob |
+|---|---|---|
+| `CharacterEntity` | Id, Name, SystemId, CampaignId, OwnerId | Ability scores, skills, equipment |
+| `CampaignEntity` | Id, Name, SystemId, Description, OwnerId | Campaign-specific settings |
+| `SessionEntity` | Id, CampaignId, CharacterId, StartedAt | Session state, current scene |
+| `SessionEventEntity` | Id, SessionId, EventType, Timestamp | Event-specific data |
+| `GameWorldEntity` | Id, CampaignId, EntityType, Name | NPC/monster/location stats |
+| `RulebookEntity` | Id, SystemId, Name, Version | Parsed rulebook definition |
+
+## PDF Export Strategy
+Character sheet PDF generation flow:
+```
+CharacterEntity.Stats (JsonDocument)
+  → IRuleBook.GetCharacterSheetSchema()  (field labels + layout)
+    → PDF template filled with stats values
+      → exported as .pdf
+```
+
+## Implementation Note
+Mock data services are in place for MVP. Real persistence using this
+hybrid model will be implemented post-MVP in the DataAccess project.
+Switch from mock to real by flipping UseMockData in appsettings.
+```
+
+## FILE: docs\game-engine.md
+```md
+# Game Engine
+
+## Overview
+The TTRPG game engine supports multiple rule systems through a strategy pattern.
+Each game system implements `IRuleBook`, which is the core extension point.
+The `GameSystemRegistry` (implementing `IGameSystemRegistry`) automatically discovers these implementations via reflection.
+
+## Key Interfaces (all in Models/Interfaces/)
+
+### IRuleBook
+The primary extension point. Implement this to add a new game system.
+
+```csharp
+public interface IRuleBook
+{
+    string SystemId { get; }
+    string DisplayName { get; }
+
+    CheckResult ResolveSkillCheck(SkillCheckContext context);
+    AttackResult ResolveAttack(AttackContext context);
+    CharacterSheetSchema GetCharacterSheetSchema();
+}
+```
+
+### INarrator
+AI narration abstraction. Describes events in the game world using AI.
+
+### ICharacterSheetFactory
+Generates dynamic character sheet UI schemas based on the active game system.
+
+## Core Records (in Models/GameSystems/)
+
+### Skill Check
+```csharp
+public record SkillCheckContext(
+    string CharacterId,
+    string SkillId, 
+    int AbilityModifier, 
+    int ProficiencyBonus, 
+    int? DifficultyClass = null, 
+    Dictionary<string, int>? AdditionalModifiers = null);
+
+public record CheckResult(
+    int RollValue, 
+    int TotalResult, 
+    bool IsSuccess, 
+    string Message);
+```
+
+### Attack
+```csharp
+public record AttackContext(
+    string WeaponId,
+    int AttackModifier,
+    int? TargetArmorClass = null,
+    Dictionary<string, int>? AdditionalModifiers = null);
+
+public record AttackResult(
+    int AttackRoll,
+    int TotalAttackResult,
+    bool IsHit,
+    bool IsCriticalHit,
+    int? DamageDealt = null,
+    string? DamageType = null,
+    string Message = "");
+```
+
+## Adding a New Game System
+
+1. Add domain models to `Models/GameSystems/{Name}/`
+2. Implement `IRuleBook` in `API.Services/GameSystems/{Name}/{Name}RuleBook.cs`
+3. Decorate with `[GameSystem("system-id")]`
+4. Add MediatR contracts to `Mediator/Contracts/GameSystems/`
+5. Add handlers to `Mediator/Handlers/GameSystems/`
+6. Add a spec doc to `docs/game-systems/{name}.md`
+
+*Note: `GameSystemRegistry` automatically discovers all `[GameSystem]` decorated classes in the `API.Services` assembly.*
+
+## GameSystemAttribute
+```csharp
+[GameSystem("dnd5e")]
+public class DnD5eRuleBook : IRuleBook { ... }
+```
+
+## Game Systems
+| ID | Name | Status |
+|---|---|---|
+| `dnd5e` | Dungeons & Dragons 5th Edition | Implemented |
+
+## MediatR Flow
+```
+Blazor page
+  → API.Client.ResolveSkillCheckAsync(request)
+    → API controller
+      → _mediator.Send(new ResolveSkillCheckRequest(systemId, context))
+        → ResolveSkillCheckHandler
+          → IGameSystemRegistry.Get(systemId).ResolveSkillCheck(context)
+            → {Name}RuleBook.ResolveSkillCheck(context)
+```
+```
+
+## FILE: docs\game-session.md
+```md
+# Game Session
+
+## Overview
+Game sessions represent an active instance of a TTRPG play session. A session is associated with a specific character name and a game system (e.g., `dnd5e`). 
+
+The current implementation uses an in-memory `SessionStore` on the server for Phase 3, which persists for the lifetime of the API process.
+
+## Session Flow
+
+1. **Start Session**: 
+   - The user enters a character name and selects a game system in the `SessionComponent`.
+   - A `StartSessionRequest` is sent to the API.
+   - The server creates a `SessionState`, generates a `SessionId`, and initializes the `CharacterSheetSchema` from the selected rulebook.
+   - The `SessionState` is stored in the `SessionStore`.
+
+2. **Perform Action**:
+   - The user performs actions (e.g., "Roll Stealth" or "Attack") in the UI.
+   - A `PerformActionRequest` is sent to the API with the `SessionId`, `ActionType`, and relevant context.
+   - The server retrieves the session from the `SessionStore`.
+   - The rulebook resolves the action and returns a `CheckResult` or `AttackResult`.
+   - A `SessionEvent` is created, added to the session's event log, and the updated state is saved.
+   - The `SessionEvent` is returned to the client to update the local UI state.
+
+## Core Records
+
+### SessionState (Models/Session/SessionState.cs)
+Holds the complete state of an active game session.
+
+```csharp
+public record SessionState(
+    string SessionId,
+    string CharacterName,
+    string SystemId,
+    CharacterSheetSchema CharacterSheetSchema,
+    IReadOnlyList<SessionEvent> EventLog);
+```
+
+### SessionEvent (Models/Session/SessionEvent.cs)
+Represents a single action or event that occurred during the session.
+
+```csharp
+public record SessionEvent(
+    string EventType,
+    string Description,
+    DateTime Timestamp,
+    CheckResult? CheckResult = null,
+    AttackResult? AttackResult = null);
+```
+
+### Contracts (Mediator/Contracts/Session/)
+- `StartSessionRequest(string CharacterName, string SystemId)`
+- `PerformActionRequest(string SessionId, ActionType ActionType, ...)`
+- `ActionType` (Enum: `SkillCheck`, `Attack`)
+
+## In-Memory Store Pattern
+The `SessionStore` is a static class in the `Mediator` project that uses a `ConcurrentDictionary` to manage active sessions.
+
+```csharp
+// Mediator/Mediator/Handlers/Session/SessionStore.cs
+public static class SessionStore
+{
+    public static ConcurrentDictionary<string, SessionState> Sessions { get; } = new();
+}
+```
+
+This pattern allows MediatR handlers to maintain state across multiple requests without a database in the early development phases.
+
+## Blazor Component Structure
+
+The session UI is composed of several components in `DemonsAndDogs/Components/`:
+
+- **SessionComponent**: The main container. It handles the initial "Start Session" form and then orchestrates the game session UI once a session is active. It manages the `SessionState` and calls the `ISessionClient`.
+- **CharacterSheetComponent**: A read-only display of the character's stats based on the `CharacterSheetSchema` provided by the game system.
+- **ActionLogComponent**: Displays a scrollable list of `SessionEvent` objects, showing the history of rolls and actions with appropriate styling (e.g., success/failure colors).
+
+### Component Hierarchy
+```
+SessionComponent
+├── CharacterSheetComponent (Left Sidebar)
+├── ActionLogComponent (Center Column)
+└── DM Narration Card (Right Sidebar - Placeholder for Phase 4)
+```
+```
+
+## FILE: docs\testing.md
+```md
+# Testing Guidelines
+
+## Test Projects
+
+| Project | Purpose | Framework |
+|---|---|---|
+| `DemonsAndDogs.API.Tests` | Unit tests for API layer, handlers, services, rulebooks | xUnit |
+| `DemonsAndDogs.Tests` | Unit tests for Blazor components | xUnit + bUnit |
+| `DemonsAndDogs.PlaywrightTests` | End-to-end browser tests | Playwright |
+
+## What to Test
+
+### API Tests (highest priority)
+- Game system mechanics — `DnD5eRuleBook` skill checks, attacks, natural 20/1
+- `GameSystemRegistry` — reflection discovery, unknown system throws `KeyNotFoundException`
+- MediatR handlers — correct delegation to services, correct response shape
+- Mock services — return expected hardcoded data
+
+### Blazor Component Tests
+- Components render without errors
+- Dynamic `CharacterSheetSchema` fields render correctly
+- Event log displays session events in order
+- Navigation links point to correct routes
+
+### Playwright Tests (end-to-end)
+- Full happy path: Home → Campaigns → New Session → Active Session
+- Skill check produces a result in the event log
+- Navigation works correctly across all pages
+
+## Patterns
+
+### Naming Convention
+```
+MethodName_StateUnderTest_ExpectedBehavior
+ResolveSkillCheck_NaturalTwenty_ReturnsSuccess
+ResolveSkillCheck_TotalBelowDC_ReturnsFailure
+GameSystemRegistry_UnknownSystemId_ThrowsKeyNotFoundException
+```
+
+### API Test Structure (xUnit)
+```csharp
+public class DnD5eRuleBookTests
+{
+    private readonly DnD5eRuleBook _sut = new();
+
+    [Fact]
+    public void ResolveSkillCheck_WhenTotalMeetsDC_ReturnsSuccess()
+    {
+        // Arrange
+        var context = new SkillCheckContext("char1", "athletics", 5, 3, 15);
+
+        // Act
+        var result = _sut.ResolveSkillCheck(context);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.IsType<CheckResult>(result);
+    }
+}
+```
+
+### Blazor Component Test Structure (bUnit)
+```csharp
+public class ActionLogComponentTests : TestContext
+{
+    [Fact]
+    public void ActionLog_WithEvents_RendersAllEvents()
+    {
+        // Arrange
+        var events = new List<SessionEvent> { ... };
+
+        // Act
+        var cut = RenderComponent<ActionLogComponent>(
+            p => p.Add(c => c.Events, events));
+
+        // Assert
+        Assert.Equal(events.Count, cut.FindAll(".event-item").Count);
+    }
+}
+```
+
+## What NOT to Test
+- Mock service return values (they're hardcoded, testing them adds no value)
+- EF Core queries (test repositories against a real test DB or use integration tests)
+- Controller routing (covered by Playwright)
+- Pure record constructors
+```
+
+## FILE: docs\ui-themes.md
+```md
+# UI Themes
+
+## Overview
+Demons and Dogs supports two visual themes selectable per campaign.
+Theme is stored on the `CampaignResource` and applied at the app level
+when a campaign is active. Default theme is Fantasy.
+
+## Theme Implementation
+Themes are implemented as CSS custom property sets applied to the `<body>` tag
+via a `data-theme` attribute: `<body data-theme="fantasy">` or `<body data-theme="steampunk">`.
+
+A `ThemeService` in `DemonsAndDogs` manages the active theme and persists it
+to localStorage so it survives page refreshes.
+
+## Fantasy Theme
+**Concept:** Ancient tome, candlelit tavern, parchment and ink.
+
+### Palette
+```css
+[data-theme="fantasy"] {
+  --bg-primary: #1a1209;        /* near-black, warm */
+  --bg-secondary: #2c1f0e;      /* dark brown */
+  --bg-card: #f4e4c1;           /* aged parchment */
+  --bg-card-dark: #2a1a0a;      /* dark card variant */
+  --text-primary: #f4e4c1;      /* parchment text on dark */
+  --text-on-card: #2c1a0a;      /* dark ink on parchment */
+  --accent-primary: #c9973a;    /* antique gold */
+  --accent-secondary: #8b2020;  /* deep crimson */
+  --accent-glow: #e8b84b;       /* golden glow */
+  --border-color: #8b6914;      /* aged gold border */
+  --shadow-color: rgba(0,0,0,0.7);
+}
+```
+
+### Typography
+- **Display/headings:** `Cinzel` (Google Fonts) — Roman-inspired serif, regal
+- **Body:** `Crimson Text` (Google Fonts) — elegant readable serif
+- **Monospace/rolls:** `MedievalSharp` or fallback `Georgia`
+
+### Visual Details
+- Parchment texture on cards (CSS noise filter or SVG texture)
+- Decorative corner flourishes on cards using CSS border-image or pseudo-elements
+- Subtle vignette on page background
+- Golden glow on hover states and active elements
+- Flickering animation on accent elements (subtle, not distracting)
+- Horizontal rules styled as ornamental dividers
+
+### Key Classes
+```css
+.card-fantasy        /* parchment card with decorative border */
+.btn-fantasy         /* aged metal button with gold accent */
+.heading-fantasy     /* Cinzel font with letter-spacing */
+.divider-fantasy     /* ornamental horizontal rule */
+.glow-fantasy        /* golden glow effect */
+```
+
+## Steampunk Theme
+**Concept:** Victorian inventor's workshop, brass and iron, gas lamps.
+
+### Palette
+```css
+[data-theme="steampunk"] {
+  --bg-primary: #0d0d0d;        /* near-black */
+  --bg-secondary: #1a1208;      /* very dark brown-black */
+  --bg-card: #1c1208;           /* dark leather card */
+  --text-primary: #d4a853;      /* warm brass text */
+  --text-on-card: #c8a96e;      /* aged brass on dark */
+  --accent-primary: #b87333;    /* copper */
+  --accent-secondary: #8b6914;  /* aged brass */
+  --accent-glow: #ff6b1a;       /* hot ember orange */
+  --border-color: #8b6914;      /* brass border */
+  --shadow-color: rgba(0,0,0,0.8);
+}
+```
+
+### Typography
+- **Display/headings:** `Special Elite` (Google Fonts) — typewriter, mechanical
+- **Body:** `Libre Baskerville` (Google Fonts) — Victorian-era serif
+- **Monospace/rolls:** `Courier Prime`
+
+### Visual Details
+- Riveted metal texture on cards using CSS repeating gradients
+- Gear/cog decorative elements on section headers (CSS or SVG)
+- Amber/orange glow on hover (ember effect)
+- Steam/smoke subtle animation on certain elements
+- Horizontal rules styled as pipe fittings
+- Copper and brass metallic gradients on buttons
+
+### Key Classes
+```css
+.card-steampunk      /* riveted dark metal card */
+.btn-steampunk       /* brass button with copper gradient */
+.heading-steampunk   /* Special Elite with mechanical styling */
+.divider-steampunk   /* pipe-fitting horizontal rule */
+.glow-steampunk      /* ember orange glow effect */
+```
+
+## ThemeService
+```csharp
+// DemonsAndDogs/Services/ThemeService.cs
+public class ThemeService
+{
+    public string CurrentTheme { get; private set; } = "fantasy";
+    public event Action? OnThemeChanged;
+
+    public void SetTheme(string theme)
+    {
+        CurrentTheme = theme;
+        OnThemeChanged?.Invoke();
+    }
+}
+```
+
+Applied in `MainLayout.razor`:
+```razor
+<body data-theme="@ThemeService.CurrentTheme">
+```
+
+## Per-Campaign Theme
+`CampaignResource` has a `Theme` property (`"fantasy"` or `"steampunk"`).
+When a player enters a session, `ThemeService.SetTheme(campaign.Theme)` is called.
+Theme reverts to default (`"fantasy"`) when leaving a session.
+
+## Google Fonts to Import
+```html
+<!-- In index.html -->
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Text:ital,wght@0,400;0,600;1,400&family=Special+Elite&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+```
+```
+
+## FILE: Documentation\Documentation.csproj
+```csproj
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+    
+    <!--
+      Docs live in the top-level /docs folder for easy editing.
+      Embedded here as assembly resources so MCPServer can serve
+      them without needing file paths on disk.
+    -->
+    <ItemGroup>
+        <EmbeddedResource Include="..\docs\**\*.md"
+                          LogicalName="%(RecursiveDir)%(Filename)%(Extension)"
+                          Visible="true" />
+    </ItemGroup>
+
+</Project>
+```
+
+## FILE: Documentation\DocumentationAnchor.cs
+```cs
+namespace Documentation;
+
+/// <summary>
+/// Marker class used by MCPServer to locate the Documentation assembly.
+/// Do not remove.
+/// </summary>
+public static class DocumentationAnchor { }
+```
+
+## FILE: global.json
+```json
+{
+  "sdk": {
+    "version": "10.0.0",
+    "rollForward": "latestMinor",
+    "allowPrerelease": false
+  }
+}
+```
+
+## FILE: MCPServer\MCPServer.csproj
+```csproj
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.3" />
+      <PackageReference Include="ModelContextProtocol" Version="1.1.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Documentation\Documentation.csproj" />
+    </ItemGroup>
+
+</Project>
+```
+
+## FILE: MCPServer\Program.cs
+```cs
+using System.Reflection;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+
+var builder = Host.CreateApplicationBuilder(args);
+
+builder.Services
+    .AddMcpServer()
+    .WithStdioServerTransport()
+    .WithToolsFromAssembly(Assembly.GetExecutingAssembly())
+    .WithPromptsFromAssembly(Assembly.GetExecutingAssembly());
+
+await builder.Build().RunAsync();
+```
+
+## FILE: MCPServer\Tools\DocumentationTools.cs
+```cs
+using System.ComponentModel;
+using System.Reflection;
+using Documentation;
+using ModelContextProtocol.Server;
+
+namespace MCPServer.Tools;
+
+[McpServerToolType]
+public static class DocumentationTools
+{
+    /// <summary>
+    /// Lists all available documentation files embedded in the Documentation assembly.
+    /// Call this first to see what context is available before calling GetDoc.
+    /// </summary>
+    [McpServerTool]
+    [Description("List all available project documentation files. Call this to see what docs exist before fetching one.")]
+    public static string[] ListDocs()
+    {
+        return GetAssembly()
+            .GetManifestResourceNames()
+            .Where(n => n.EndsWith(".md", StringComparison.OrdinalIgnoreCase))
+            .Select(n => Path.GetFileNameWithoutExtension(n))
+            .OrderBy(n => n)
+            .ToArray();
+    }
+
+    /// <summary>
+    /// Returns the full contents of a documentation file.
+    /// </summary>
+    [McpServerTool]
+    [Description(
+        "Get the contents of a project documentation file by name. " +
+        "Examples: 'architecture', 'best-practices', 'game-engine'. " +
+        "Call ListDocs first if you are unsure what is available.")]
+    public static string GetDoc(
+        [Description("The doc name without extension, e.g. 'architecture' or 'game-engine'")]
+        string name)
+    {
+        var assembly = GetAssembly();
+
+        var resource = assembly
+            .GetManifestResourceNames()
+            .FirstOrDefault(n => n.Contains(name, StringComparison.OrdinalIgnoreCase));
+
+        if (resource is null)
+        {
+            var available = string.Join(", ", assembly
+                .GetManifestResourceNames()
+                .Where(n => n.EndsWith(".md"))
+                .Select(Path.GetFileNameWithoutExtension));
+            return $"No doc found matching '{name}'. Available docs: {available}";
+        }
+
+        using var stream = assembly.GetManifestResourceStream(resource)!;
+        using var reader = new StreamReader(stream);
+        return reader.ReadToEnd();
+    }
+
+    /// <summary>
+    /// Returns all docs concatenated — useful for giving full project context in one call.
+    /// </summary>
+    [McpServerTool]
+    [Description("Get all project documentation in one call. Use when you need full project context.")]
+    public static string GetAllDocs()
+    {
+        var assembly = GetAssembly();
+
+        var resources = assembly
+            .GetManifestResourceNames()
+            .Where(n => n.EndsWith(".md", StringComparison.OrdinalIgnoreCase))
+            .OrderBy(n => n);
+
+        var sections = resources.Select(resource =>
+        {
+            using var stream = assembly.GetManifestResourceStream(resource)!;
+            using var reader = new StreamReader(stream);
+            var name = Path.GetFileNameWithoutExtension(resource);
+            return $"# [{name}]\n\n{reader.ReadToEnd()}";
+        });
+
+        return string.Join("\n\n---\n\n", sections);
+    }
+
+    private static Assembly GetAssembly() =>
+        Assembly.GetAssembly(typeof(DocumentationAnchor))
+        ?? throw new InvalidOperationException("Could not locate Documentation assembly.");
+}
+```
+
+## FILE: Mediator\Mediator.csproj
+```csproj
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="MediatR" Version="14.0.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\API.Services\API.Services.csproj" />
+      <ProjectReference Include="..\AppConstants\AppConstants.csproj" />
+      <ProjectReference Include="..\Models\Models.csproj" />
+    </ItemGroup>
+
+</Project>
+```
+
+## FILE: Mediator\Mediator\Contracts\Campaigns\CampaignRequests.cs
+```cs
+using MediatR;
+using Models.Common;
+
+namespace Mediator.Mediator.Contracts.Campaigns;
+
+public record GetCampaignsRequest : IRequest<IEnumerable<CampaignResource>>;
+public record GetCampaignRequest(string Id) : IRequest<CampaignResource?>;
+```
+
+## FILE: Mediator\Mediator\Contracts\Characters\CharacterRequests.cs
+```cs
+using MediatR;
+using Models.Common;
+
+namespace Mediator.Mediator.Contracts.Characters;
+
+public record GetCharactersRequest : IRequest<IEnumerable<CharacterResource>>;
+public record GetCharacterRequest(string Id) : IRequest<CharacterResource?>;
+public record GetCharactersBySystemRequest(string SystemId) : IRequest<IEnumerable<CharacterResource>>;
+```
+
+## FILE: Mediator\Mediator\Contracts\GameSystems\GetCharacterSheetSchemaRequest.cs
+```cs
+using MediatR;
+using Models.GameSystems;
+
+namespace Mediator.Mediator.Contracts.GameSystems;
+
+public record GetCharacterSheetSchemaRequest(string SystemId) : IRequest<CharacterSheetSchema>;
+```
+
+## FILE: Mediator\Mediator\Contracts\GameSystems\GetGameSystemsRequest.cs
+```cs
+using MediatR;
+using Models.GameSystems;
+
+namespace Mediator.Mediator.Contracts.GameSystems;
+
+public record GetGameSystemsRequest() : IRequest<IEnumerable<GameSystemDescriptor>>;
+```
+
+## FILE: Mediator\Mediator\Contracts\GameSystems\ResolveAttackRequest.cs
+```cs
+using MediatR;
+using Models.GameSystems;
+
+namespace Mediator.Mediator.Contracts.GameSystems;
+
+public record ResolveAttackRequest(string SystemId, AttackContext Context)
+    : IRequest<AttackResult>;
+```
+
+## FILE: Mediator\Mediator\Contracts\GameSystems\ResolveSkillCheckRequest.cs
+```cs
+using MediatR;
+using Models.GameSystems;
+
+namespace Mediator.Mediator.Contracts.GameSystems;
+
+public record ResolveSkillCheckRequest(string SystemId, SkillCheckContext Context)
+    : IRequest<CheckResult>;
+```
+
+## FILE: Mediator\Mediator\Contracts\Session\ActionType.cs
+```cs
+namespace Mediator.Mediator.Contracts.Session;
+
+public enum ActionType
+{
+    SkillCheck,
+    Attack
+}
+```
+
+## FILE: Mediator\Mediator\Contracts\Session\GetSessionRequest.cs
+```cs
+using MediatR;
+using Models.Session;
+
+namespace Mediator.Mediator.Contracts.Session;
+
+public record GetSessionRequest(string SessionId) : IRequest<SessionState>;
+```
+
+## FILE: Mediator\Mediator\Contracts\Session\NarrateActionRequest.cs
+```cs
+using MediatR;
+using Models.Narration;
+
+namespace Mediator.Mediator.Contracts.Session;
+
+public record NarrateActionRequest(string SessionId) : IRequest<NarrationResult>;
+```
+
+## FILE: Mediator\Mediator\Contracts\Session\PerformActionRequest.cs
+```cs
+using MediatR;
+using Models.GameSystems;
+using Models.Session;
+
+namespace Mediator.Mediator.Contracts.Session;
+
+public record PerformActionRequest(
+    string SessionId,
+    ActionType ActionType,
+    SkillCheckContext? SkillCheckContext = null,
+    AttackContext? AttackContext = null)
+    : IRequest<SessionEvent>;
+```
+
+## FILE: Mediator\Mediator\Contracts\Session\StartSessionRequest.cs
+```cs
+using MediatR;
+using Models.Session;
+
+namespace Mediator.Mediator.Contracts.Session;
+
+public record StartSessionRequest(string CharacterName, string SystemId)
+    : IRequest<SessionState>;
+```
+
+## FILE: Mediator\Mediator\Handlers\Campaigns\CampaignHandlers.cs
+```cs
+using MediatR;
+using API.Services.Abstraction;
+using Models.Common;
+using Mediator.Mediator.Contracts.Campaigns;
+
+namespace Mediator.Mediator.Handlers.Campaigns;
+
+public class GetCampaignsHandler(ICampaignService service) : IRequestHandler<GetCampaignsRequest, IEnumerable<CampaignResource>>
+{
+    public async Task<IEnumerable<CampaignResource>> Handle(GetCampaignsRequest request, CancellationToken cancellationToken)
+    {
+        return await service.GetAllAsync();
+    }
+}
+
+public class GetCampaignHandler(ICampaignService service) : IRequestHandler<GetCampaignRequest, CampaignResource?>
+{
+    public async Task<CampaignResource?> Handle(GetCampaignRequest request, CancellationToken cancellationToken)
+    {
+        return await service.GetByIdAsync(request.Id);
+    }
+}
+```
+
+## FILE: Mediator\Mediator\Handlers\Characters\CharacterHandlers.cs
+```cs
+using MediatR;
+using API.Services.Abstraction;
+using Models.Common;
+using Mediator.Mediator.Contracts.Characters;
+
+namespace Mediator.Mediator.Handlers.Characters;
+
+public class GetCharactersHandler(ICharacterService service) : IRequestHandler<GetCharactersRequest, IEnumerable<CharacterResource>>
+{
+    public async Task<IEnumerable<CharacterResource>> Handle(GetCharactersRequest request, CancellationToken cancellationToken)
+    {
+        return await service.GetAllAsync();
+    }
+}
+
+public class GetCharacterHandler(ICharacterService service) : IRequestHandler<GetCharacterRequest, CharacterResource?>
+{
+    public async Task<CharacterResource?> Handle(GetCharacterRequest request, CancellationToken cancellationToken)
+    {
+        return await service.GetByIdAsync(request.Id);
+    }
+}
+
+public class GetCharactersBySystemHandler(ICharacterService service) : IRequestHandler<GetCharactersBySystemRequest, IEnumerable<CharacterResource>>
+{
+    public async Task<IEnumerable<CharacterResource>> Handle(GetCharactersBySystemRequest request, CancellationToken cancellationToken)
+    {
+        return await service.GetBySystemIdAsync(request.SystemId);
+    }
+}
+```
+
+## FILE: Mediator\Mediator\Handlers\GameSystems\GetCharacterSheetSchemaHandler.cs
+```cs
+using MediatR;
+using API.Services.Abstraction;
+using Mediator.Mediator.Contracts.GameSystems;
+using Models.GameSystems;
+
+namespace Mediator.Mediator.Handlers.GameSystems;
+
+public class GetCharacterSheetSchemaHandler(IGameSystemRegistry registry)
+    : IRequestHandler<GetCharacterSheetSchemaRequest, CharacterSheetSchema>
+{
+    public Task<CharacterSheetSchema> Handle(GetCharacterSheetSchemaRequest request, CancellationToken cancellationToken)
+    {
+        var ruleBook = registry.Get(request.SystemId);
+        return Task.FromResult(ruleBook.GetCharacterSheetSchema());
+    }
+}
+```
+
+## FILE: Mediator\Mediator\Handlers\GameSystems\GetGameSystemsHandler.cs
+```cs
+using MediatR;
+using API.Services.Abstraction;
+using Mediator.Mediator.Contracts.GameSystems;
+using Models.GameSystems;
+
+namespace Mediator.Mediator.Handlers.GameSystems;
+
+public class GetGameSystemsHandler(IGameSystemRegistry registry) 
+    : IRequestHandler<GetGameSystemsRequest, IEnumerable<GameSystemDescriptor>>
+{
+    public Task<IEnumerable<GameSystemDescriptor>> Handle(GetGameSystemsRequest request, CancellationToken cancellationToken)
+    {
+        var systems = registry.GetAll().Select(s => new GameSystemDescriptor(s.SystemId, s.DisplayName));
+        return Task.FromResult(systems);
+    }
+}
+```
+
+## FILE: Mediator\Mediator\Handlers\GameSystems\ResolveAttackHandler.cs
+```cs
+using MediatR;
+using API.Services.Abstraction;
+using Models.GameSystems;
+using Mediator.Mediator.Contracts.GameSystems;
+
+namespace Mediator.Mediator.Handlers.GameSystems;
+
+public class ResolveAttackHandler(IGameSystemRegistry registry)
+    : IRequestHandler<ResolveAttackRequest, AttackResult>
+{
+    public Task<AttackResult> Handle(ResolveAttackRequest request, CancellationToken cancellationToken)
+    {
+        var ruleBook = registry.Get(request.SystemId);
+        var result = ruleBook.ResolveAttack(request.Context);
+        return Task.FromResult(result);
+    }
+}
+```
+
+## FILE: Mediator\Mediator\Handlers\GameSystems\ResolveSkillCheckHandler.cs
+```cs
+using MediatR;
+using API.Services.Abstraction;
+using Models.GameSystems;
+using Mediator.Mediator.Contracts.GameSystems;
+
+namespace Mediator.Mediator.Handlers.GameSystems;
+
+public class ResolveSkillCheckHandler(IGameSystemRegistry registry)
+    : IRequestHandler<ResolveSkillCheckRequest, CheckResult>
+{
+    public Task<CheckResult> Handle(ResolveSkillCheckRequest request, CancellationToken cancellationToken)
+    {
+        var ruleBook = registry.Get(request.SystemId);
+        var result = ruleBook.ResolveSkillCheck(request.Context);
+        return Task.FromResult(result);
+    }
+}
+```
+
+## FILE: Mediator\Mediator\Handlers\Session\GetSessionHandler.cs
+```cs
+using MediatR;
+using Mediator.Mediator.Contracts.Session;
+using Models.Session;
+
+namespace Mediator.Mediator.Handlers.Session;
+
+public class GetSessionHandler : IRequestHandler<GetSessionRequest, SessionState>
+{
+    public Task<SessionState> Handle(GetSessionRequest request, CancellationToken cancellationToken)
+    {
+        if (SessionStore.Sessions.TryGetValue(request.SessionId, out var session))
+        {
+            return Task.FromResult(session);
+        }
+        
+        throw new KeyNotFoundException($"Session {request.SessionId} not found.");
+    }
+}
+```
+
+## FILE: Mediator\Mediator\Handlers\Session\NarrateActionHandler.cs
+```cs
+using MediatR;
+using Mediator.Mediator.Contracts.Session;
+using Models.Interfaces;
+using Models.Narration;
+using Models.Session;
+using System.Linq;
+
+namespace Mediator.Mediator.Handlers.Session;
+
+public class NarrateActionHandler(INarrator narrator) : IRequestHandler<NarrateActionRequest, NarrationResult>
+{
+    public async Task<NarrationResult> Handle(NarrateActionRequest request, CancellationToken cancellationToken)
+    {
+        if (!SessionStore.Sessions.TryGetValue(request.SessionId, out var session))
+        {
+            throw new KeyNotFoundException($"Session {request.SessionId} not found.");
+        }
+
+        var lastEvent = session.EventLog.LastOrDefault();
+        if (lastEvent == null)
+        {
+            return new NarrationResult("No events to narrate yet.", TokenStream: null);
+        }
+
+        // Map SessionEvent to GameEvent for the narrator
+        var gameEvent = new GameEvent(
+            EventType: lastEvent.EventType,
+            Description: lastEvent.Description,
+            OccurredAt: lastEvent.Timestamp,
+            SubjectId: session.CharacterName,
+            Metadata: BuildMetadata(lastEvent)
+        );
+
+        return await narrator.NarrateAsync(gameEvent, "dramatic");
+    }
+
+    private Dictionary<string, string> BuildMetadata(SessionEvent sessionEvent)
+    {
+        var metadata = new Dictionary<string, string>();
+        
+        if (sessionEvent.CheckResult != null)
+        {
+            metadata["Success"] = sessionEvent.CheckResult.IsSuccess.ToString();
+            metadata["Roll"] = sessionEvent.CheckResult.TotalResult.ToString();
+        }
+        else if (sessionEvent.AttackResult != null)
+        {
+            metadata["Success"] = sessionEvent.AttackResult.IsHit.ToString();
+            metadata["Roll"] = sessionEvent.AttackResult.TotalAttackResult.ToString();
+            metadata["Critical"] = sessionEvent.AttackResult.IsCriticalHit.ToString();
+        }
+        
+        return metadata;
+    }
+}
+```
+
+## FILE: Mediator\Mediator\Handlers\Session\PerformActionHandler.cs
+```cs
+using MediatR;
+using API.Services.Abstraction;
+using Mediator.Mediator.Contracts.Session;
+using Models.Session;
+using Models.GameSystems;
+
+namespace Mediator.Mediator.Handlers.Session;
+
+public class PerformActionHandler(IGameSystemRegistry registry)
+    : IRequestHandler<PerformActionRequest, SessionEvent>
+{
+    public Task<SessionEvent> Handle(PerformActionRequest request, CancellationToken cancellationToken)
+    {
+        if (!SessionStore.Sessions.TryGetValue(request.SessionId, out var state))
+        {
+            throw new KeyNotFoundException($"Session {request.SessionId} not found.");
+        }
+
+        var ruleBook = registry.Get(state.SystemId);
+        SessionEvent sessionEvent;
+
+        if (request.ActionType == ActionType.SkillCheck)
+        {
+            if (request.SkillCheckContext == null)
+            {
+                throw new ArgumentException("SkillCheckContext is required for SkillCheck action.");
+            }
+            
+            var result = ruleBook.ResolveSkillCheck(request.SkillCheckContext);
+            sessionEvent = new SessionEvent(
+                "SkillCheck",
+                $"Performed {request.SkillCheckContext.SkillId} check: {result.Message}",
+                DateTime.UtcNow,
+                CheckResult: result);
+        }
+        else // Attack
+        {
+            if (request.AttackContext == null)
+            {
+                throw new ArgumentException("AttackContext is required for Attack action.");
+            }
+            
+            var result = ruleBook.ResolveAttack(request.AttackContext);
+            sessionEvent = new SessionEvent(
+                "Attack",
+                $"Performed attack with {request.AttackContext.WeaponId}: {result.Message}",
+                DateTime.UtcNow,
+                AttackResult: result);
+        }
+
+        // Update session state
+        var newEventLog = new List<SessionEvent>(state.EventLog) { sessionEvent };
+        var newState = state with { EventLog = newEventLog };
+        SessionStore.Sessions[request.SessionId] = newState;
+
+        return Task.FromResult(sessionEvent);
+    }
+}
+```
+
+## FILE: Mediator\Mediator\Handlers\Session\SessionStore.cs
+```cs
+using System.Collections.Concurrent;
+using Models.Session;
+
+namespace Mediator.Mediator.Handlers.Session;
+
+/// <summary>
+/// Simple in-memory session store for MVP.
+/// </summary>
+public static class SessionStore
+{
+    public static ConcurrentDictionary<string, SessionState> Sessions { get; } = new();
+}
+```
+
+## FILE: Mediator\Mediator\Handlers\Session\StartSessionHandler.cs
+```cs
+using MediatR;
+using API.Services.Abstraction;
+using Mediator.Mediator.Contracts.Session;
+using Models.Session;
+using Models.GameSystems;
+
+namespace Mediator.Mediator.Handlers.Session;
+
+public class StartSessionHandler(IGameSystemRegistry registry)
+    : IRequestHandler<StartSessionRequest, SessionState>
+{
+    public Task<SessionState> Handle(StartSessionRequest request, CancellationToken cancellationToken)
+    {
+        var ruleBook = registry.Get(request.SystemId);
+        var schema = ruleBook.GetCharacterSheetSchema();
+        
+        var sessionId = Guid.NewGuid().ToString();
+        var state = new SessionState(
+            sessionId,
+            request.CharacterName,
+            request.SystemId,
+            schema,
+            new List<SessionEvent>());
+            
+        SessionStore.Sessions[sessionId] = state;
+        
+        return Task.FromResult(state);
+    }
+}
+```
+
+## FILE: Mediator\MediatorAssemblyMarker.cs
+```cs
+namespace Mediator;
+
+// Add the following to Program.cs 
+// builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(MediatorAssemblyMarker).Assembly));
+
+/// <summary>
+/// Used to register mediator services
+/// </summary>
+public sealed class MediatorAssemblyMarker;
+```
+
+## FILE: Models\Attributes\GameSystemAttribute.cs
+```cs
+namespace Models.Attributes;
+
+[AttributeUsage(AttributeTargets.Class, Inherited = false)]
+public class GameSystemAttribute(string systemId) : Attribute
+{
+    public string SystemId { get; } = systemId;
+}
+```
+
+## FILE: Models\Common\CampaignResource.cs
+```cs
+using AppConstants;
+
+namespace Models.Common;
+
+public record CampaignResource : JsonResource
+{
+    public override string Kind => ResourceKinds.Campaign;
+    public string Theme { get; init; } = "fantasy";
+}
+```
+
+## FILE: Models\Common\CharacterResource.cs
+```cs
+using AppConstants;
+
+namespace Models.Common;
+
+public record CharacterResource : JsonResource
+{
+    public override string Kind => ResourceKinds.Character;
+}
+```
+
+## FILE: Models\Common\DocumentDefinitionResource.cs
+```cs
+using AppConstants;
+
+namespace Models.Common;
+
+public record DocumentDefinitionResource : JsonResource
+{
+    public override string Kind => ResourceKinds.DocumentDefinition;
+}
+```
+
+## FILE: Models\Common\DocumentResource.cs
+```cs
+using AppConstants;
+
+namespace Models.Common;
+
+public record DocumentResource : JsonResource
+{
+    public override string Kind => ResourceKinds.Document;
+}
+```
+
+## FILE: Models\Common\GameResource.cs
+```cs
+using AppConstants;
+
+namespace Models.Common;
+
+public record GameResource : JsonResource
+{
+    public override string Kind => ResourceKinds.Game;
+}
+```
+
+## FILE: Models\Common\JsonResource.cs
+```cs
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using AppConstants;
+
+namespace Models.Common;
+
+[JsonPolymorphic(TypeDiscriminatorPropertyName = "Kind")]
+[JsonDerivedType(typeof(CampaignResource), ResourceKinds.Campaign)]
+[JsonDerivedType(typeof(CharacterResource), ResourceKinds.Character)]
+[JsonDerivedType(typeof(DocumentDefinitionResource), ResourceKinds.DocumentDefinition)]
+[JsonDerivedType(typeof(DocumentResource), ResourceKinds.Document)]
+[JsonDerivedType(typeof(GameResource), ResourceKinds.Game)]
+[JsonDerivedType(typeof(SchemaResource), ResourceKinds.Schema)]
+public abstract record JsonResource
+{
+    [JsonPropertyName("Kind")]
+    public abstract string Kind { get; }
+
+    public string Id { get; init; } = Guid.NewGuid().ToString();
+    public string? EntityId { get; init; }
+    public string? OwnerId { get; init; }
+    public string? SubjectId { get; init; }
+    public string? CampaignId { get; init; }
+    public string? RulesetId { get; init; }
+    public string? GameId { get; init; }
+    public string? SchemaVersion { get; init; }
+    public string? Schema { get; init; }
+    public string? ResourceKind { get; init; }
+    public JsonElement Data { get; init; }
+}
+```
+
+## FILE: Models\Common\SchemaResource.cs
+```cs
+using AppConstants;
+
+namespace Models.Common;
+
+public record SchemaResource : JsonResource
+{
+    public override string Kind => ResourceKinds.Schema;
+}
+```
+
+## FILE: Models\GameSystems\Attack.cs
+```cs
+namespace Models.GameSystems;
+
+public record AttackContext(
+    string WeaponId,
+    int AttackModifier,
+    int? TargetArmorClass = null,
+    Dictionary<string, int>? AdditionalModifiers = null);
+
+public record AttackResult(
+    int AttackRoll,
+    int TotalAttackResult,
+    bool IsHit,
+    bool IsCriticalHit,
+    int? DamageDealt = null,
+    string? DamageType = null,
+    string Message = "");
+```
+
+## FILE: Models\GameSystems\CharacterSheetSchema.cs
+```cs
+namespace Models.GameSystems;
+
+public record CharacterSheetSchema(
+    string SystemId,
+    List<SheetSection> Sections);
+
+public record SheetSection(
+    string Name,
+    string DisplayName,
+    List<SheetField> Fields);
+
+public record SheetField(
+    string Key,
+    string Label,
+    string Type, // e.g., "number", "text", "calculated"
+    bool IsRequired,
+    object? DefaultValue = null);
+```
+
+## FILE: Models\GameSystems\GameSystemDescriptor.cs
+```cs
+namespace Models.GameSystems;
+
+public record GameSystemDescriptor(string SystemId, string DisplayName);
+```
+
+## FILE: Models\GameSystems\SkillCheck.cs
+```cs
+namespace Models.GameSystems;
+
+public record SkillCheckContext(
+    string CharacterId,
+    string SkillId, 
+    int AbilityModifier, 
+    int ProficiencyBonus, 
+    int? DifficultyClass = null, 
+    Dictionary<string, int>? AdditionalModifiers = null);
+
+public record CheckResult(
+    int RollValue, 
+    int TotalResult, 
+    bool IsSuccess, 
+    string Message);
+```
+
+## FILE: Models\Interfaces\ICharacterSheetFactory.cs
+```cs
+using Models.GameSystems;
+
+namespace Models.Interfaces;
+
+public interface ICharacterSheetFactory
+{
+    CharacterSheetSchema Create(string systemId);
+}
+```
+
+## FILE: Models\Interfaces\INarrator.cs
+```cs
+using Models.Narration;
+
+namespace Models.Interfaces;
+
+public interface INarrator
+{
+    Task<NarrationResult> NarrateAsync(GameEvent gameEvent, string? Tone = "neutral");
+}
+```
+
+## FILE: Models\Interfaces\IRuleBook.cs
+```cs
+using Models.GameSystems;
+
+namespace Models.Interfaces;
+
+public interface IRuleBook
+{
+    string SystemId { get; }
+    string DisplayName { get; }
+    CheckResult ResolveSkillCheck(SkillCheckContext context);
+    AttackResult ResolveAttack(AttackContext context);
+    CharacterSheetSchema GetCharacterSheetSchema();
+}
+```
+
+## FILE: Models\Models.csproj
+```csproj
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\AppConstants\AppConstants.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
+    </ItemGroup>
+
+</Project>
+```
+
+## FILE: Models\Narration\GameEvent.cs
+```cs
+namespace Models.Narration;
+
+public record GameEvent(
+    string EventType, // e.g., "CombatStart", "SkillCheckSuccess", "NPCDeath"
+    string Description,
+    DateTime OccurredAt,
+    string? SubjectId = null,
+    Dictionary<string, string>? Metadata = null);
+
+public record NarrationResult(
+    string Text,
+    string? AudioUrl = null,
+    string? ImagePrompt = null,
+    IAsyncEnumerable<string>? TokenStream = null);
+```
+
+## FILE: Models\Session\SessionEvent.cs
+```cs
+using Models.GameSystems;
+
+namespace Models.Session;
+
+public record SessionEvent(
+    string EventType,
+    string Description,
+    DateTime Timestamp,
+    CheckResult? CheckResult = null,
+    AttackResult? AttackResult = null);
+```
+
+## FILE: Models\Session\SessionState.cs
+```cs
+using Models.GameSystems;
+
+namespace Models.Session;
+
+public record SessionState(
+    string SessionId,
+    string CharacterName,
+    string SystemId,
+    CharacterSheetSchema CharacterSheetSchema,
+    IReadOnlyList<SessionEvent> EventLog);
+```
+
+## FILE: UIComponents\_Imports.razor
+```razor
+@using Microsoft.AspNetCore.Components.Web
+@using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.AspNetCore.Components.Routing
+@using Microsoft.JSInterop
+@using Radzen.Blazor
+@using Radzen.Blazor.Rendering
+@using Radzen
+@using Models.Common
+@using AppConstants
+@using API.Client
+@using UIComponents.Services
+```
+
+## FILE: UIComponents\ActionLogComponent.razor
+```razor
+@using Models.Session
+@using Models.GameSystems
+
+<div class="card @(ThemeClass) h-100">
+    <div class="card-header border-bottom border-secondary">
+        <h3 class="heading-@(Theme) m-0">Action Log</h3>
+    </div>
+    <div class="card-body overflow-auto" style="max-height: 500px;">
+        @if (Events != null && Events.Count > 0)
+        {
+            @foreach (var evt in Events.OrderByDescending(e => e.Timestamp))
+            {
+                <div class="mb-3 p-3" style="border-left: 4px solid @GetEventColor(evt); background-color: rgba(0,0,0,0.05); border-radius: 0 8px 8px 0;">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span class="badge" style="background-color: @GetEventColor(evt); color: white;">@evt.EventType</span>
+                        <small class="opacity-75">@evt.Timestamp.ToString("HH:mm:ss")</small>
+                    </div>
+                    <div class="mb-2" style="font-family: var(--font-body); color: var(--text-on-card);">@evt.Description</div>
+
+                    @if (evt.CheckResult != null)
+                    {
+                        <div class="p-1 px-2 mt-1 rounded small" style="font-family: var(--font-mono); background: rgba(0,0,0,0.1); display: inline-block; color: var(--accent-primary);">
+                            <span class="me-3">ROLL: @evt.CheckResult.RollValue</span>
+                            <span class="fw-bold">TOTAL: @evt.CheckResult.TotalResult</span>
+                        </div>
+                    }
+                    else if (evt.AttackResult != null)
+                    {
+                        <div class="p-1 px-2 mt-1 rounded small" style="font-family: var(--font-mono); background: rgba(0,0,0,0.1); display: inline-block; color: var(--accent-primary);">
+                            <span class="me-3">ROLL: @evt.AttackResult.AttackRoll</span>
+                            <span class="fw-bold">TOTAL: @evt.AttackResult.TotalAttackResult</span>
+                        </div>
+                    }
+                </div>
+            }
+        }
+        else
+        {
+            <div class="text-center p-5 opacity-50">
+                <span style="font-size: 3rem;">📜</span>
+                <p class="mt-2">No actions performed yet.</p>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter] public IReadOnlyList<SessionEvent>? Events { get; set; }
+    [Parameter] public string Theme { get; set; } = "fantasy";
+    private string ThemeClass => Theme == "steampunk" ? "card-steampunk" : "card-fantasy";
+
+    private string GetEventColor(SessionEvent evt)
+    {
+        if (evt.CheckResult != null)
+        {
+            return evt.CheckResult.IsSuccess ? "var(--accent-primary)" : "var(--accent-secondary)";
+        }
+        if (evt.AttackResult != null)
+        {
+            return evt.AttackResult.IsHit ? "#8b2020" : "#555";
+        }
+        return "var(--border-color)";
+    }
+}
+```
+
+## FILE: UIComponents\CampaignDetailComponent.razor
+```razor
+@using API.Client.Abstraction
+@using Models.Common
+@inject ICampaignClient CampaignClient
+@inject ICharacterClient CharacterClient
+
+<div class="container py-4">
+    @if (_campaign == null)
+    {
+        <div class="text-center py-5">
+            <p class="mt-2 glow">Loading campaign details...</p>
+        </div>
+    }
+    else
+    {
+        <nav aria-label="breadcrumb" class="mb-4">
+            <a href="/campaigns">Campaigns</a> / <span>@_campaign.EntityId</span>
+        </nav>
+
+        <div class="card mb-4">
+            <div class="card-body p-4">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <h1 class="glow mb-1">@_campaign.EntityId</h1>
+                        <p class="lead mb-0">@GetDescription(_campaign)</p>
+                    </div>
+                    <div class="col-auto">
+                        <a href="/session/new?campaignId=@CampaignId" class="btn-primary" style="text-decoration: none; font-size: 1.25rem;">
+                            Start Session
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <h3 class="mb-3 glow">Characters</h3>
+        @if (_characters == null)
+        {
+            <div class="text-center py-4">
+                <p class="glow">Searching for heroes...</p>
+            </div>
+        }
+        else if (!_characters.Any())
+        {
+            <div class="card text-center py-4">
+                <p class="mb-0 italic">No characters assigned to this campaign yet.</p>
+            </div>
+        }
+        else
+        {
+            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-3">
+                @foreach (var character in _characters)
+                {
+                    <div class="col">
+                        <div class="card h-100 text-center">
+                            <div class="card-body">
+                                <div class="rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 64px; height: 64px; border: 2px solid var(--accent-primary); color: var(--accent-primary);">
+                                    <span style="font-size: 24px;">👤</span>
+                                </div>
+                                <h4 class="card-title mb-1 glow">@character.EntityId</h4>
+                                <p class="small mb-3">@character.RulesetId</p>
+                                <a href="/characters/@character.Id" class="btn-secondary btn-sm" style="text-decoration: none;">View Sheet</a>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    }
+</div>
+
+@code {
+    [Parameter] public string CampaignId { get; set; } = "";
+
+    private CampaignResource? _campaign;
+    private IEnumerable<CharacterResource>? _characters;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (string.IsNullOrEmpty(CampaignId)) return;
+
+        _campaign = await CampaignClient.GetByIdAsync(CampaignId);
+        
+        // Fetch characters for this campaign
+        try 
+        {
+            _characters = (await CharacterClient.GetAllAsync()).Where(c => c.CampaignId == CampaignId);
+        }
+        catch 
+        {
+            _characters = Array.Empty<CharacterResource>();
+        }
+    }
+
+    private string GetDescription(CampaignResource resource)
+    {
+        if (resource.Data.TryGetProperty("description", out var prop))
+        {
+            return prop.GetString() ?? "No description available.";
+        }
+        return "No description available.";
+    }
+}
+```
+
+## FILE: UIComponents\CampaignsComponent.razor
+```razor
+@using API.Client.Abstraction
+@using Models.Common
+@inject ICampaignClient CampaignClient
+
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="glow">Campaigns</h2>
+        <a href="/campaigns/new" class="btn-secondary disabled">
+            New Campaign
+        </a>
+    </div>
+
+    @if (_campaigns == null)
+    {
+        <div class="text-center py-5">
+            <p class="mt-2 glow">Loading campaigns...</p>
+        </div>
+    }
+    else if (!_campaigns.Any())
+    {
+        <div class="card py-5 text-center">
+            <p class="mb-0">No campaigns found. Start by creating one!</p>
+        </div>
+    }
+    else
+    {
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+            @foreach (var campaign in _campaigns)
+            {
+                <div class="col">
+                    <div class="card h-100 campaign-card">
+                        <div class="card-body">
+                            <h3 class="card-title glow">@campaign.EntityId</h3>
+                            <p class="card-text">@GetDescription(campaign)</p>
+                        </div>
+                        <div class="card-footer pt-0 pb-3">
+                            <a href="/campaigns/@campaign.Id" class="btn-primary d-block text-center" style="text-decoration: none;">
+                                View Details
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    private IEnumerable<CampaignResource>? _campaigns;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _campaigns = await CampaignClient.GetAllAsync();
+    }
+
+    private string GetDescription(CampaignResource resource)
+    {
+        if (resource.Data.TryGetProperty("description", out var prop))
+        {
+            return prop.GetString() ?? "No description available.";
+        }
+        return "No description available.";
+    }
+}
+```
+
+## FILE: UIComponents\CharacterDetailComponent.razor
+```razor
+@using API.Client.Abstraction
+@using Models.Common
+@using Models.GameSystems
+@inject ICharacterClient CharacterClient
+@inject IGameSystemClient GameSystemClient
+
+<div class="container py-4">
+    @if (_character == null)
+    {
+        <div class="text-center py-5">
+            <p class="mt-2 glow">Loading character...</p>
+        </div>
+    }
+    else
+    {
+        <nav aria-label="breadcrumb" class="mb-4">
+            <a href="/characters">Characters</a> / <span>@_character.EntityId</span>
+        </nav>
+
+        <div class="row">
+            <div class="col-lg-4">
+                <div class="card mb-4 text-center">
+                    <div class="card-body p-4">
+                        <div class="rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 120px; height: 120px; border: 3px solid var(--accent-primary); color: var(--accent-primary);">
+                            <span style="font-size: 48px;">👤</span>
+                        </div>
+                        <h2 class="glow">@_character.EntityId</h2>
+                        <p>@_character.RulesetId</p>
+                        <div class="divider"></div>
+                        <div class="text-left small">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>System:</span>
+                                <strong>@_character.GameId</strong>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Owner:</span>
+                                <strong>@_character.OwnerId</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-8">
+                @if (_schema == null)
+                {
+                    <div class="card">
+                        <div class="card-body text-center py-5">
+                            <p class="glow mb-0">Unrolling parchment...</p>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <CharacterSheetComponent Schema="_schema" />
+                }
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public string CharacterId { get; set; } = "";
+
+    private CharacterResource? _character;
+    private CharacterSheetSchema? _schema;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (string.IsNullOrEmpty(CharacterId)) return;
+
+        _character = await CharacterClient.GetByIdAsync(CharacterId);
+        
+        if (_character != null && !string.IsNullOrEmpty(_character.GameId))
+        {
+            try 
+            {
+                _schema = await GameSystemClient.GetSchemaAsync(_character.GameId);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error loading schema for system {_character.GameId}: {ex.Message}");
+            }
+        }
+    }
+}
+```
+
+## FILE: UIComponents\CharactersComponent.razor
+```razor
+@using API.Client.Abstraction
+@using Models.Common
+@inject ICharacterClient CharacterClient
+
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="glow">Characters</h2>
+        <a href="/characters/new" class="btn-secondary disabled">
+            New Character
+        </a>
+    </div>
+
+    @if (_characters == null)
+    {
+        <div class="text-center py-5">
+            <p class="mt-2 glow">Loading characters...</p>
+        </div>
+    }
+    else if (!_characters.Any())
+    {
+        <div class="card py-5 text-center">
+            <p class="mb-0">No characters found.</p>
+        </div>
+    }
+    else
+    {
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4">
+            @foreach (var character in _characters)
+            {
+                <div class="col">
+                    <div class="card h-100 text-center">
+                        <div class="card-body">
+                            <div class="rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px; border: 2px solid var(--accent-primary); color: var(--accent-primary);">
+                                <span style="font-size: 32px;">👤</span>
+                            </div>
+                            <h4 class="card-title glow">@character.EntityId</h4>
+                            <p class="small">@character.RulesetId</p>
+                            <div class="mt-3">
+                                <a href="/characters/@character.Id" class="btn-primary btn-sm d-block text-center" style="text-decoration: none;">View Sheet</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    private IEnumerable<CharacterResource>? _characters;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _characters = await CharacterClient.GetAllAsync();
+    }
+}
+```
+
+## FILE: UIComponents\CharacterSheetComponent.razor
+```razor
+@using Models.GameSystems
+
+<div class="card @(ThemeClass) h-100">
+    <div class="card-header border-bottom border-secondary">
+        <h3 class="heading-@(Theme) m-0">Character Sheet</h3>
+    </div>
+    <div class="card-body overflow-auto">
+        @if (Schema != null)
+        {
+            @foreach (var sheetSection in Schema.Sections)
+            {
+                <h4 class="mt-4 border-bottom pb-1 heading-@(Theme)" style="font-size: 1.2rem;">@sheetSection.DisplayName</h4>
+                <div class="row">
+                    @foreach (var field in sheetSection.Fields)
+                    {
+                        <div class="col-md-6 mb-3">
+                            <div class="p-2" style="background-color: rgba(0,0,0,0.05); border-radius: 4px; border: 1px solid var(--border-color);">
+                                <span class="d-block small opacity-75" style="font-family: var(--font-display); text-transform: uppercase;">@field.Label</span>
+                                <div class="text-center py-1" style="font-family: var(--font-mono); font-size: 1.2rem; color: var(--accent-primary);">
+                                    @field.DefaultValue
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        }
+        else
+        {
+            <div class="text-center p-4">
+                <p>No schema loaded.</p>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter] public CharacterSheetSchema? Schema { get; set; }
+    [Parameter] public string Theme { get; set; } = "fantasy";
+    private string ThemeClass => Theme == "steampunk" ? "card-steampunk" : "card-fantasy";
+}
+```
+
+## FILE: UIComponents\GameSystemsComponent.razor
+```razor
+@using API.Client.Abstraction
+@using Models.GameSystems
+@inject IGameSystemClient GameSystemClient
+
+<div class="container py-4">
+    <div class="mb-4">
+        <h2 class="glow">Game Systems</h2>
+        <p>Available rulebooks and game systems supported by Demons & Dogs.</p>
+    </div>
+
+    @if (_systems == null)
+    {
+        <div class="text-center py-5">
+            <p class="mt-2 glow">Loading game systems...</p>
+        </div>
+    }
+    else if (!_systems.Any())
+    {
+        <div class="card py-5 text-center">
+            <p class="mb-0">No game systems found in the registry.</p>
+        </div>
+    }
+    else
+    {
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+            @foreach (var system in _systems)
+            {
+                <div class="col">
+                    <div class="card h-100 system-card">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="rounded p-2 mr-3" style="background-color: var(--accent-secondary); color: white;">
+                                    <span>📜</span>
+                                </div>
+                                <h4 class="card-title glow mb-0">@system.DisplayName</h4>
+                            </div>
+                            <p class="card-text small">System ID: <code>@system.SystemId</code></p>
+                        </div>
+                        <div class="card-footer pt-0 pb-3">
+                            <button class="btn-secondary d-block text-center w-100 disabled" style="font-size: 0.8rem;">
+                                System Specs
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    private IEnumerable<GameSystemDescriptor>? _systems;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _systems = await GameSystemClient.GetAllAsync();
+    }
+}
+```
+
+## FILE: UIComponents\HomeComponent.razor
+```razor
+<div class="container text-center py-5">
+    <h1 class="glow mb-4" style="font-size: 5rem;">Demons & Dogs</h1>
+    <p class="lead mb-5" style="font-size: 1.5rem; font-family: var(--font-display);">Your AI-powered TTRPG companion</p>
+    <div class="divider"></div>
+    <a href="/campaigns" class="btn-primary" style="font-size: 1.5rem; text-decoration: none;">
+        Start Playing
+    </a>
+</div>
+```
+
+## FILE: UIComponents\NarrationPanel.razor
+```razor
+@using System.Text
+@using System.IO
+@using API.Client
+@inject IApiClient ApiClient
+
+<div class="narration-panel card @(ThemeClass) mt-4 mb-4 glow-@(Theme)">
+    <div class="card-header border-bottom border-secondary">
+        <h3 class="heading-@(Theme) m-0">Mordecai's Narration</h3>
+    </div>
+    <div class="card-body">
+        <p class="narration-text">@DisplayedText<span class="cursor">|</span></p>
+    </div>
+</div>
+
+<style>
+    .narration-text {
+        font-family: var(--font-body);
+        font-style: italic;
+        line-height: 1.6;
+        min-height: 4em;
+        font-size: 1.1rem;
+        color: var(--text-on-card);
+    }
+    .cursor {
+        font-weight: bold;
+        animation: blink 1s step-end infinite;
+        color: var(--accent-primary);
+        margin-left: 2px;
+    }
+    @@keyframes blink {
+        from, to { opacity: 0; }
+        50% { opacity: 1; }
+    }
+</style>
+
+@code {
+    [Parameter] public string Theme { get; set; } = "fantasy";
+
+    private string DisplayedText { get; set; } = "";
+    private string ThemeClass => Theme == "steampunk" ? "card-steampunk" : "card-fantasy";
+
+    public async Task StartNarration(string sessionId)
+    {
+        DisplayedText = "";
+        StateHasChanged();
+
+        try
+        {
+            var url = $"api/narration/stream/{sessionId}";
+            await foreach (var token in ApiClient.GetStream(url))
+            {
+                foreach (var ch in token)
+                {
+                    DisplayedText += ch;
+                    StateHasChanged();
+                    await Task.Delay(15);
+                }
+            }
+        }
+        catch (Exception)
+        {
+            DisplayedText = "The shadows grow silent...";
+            StateHasChanged();
+        }
+    }
+}
+```
+
+## FILE: UIComponents\NewSessionComponent.razor
+```razor
+@using API.Client.Abstraction
+@using Models.Common
+@using Mediator.Mediator.Contracts.Session
+@inject UIComponents.Services.ThemeService ThemeService
+@inject ICampaignClient CampaignClient
+@inject ICharacterClient CharacterClient
+@inject ISessionClient SessionClient
+@inject NavigationManager NavigationManager
+
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header py-3">
+                    <h3 class="mb-0 glow">Start New Session</h3>
+                </div>
+                <div class="card-body p-4">
+                    <div class="form-group mb-4">
+                        <label class="form-label glow">Campaign</label>
+                        <select class="form-control" @bind="_selectedCampaignId">
+                            <option value="">Select a campaign...</option>
+                            @if (_campaigns != null)
+                            {
+                                @foreach (var campaign in _campaigns)
+                                {
+                                    <option value="@campaign.Id">@campaign.EntityId</option>
+                                }
+                            }
+                        </select>
+                    </div>
+
+                    <div class="form-group mb-4">
+                        <label class="form-label glow">Character</label>
+                        <select class="form-control" @bind="_selectedCharacterId">
+                            <option value="">Select a character...</option>
+                            @if (_characters != null)
+                            {
+                                @foreach (var character in _characters)
+                                {
+                                    <option value="@character.Id">@character.EntityId (@character.GameId)</option>
+                                }
+                            }
+                        </select>
+                    </div>
+
+                    <div class="mt-5 text-center">
+                        <button class="btn-primary w-100" 
+                                @onclick="OnStartSession" 
+                                disabled="@(string.IsNullOrEmpty(_selectedCampaignId) || string.IsNullOrEmpty(_selectedCharacterId) || _isStarting)">
+                            @if (_isStarting)
+                            {
+                                <span>Starting...</span>
+                            }
+                            else
+                            {
+                                <span>Start Session</span>
+                            }
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public string? PreSelectedCampaignId { get; set; }
+
+    private IEnumerable<CampaignResource>? _campaigns;
+    private IEnumerable<CharacterResource>? _characters;
+    private string _selectedCampaignId = "";
+    private string _selectedCharacterId = "";
+    private bool _isStarting = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _campaigns = await CampaignClient.GetAllAsync();
+        _characters = await CharacterClient.GetAllAsync();
+
+        if (!string.IsNullOrEmpty(PreSelectedCampaignId))
+        {
+            _selectedCampaignId = PreSelectedCampaignId;
+        }
+    }
+
+    private async Task OnStartSession()
+    {
+        if (string.IsNullOrEmpty(_selectedCharacterId)) return;
+
+        _isStarting = true;
+        try 
+        {
+            var campaign = _campaigns?.FirstOrDefault(c => c.Id == _selectedCampaignId);
+            var character = _characters?.FirstOrDefault(c => c.Id == _selectedCharacterId);
+            
+            if (character == null) return;
+
+            // Set the theme based on campaign before navigating
+            if (campaign != null)
+            {
+                ThemeService.SetTheme(campaign.Theme);
+            }
+
+            var request = new StartSessionRequest(character.EntityId ?? "Unknown", character.GameId ?? "dnd5e");
+            var sessionState = await SessionClient.StartSessionAsync(request);
+            
+            NavigationManager.NavigateTo($"/session/{sessionState.SessionId}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error starting session: {ex.Message}");
+            _isStarting = false;
+        }
+    }
+}
+```
+
+## FILE: UIComponents\Services\ThemeService.cs
+```cs
+namespace UIComponents.Services;
+
+public class ThemeService
+{
+    public string CurrentTheme { get; private set; } = "fantasy";
+    public event Action? OnThemeChanged;
+
+    public void SetTheme(string theme)
+    {
+        if (CurrentTheme == theme) return;
+        CurrentTheme = theme;
+        OnThemeChanged?.Invoke();
+    }
+}
+```
+
+## FILE: UIComponents\SessionComponent.razor
+```razor
+@using API.Client.Abstraction
+@using Mediator.Mediator.Contracts.Session
+@using Models.Session
+@using Models.GameSystems
+@using UIComponents.Services
+@inject UIComponents.Services.ThemeService ThemeService
+@inject ISessionClient SessionClient
+
+<div class="container-fluid py-4">
+    @if (_sessionState == null)
+    {
+        <div class="text-center py-5">
+            <p class="mt-2 glow">Connecting to session...</p>
+        </div>
+    }
+    else
+    {
+        <div class="row">
+            <div class="col-md-3">
+                <CharacterSheetComponent Schema="_sessionState.CharacterSheetSchema" Theme="@ThemeService.CurrentTheme" />
+            </div>
+            <div class="col-md-6">
+                <div class="card @(ThemeClass) mb-3 glow-@(ThemeService.CurrentTheme)">
+                    <div class="card-body text-center">
+                        <h1 class="heading-@(ThemeService.CurrentTheme) mb-3">@_sessionState.CharacterName</h1>
+                        <div class="d-flex justify-content-center gap-3">
+                            <button class="btn-primary" @onclick="RollSkillCheck" style="font-size: 1.25rem;">
+                                ⚡ Roll Stealth
+                            </button>
+                            <button class="btn-primary" @onclick="MakeAttack" style="background-color: var(--accent-secondary); font-size: 1.25rem;">
+                                ⚔ Attack
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <ActionLogComponent Events="_sessionState.EventLog" Theme="@ThemeService.CurrentTheme" />
+            </div>
+            <div class="col-md-3">
+                <NarrationPanel @ref="_narrationPanel" Theme="@ThemeService.CurrentTheme" />
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public string? SessionId { get; set; }
+    private SessionState? _sessionState;
+    private NarrationPanel? _narrationPanel;
+    private string ThemeClass => ThemeService.CurrentTheme == "steampunk" ? "card-steampunk" : "card-fantasy";
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (!string.IsNullOrEmpty(SessionId))
+        {
+            try 
+            {
+                _sessionState = await SessionClient.GetSessionAsync(SessionId);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error loading session: {ex.Message}");
+            }
+        }
+    }
+
+    private async Task RollSkillCheck()
+    {
+        if (_sessionState == null) return;
+        
+        try
+        {
+            var context = new SkillCheckContext(_sessionState.SessionId, "stealth", 3, 2, 15);
+            var request = new PerformActionRequest(_sessionState.SessionId, ActionType.SkillCheck, SkillCheckContext: context);
+            var result = await SessionClient.PerformActionAsync(request);
+            
+            await UpdateLocalLog(result);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error performing skill check: {ex.Message}");
+        }
+    }
+
+    private async Task MakeAttack()
+    {
+        if (_sessionState == null) return;
+        
+        try
+        {
+            var context = new AttackContext("longsword", 5, 14);
+            var request = new PerformActionRequest(_sessionState.SessionId, ActionType.Attack, AttackContext: context);
+            var result = await SessionClient.PerformActionAsync(request);
+            
+            await UpdateLocalLog(result);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error performing attack: {ex.Message}");
+        }
+    }
+
+    private async Task UpdateLocalLog(SessionEvent result)
+    {
+        if (_sessionState == null) return;
+        var newLog = new List<SessionEvent>(_sessionState.EventLog) { result };
+        _sessionState = _sessionState with { EventLog = newLog };
+
+        if (_narrationPanel != null)
+        {
+            await _narrationPanel.StartNarration(_sessionState.SessionId);
+        }
+    }
+}
+```
+
+## FILE: UIComponents\Shared\NavMenu.razor
+```razor
+@inject UIComponents.Services.ThemeService ThemeService
+
+<nav class="navbar">
+    <div class="container-fluid d-flex justify-content-between align-items-center">
+        <a class="brand" href="/">⚔ Demons & Dogs</a>
+        
+        <div class="nav-links d-flex gap-4">
+            <div class="nav-item">
+                <NavLink class="nav-link" href="/campaigns" Match="NavLinkMatch.All">Play</NavLink>
+            </div>
+            <div class="nav-item">
+                <NavLink class="nav-link" href="/characters">Characters</NavLink>
+            </div>
+            <div class="nav-item">
+                <NavLink class="nav-link" href="/systems">Game Systems</NavLink>
+            </div>
+        </div>
+
+        <div class="theme-toggle">
+            <button class="btn-primary" @onclick="ToggleTheme">
+                @(ThemeService.CurrentTheme == "fantasy" ? "⚙ Steampunk" : "📜 Fantasy")
+            </button>
+        </div>
+    </div>
+</nav>
+
+@code {
+    private void ToggleTheme()
+    {
+        ThemeService.SetTheme(ThemeService.CurrentTheme == "fantasy" ? "steampunk" : "fantasy");
+    }
+}
+```
+
+## FILE: UIComponents\UIComponents.csproj
+```csproj
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+    </PropertyGroup>
+
+
+    <ItemGroup>
+        <SupportedPlatform Include="browser"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="10.0.3"/>
+        <PackageReference Include="Radzen.Blazor" Version="9.0.5" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\AppConstants\AppConstants.csproj" />
+      <ProjectReference Include="..\Models\Models.csproj" />
+      <ProjectReference Include="..\API.Client\API.Client.csproj" />
+    </ItemGroup>
+
+</Project>
+```
+
+# ================================================================
+# END OF CONTEXT - 144 files exported, 1 skipped
+
