@@ -1,0 +1,92 @@
+@using API.Client.Abstraction
+@using Models.Common
+@using Models.GameSystems
+@inject ICharacterClient CharacterClient
+@inject IGameSystemClient GameSystemClient
+
+<div class="container py-4">
+    @if (_character == null)
+    {
+        <div class="text-center py-5">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-2">Loading character...</p>
+        </div>
+    }
+    else
+    {
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="/characters">Characters</a></li>
+                <li class="breadcrumb-item active" aria-current="page">@_character.EntityId</li>
+            </ol>
+        </nav>
+
+        <div class="row">
+            <div class="col-lg-4">
+                <div class="card shadow-sm border-0 mb-4 text-center">
+                    <div class="card-body p-4">
+                        <div class="bg-light rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 120px; height: 120px;">
+                            <i class="oi oi-person text-primary" style="font-size: 48px;"></i>
+                        </div>
+                        <h2 class="font-weight-bold">@_character.EntityId</h2>
+                        <p class="text-muted">@_character.RulesetId</p>
+                        <hr />
+                        <div class="text-left small">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="text-muted">System:</span>
+                                <strong>@_character.GameId</strong>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="text-muted">Owner:</span>
+                                <strong>@_character.OwnerId</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-8">
+                @if (_schema == null)
+                {
+                    <div class="card shadow-sm border-0">
+                        <div class="card-body text-center py-5">
+                            <div class="spinner-border text-secondary mb-3" role="status"></div>
+                            <p class="text-muted mb-0">Loading character sheet...</p>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <CharacterSheetComponent Schema="_schema" />
+                }
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public string CharacterId { get; set; } = "";
+
+    private JsonResource? _character;
+    private CharacterSheetSchema? _schema;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (string.IsNullOrEmpty(CharacterId)) return;
+
+        _character = await CharacterClient.GetByIdAsync(CharacterId);
+        
+        if (_character != null && !string.IsNullOrEmpty(_character.GameId))
+        {
+            try 
+            {
+                _schema = await GameSystemClient.GetSchemaAsync(_character.GameId);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error loading schema for system {_character.GameId}: {ex.Message}");
+            }
+        }
+    }
+}

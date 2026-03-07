@@ -7,29 +7,11 @@
 <div class="container-fluid py-4">
     @if (_sessionState == null)
     {
-        <div class="row justify-content-center">
-            <div class="col-md-6">
-                <div class="card shadow">
-                    <div class="card-header bg-dark text-white text-center">
-                        <h3 class="mb-0">Start New Session</h3>
-                    </div>
-                    <div class="card-body">
-                        <div class="form-group mb-3">
-                            <label class="font-weight-bold">Character Name</label>
-                            <input class="form-control" @bind="_characterName" placeholder="Enter character name..." />
-                        </div>
-                        <div class="form-group mb-4">
-                            <label class="font-weight-bold">Game System</label>
-                            <select class="form-control" @bind="_systemId">
-                                <option value="dnd5e">Dungeons & Dragons 5th Edition</option>
-                            </select>
-                        </div>
-                        <button class="btn btn-primary btn-block btn-lg" @onclick="StartSession">
-                            <i class="oi oi-play mr-2"></i>Start Adventure
-                        </button>
-                    </div>
-                </div>
+        <div class="text-center py-5">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading session...</span>
             </div>
+            <p class="mt-2">Connecting to session...</p>
         </div>
     }
     else
@@ -68,20 +50,21 @@
 </div>
 
 @code {
+    [Parameter] public string? SessionId { get; set; }
     private SessionState? _sessionState;
-    private string _characterName = "Adventurer";
-    private string _systemId = "dnd5e";
 
-    private async Task StartSession()
+    protected override async Task OnParametersSetAsync()
     {
-        try
+        if (!string.IsNullOrEmpty(SessionId))
         {
-            var request = new StartSessionRequest(_characterName, _systemId);
-            _sessionState = await SessionClient.StartSessionAsync(request);
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error starting session: {ex.Message}");
+            try 
+            {
+                _sessionState = await SessionClient.GetSessionAsync(SessionId);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error loading session: {ex.Message}");
+            }
         }
     }
 

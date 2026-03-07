@@ -1,0 +1,62 @@
+@using API.Client.Abstraction
+@using Models.GameSystems
+@inject IGameSystemClient GameSystemClient
+
+<div class="container py-4">
+    <div class="mb-4">
+        <h2>Game Systems</h2>
+        <p class="text-muted">Available rulebooks and game systems supported by Demons & Dogs.</p>
+    </div>
+
+    @if (_systems == null)
+    {
+        <div class="text-center py-5">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-2">Loading game systems...</p>
+        </div>
+    }
+    else if (!_systems.Any())
+    {
+        <div class="alert alert-warning py-5 text-center shadow-sm">
+            <i class="oi oi-warning display-4 mb-3"></i>
+            <p class="mb-0">No game systems found in the registry.</p>
+        </div>
+    }
+    else
+    {
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+            @foreach (var system in _systems)
+            {
+                <div class="col">
+                    <div class="card h-100 shadow-sm border-0 system-card">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="bg-primary text-white rounded p-2 mr-3">
+                                    <i class="oi oi-book" style="font-size: 20px;"></i>
+                                </div>
+                                <h5 class="card-title font-weight-bold mb-0">@system.DisplayName</h5>
+                            </div>
+                            <p class="card-text text-muted small">System ID: <code>@system.SystemId</code></p>
+                        </div>
+                        <div class="card-footer bg-white border-top-0 pt-0 pb-3">
+                            <button class="btn btn-outline-primary btn-block btn-sm disabled">
+                                <i class="oi oi-info mr-2"></i>System Specs
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    private IEnumerable<GameSystemDescriptor>? _systems;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _systems = await GameSystemClient.GetAllAsync();
+    }
+}

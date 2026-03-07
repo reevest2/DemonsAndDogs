@@ -1,0 +1,10 @@
+@page "/characters/{CharacterId}"
+@using DemonsAndDogs.Components
+
+<PageTitle>Character Sheet - Demons & Dogs</PageTitle>
+
+<CharacterDetailComponent CharacterId="@CharacterId" />
+
+@code {
+    [Parameter] public string CharacterId { get; set; } = "";
+}

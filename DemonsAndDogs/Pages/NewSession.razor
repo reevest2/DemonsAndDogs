@@ -1,0 +1,9 @@
+@page "/session/new"
+
+<PageTitle>New Session - Demons & Dogs</PageTitle>
+
+<NewSessionComponent PreSelectedCampaignId="@CampaignId" />
+
+@code {
+    [Parameter, SupplyParameterFromQuery] public string? CampaignId { get; set; }
+}

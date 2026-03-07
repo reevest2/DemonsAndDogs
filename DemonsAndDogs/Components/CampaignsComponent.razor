@@ -1,0 +1,68 @@
+@using API.Client.Abstraction
+@using Models.Common
+@inject ICampaignClient CampaignClient
+
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Campaigns</h2>
+        <a href="/campaigns/new" class="btn btn-outline-primary disabled">
+            <i class="oi oi-plus mr-1"></i>New Campaign
+        </a>
+    </div>
+
+    @if (_campaigns == null)
+    {
+        <div class="text-center py-5">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-2">Loading campaigns...</p>
+        </div>
+    }
+    else if (!_campaigns.Any())
+    {
+        <div class="alert alert-info py-5 text-center shadow-sm">
+            <i class="oi oi-info display-4 mb-3"></i>
+            <p class="mb-0">No campaigns found. Start by creating one!</p>
+        </div>
+    }
+    else
+    {
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+            @foreach (var campaign in _campaigns)
+            {
+                <div class="col">
+                    <div class="card h-100 shadow-sm border-0 campaign-card">
+                        <div class="card-body">
+                            <h5 class="card-title font-weight-bold">@campaign.EntityId</h5>
+                            <p class="card-text text-muted">@GetDescription(campaign)</p>
+                        </div>
+                        <div class="card-footer bg-white border-top-0 pt-0 pb-3">
+                            <a href="/campaigns/@campaign.Id" class="btn btn-primary btn-block">
+                                <i class="oi oi-eye mr-2"></i>View Details
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    private IEnumerable<JsonResource>? _campaigns;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _campaigns = await CampaignClient.GetAllAsync();
+    }
+
+    private string GetDescription(JsonResource resource)
+    {
+        if (resource.Data.TryGetProperty("description", out var prop))
+        {
+            return prop.GetString() ?? "No description available.";
+        }
+        return "No description available.";
+    }
+}

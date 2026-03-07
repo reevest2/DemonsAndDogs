@@ -1,4 +1,9 @@
-@page "/session"
-@using DemonsAndDogs.Components
+@page "/session/{SessionId}"
 
-<SessionComponent />
+<PageTitle>Game Session - Demons & Dogs</PageTitle>
+
+<SessionComponent SessionId="@SessionId" />
+
+@code {
+    [Parameter] public string SessionId { get; set; } = "";
+}

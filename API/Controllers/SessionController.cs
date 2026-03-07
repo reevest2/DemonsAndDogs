@@ -22,4 +22,11 @@ public class SessionController(IMediator mediator) : ControllerBase
         var result = await mediator.Send(request);
         return Ok(result);
     }
+
+    [HttpGet("{sessionId}")]
+    public async Task<ActionResult<SessionState>> GetSession(string sessionId)
+    {
+        var result = await mediator.Send(new GetSessionRequest(sessionId));
+        return Ok(result);
+    }
 }

@@ -15,4 +15,9 @@ public class SessionClient(IApiClient apiClient) : ISessionClient
     {
         return await apiClient.Post<PerformActionRequest, SessionEvent>("api/session/action", request, ct);
     }
+
+    public async Task<SessionState> GetSessionAsync(string sessionId, CancellationToken ct = default)
+    {
+        return await apiClient.Get<SessionState>($"api/session/{sessionId}", ct);
+    }
 }

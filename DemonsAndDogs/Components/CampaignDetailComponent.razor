@@ -1,0 +1,110 @@
+@using API.Client.Abstraction
+@using Models.Common
+@inject ICampaignClient CampaignClient
+@inject IApiClient ApiClient
+
+<div class="container py-4">
+    @if (_campaign == null)
+    {
+        <div class="text-center py-5">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-2">Loading campaign details...</p>
+        </div>
+    }
+    else
+    {
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="/campaigns">Campaigns</a></li>
+                <li class="breadcrumb-item active" aria-current="page">@_campaign.EntityId</li>
+            </ol>
+        </nav>
+
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-body p-4">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <h1 class="font-weight-bold mb-1">@_campaign.EntityId</h1>
+                        <p class="text-muted lead mb-0">@GetDescription(_campaign)</p>
+                    </div>
+                    <div class="col-auto">
+                        <a href="/session/new?campaignId=@CampaignId" class="btn btn-primary btn-lg px-4 shadow-sm">
+                            <i class="oi oi-media-play mr-2"></i>Start Session
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <h3 class="mb-3">Characters</h3>
+        @if (_characters == null)
+        {
+            <div class="text-center py-4">
+                <div class="spinner-border text-secondary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </div>
+        }
+        else if (!_characters.Any())
+        {
+            <div class="alert alert-light border text-center py-4">
+                <p class="mb-0 text-muted italic">No characters assigned to this campaign yet.</p>
+            </div>
+        }
+        else
+        {
+            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-3">
+                @foreach (var character in _characters)
+                {
+                    <div class="col">
+                        <div class="card h-100 border-0 shadow-sm text-center">
+                            <div class="card-body">
+                                <div class="bg-light rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 64px; height: 64px;">
+                                    <i class="oi oi-person text-secondary" style="font-size: 24px;"></i>
+                                </div>
+                                <h5 class="card-title font-weight-bold mb-1">@character.EntityId</h5>
+                                <p class="text-muted small mb-3">@character.RulesetId</p>
+                                <a href="/characters/@character.Id" class="btn btn-sm btn-outline-primary px-3">View Sheet</a>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    }
+</div>
+
+@code {
+    [Parameter] public string CampaignId { get; set; } = "";
+
+    private JsonResource? _campaign;
+    private IEnumerable<JsonResource>? _characters;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (string.IsNullOrEmpty(CampaignId)) return;
+
+        _campaign = await CampaignClient.GetByIdAsync(CampaignId);
+        
+        // Fetch characters for this campaign
+        try 
+        {
+            _characters = await ApiClient.Get<IEnumerable<JsonResource>>($"api/JsonResource/query?resourceKind=character&campaignId={CampaignId}", default);
+        }
+        catch 
+        {
+            _characters = Array.Empty<JsonResource>();
+        }
+    }
+
+    private string GetDescription(JsonResource resource)
+    {
+        if (resource.Data.TryGetProperty("description", out var prop))
+        {
+            return prop.GetString() ?? "No description available.";
+        }
+        return "No description available.";
+    }
+}

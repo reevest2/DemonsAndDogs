@@ -1,0 +1,107 @@
+@using API.Client.Abstraction
+@using Models.Common
+@using Mediator.Mediator.Contracts.Session
+@inject ICampaignClient CampaignClient
+@inject ICharacterClient CharacterClient
+@inject ISessionClient SessionClient
+@inject NavigationManager NavigationManager
+
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-primary text-white py-3">
+                    <h3 class="mb-0 h5">Start New Session</h3>
+                </div>
+                <div class="card-body p-4">
+                    <div class="form-group mb-4">
+                        <label class="form-label font-weight-bold">Campaign</label>
+                        <select class="form-select form-select-lg" @bind="_selectedCampaignId">
+                            <option value="">Select a campaign...</option>
+                            @if (_campaigns != null)
+                            {
+                                @foreach (var campaign in _campaigns)
+                                {
+                                    <option value="@campaign.Id">@campaign.EntityId</option>
+                                }
+                            }
+                        </select>
+                    </div>
+
+                    <div class="form-group mb-4">
+                        <label class="form-label font-weight-bold">Character</label>
+                        <select class="form-select form-select-lg" @bind="_selectedCharacterId">
+                            <option value="">Select a character...</option>
+                            @if (_characters != null)
+                            {
+                                @foreach (var character in _characters)
+                                {
+                                    <option value="@character.Id">@character.EntityId (@character.GameId)</option>
+                                }
+                            }
+                        </select>
+                    </div>
+
+                    <div class="d-grid mt-5">
+                        <button class="btn btn-primary btn-lg py-3 shadow-sm" 
+                                @onclick="OnStartSession" 
+                                disabled="@(string.IsNullOrEmpty(_selectedCampaignId) || string.IsNullOrEmpty(_selectedCharacterId) || _isStarting)">
+                            @if (_isStarting)
+                            {
+                                <span class="spinner-border spinner-border-sm mr-2" role="status"></span>
+                            }
+                            else
+                            {
+                                <i class="oi oi-media-play mr-2"></i>
+                            }
+                            Start Session
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public string? PreSelectedCampaignId { get; set; }
+
+    private IEnumerable<JsonResource>? _campaigns;
+    private IEnumerable<JsonResource>? _characters;
+    private string _selectedCampaignId = "";
+    private string _selectedCharacterId = "";
+    private bool _isStarting = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _campaigns = await CampaignClient.GetAllAsync();
+        _characters = await CharacterClient.GetAllAsync();
+
+        if (!string.IsNullOrEmpty(PreSelectedCampaignId))
+        {
+            _selectedCampaignId = PreSelectedCampaignId;
+        }
+    }
+
+    private async Task OnStartSession()
+    {
+        if (string.IsNullOrEmpty(_selectedCharacterId)) return;
+
+        _isStarting = true;
+        try 
+        {
+            var character = _characters?.FirstOrDefault(c => c.Id == _selectedCharacterId);
+            if (character == null) return;
+
+            var request = new StartSessionRequest(character.EntityId ?? "Unknown", character.GameId ?? "dnd5e");
+            var sessionState = await SessionClient.StartSessionAsync(request);
+            
+            NavigationManager.NavigateTo($"/session/{sessionState.SessionId}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error starting session: {ex.Message}");
+            _isStarting = false;
+        }
+    }
+}

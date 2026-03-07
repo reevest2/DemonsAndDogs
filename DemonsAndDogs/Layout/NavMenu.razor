@@ -1,7 +1,7 @@
-
+﻿
 <div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
-        <a class="navbar-brand" href="">DemonsAndDogs</a>
+        <a class="navbar-brand font-weight-bold" href="">Demons & Dogs</a>
         <button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
             <span class="navbar-toggler-icon"></span>
         </button>
@@ -12,37 +12,22 @@
     <nav class="flex-column">
         <div class="nav-item px-3">
             <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu"></span> Home
+                <span class="oi oi-home" aria-hidden="true"></span> Home
             </NavLink>
         </div>
         <div class="nav-item px-3">
-            <NavLink class="nav-link" href="/CreateSchema" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu"></span> Create Schema
+            <NavLink class="nav-link" href="/campaigns">
+                <span class="oi oi-play-circle" aria-hidden="true"></span> Play
             </NavLink>
         </div>
         <div class="nav-item px-3">
-            <NavLink class="nav-link" href="/CreateResource" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu"></span> Create Resource
+            <NavLink class="nav-link" href="/characters">
+                <span class="oi oi-people" aria-hidden="true"></span> Characters
             </NavLink>
         </div>
         <div class="nav-item px-3">
-            <NavLink class="nav-link" href="/Games" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu"></span> Games
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="/DocumentDefinitions" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu"></span> Document Definitions
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="/Documents" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu"></span> Documents
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="/Campaigns" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu"></span> Campaigns
+            <NavLink class="nav-link" href="/systems">
+                <span class="oi oi-book" aria-hidden="true"></span> Game Systems
             </NavLink>
         </div>
     </nav>

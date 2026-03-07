@@ -1,0 +1,9 @@
+@page "/campaigns/{CampaignId}"
+
+<PageTitle>Campaign Details - Demons & Dogs</PageTitle>
+
+<CampaignDetailComponent CampaignId="@CampaignId" />
+
+@code {
+    [Parameter] public string CampaignId { get; set; } = "";
+}
