@@ -1,6 +1,7 @@
 @using System.Text
 @using System.IO
-@inject HttpClient Http
+@using API.Client
+@inject IApiClient ApiClient
 
 <div class="narration-panel card @(ThemeClass) mt-4 mb-4 glow-@(Theme)">
     <div class="card-header border-bottom border-secondary">
@@ -46,22 +47,13 @@
         try
         {
             var url = $"api/narration/stream/{sessionId}";
-            using var response = await Http.GetAsync(url, HttpCompletionOption.ResponseHeadersRead);
-            using var stream = await response.Content.ReadAsStreamAsync();
-            using var reader = new StreamReader(stream);
-
-            while (!reader.EndOfStream)
+            await foreach (var token in ApiClient.GetStream(url))
             {
-                var line = await reader.ReadLineAsync();
-                if (line?.StartsWith("data: ") == true)
+                foreach (var ch in token)
                 {
-                    var token = line.Substring(6);
-                    foreach (var ch in token)
-                    {
-                        DisplayedText += ch;
-                        StateHasChanged();
-                        await Task.Delay(15);
-                    }
+                    DisplayedText += ch;
+                    StateHasChanged();
+                    await Task.Delay(15);
                 }
             }
         }

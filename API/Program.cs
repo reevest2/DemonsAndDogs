@@ -13,13 +13,13 @@ public class Program
     {
         var builder = WebApplication.CreateBuilder(args);
         
-        //TODO: Put this in settings
+        var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? Array.Empty<string>();
         builder.Services.AddCors(options =>
         {
-            options.AddPolicy("DevCors", policy =>
+            options.AddPolicy(AppConstants.Cors.PolicyName, policy =>
             {
                 policy
-                    .WithOrigins("http://localhost:5150")
+                    .WithOrigins(allowedOrigins)
                     .AllowAnyHeader()
                     .AllowAnyMethod();
             });
@@ -42,16 +42,17 @@ public class Program
         builder.Services.ConfigureServices(builder.Configuration);
 
         var app = builder.Build();
-        app.UseCors("DevCors");
+        app.UseCors(AppConstants.Cors.PolicyName);
 
-        // Configure the HTTP request pipeline.
         if (app.Environment.IsDevelopment())
         {
             app.UseSwagger();
             app.UseSwaggerUI();
         }
-
-        app.UseHttpsRedirection();
+        else
+        {
+            app.UseHttpsRedirection();
+        }
         app.UseAuthorization();
 
 

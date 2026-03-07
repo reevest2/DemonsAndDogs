@@ -40,7 +40,7 @@ public class ActionLogComponentTests : TestContext
             .Add(p => p.Events, events));
 
         // Assert
-        var eventItems = cut.FindAll(".mb-2.p-2");
+        var eventItems = cut.FindAll(".mb-3.p-3");
         Assert.Equal(2, eventItems.Count);
     }
 
@@ -74,7 +74,7 @@ public class ActionLogComponentTests : TestContext
             .Add(p => p.Events, events));
 
         // Assert
-        var eventItems = cut.FindAll(".mb-2.p-2");
+        var eventItems = cut.FindAll(".mb-3.p-3");
         Assert.Contains("Newer Event", eventItems[0].InnerHtml);
         Assert.Contains("Older Event", eventItems[1].InnerHtml);
     }
