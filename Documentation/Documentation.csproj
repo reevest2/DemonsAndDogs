@@ -5,7 +5,12 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
     </PropertyGroup>
-
+    
+    <!--
+      Docs live in the top-level /docs folder for easy editing.
+      Embedded here as assembly resources so MCPServer can serve
+      them without needing file paths on disk.
+    -->
     <ItemGroup>
         <EmbeddedResource Include="..\docs\**\*.md"
                           LogicalName="%(RecursiveDir)%(Filename)%(Extension)"
