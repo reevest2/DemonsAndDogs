@@ -21,6 +21,8 @@ public class Program
         builder.Services.AddScoped<ApiClient>();
         builder.Services.AddScoped<IApiClient>(sp => sp.GetRequiredService<ApiClient>());
         builder.Services.AddScoped<ISessionClient, SessionClient>();
+        builder.Services.AddScoped<ICampaignClient, CampaignClient>();
+        builder.Services.AddScoped<ICharacterClient, CharacterClient>();
         //Http client to the API
         builder.Services.AddScoped(_ => new HttpClient { BaseAddress = new Uri("https://localhost:44390/") }); //TODO: Put in settings somewhere
 

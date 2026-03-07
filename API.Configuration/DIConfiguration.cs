@@ -1,8 +1,10 @@
 using API.Services;
 using API.Services.Abstraction;
+using API.Services.Mock;
 using DataAccess;
 using DataAccess.Abstraction;
 using Mediator;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Models.Common;
 
@@ -20,8 +22,20 @@ public static class DIConfiguration
         services.AddScoped<IJsonResourceRepository, JsonResourceRepository>();
     }
 
-    public static void ConfigureServices(this IServiceCollection services)
+    public static void ConfigureServices(this IServiceCollection services, IConfiguration configuration)
     {
+        var useMockData = configuration.GetValue<bool>("UseMockData");
+
+        if (useMockData)
+        {
+            services.AddScoped<ICampaignService, MockCampaignService>();
+            services.AddScoped<ICharacterService, MockCharacterService>();
+        }
+        else
+        {
+            // Real implementations will be registered here when they exist
+        }
+
         services.AddScoped<IJsonResourceService, JsonResourceService>();
         services.AddSingleton<IGameSystemRegistry, GameSystemRegistry>();
         services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(MediatorAssemblyMarker).Assembly));

@@ -12,6 +12,7 @@
     </ItemGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\API.Services.Mock\API.Services.Mock.csproj" />
       <ProjectReference Include="..\API.Services\API.Services.csproj" />
       <ProjectReference Include="..\DataAccess\DataAccess.csproj" />
       <ProjectReference Include="..\Mediator\Mediator.csproj" />

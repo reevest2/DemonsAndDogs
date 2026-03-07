@@ -39,7 +39,7 @@ public class Program
         builder.Services.AddDbContext<DbContext>(options =>
             options.UseNpgsql(dataSource));
         builder.Services.ConfigureRepositories();
-        builder.Services.ConfigureServices();
+        builder.Services.ConfigureServices(builder.Configuration);
 
         var app = builder.Build();
         app.UseCors("DevCors");

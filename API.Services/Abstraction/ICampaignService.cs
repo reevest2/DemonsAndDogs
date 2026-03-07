@@ -1,0 +1,1 @@
+using Models.Common; namespace API.Services.Abstraction; public interface ICampaignService { Task<IEnumerable<JsonResource>> GetAllAsync(); Task<JsonResource?> GetByIdAsync(string id); }
