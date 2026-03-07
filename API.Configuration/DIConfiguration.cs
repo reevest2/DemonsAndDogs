@@ -22,5 +22,6 @@ public static class DIConfiguration
     public static void ConfigureServices(this IServiceCollection services)
     {
         services.AddScoped<IJsonResourceService, JsonResourceService>();
+        services.AddSingleton<IGameSystemRegistry, GameSystemRegistry>();
     }
 }
