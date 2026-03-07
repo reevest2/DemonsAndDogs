@@ -1,9 +1,8 @@
 @page "/Games"
-@using MediatR
-@using Mediator.Mediator.Contracts
+@using AppConstants
 @using Models.Common
 @using UIComponents
-@inject IMediator Mediator
+@inject IApiClient ApiClient
 @inject NotificationService NotificationService
 
 <PageTitle>Games</PageTitle>
@@ -22,7 +21,7 @@
     {
         try
         {
-            _games = await Mediator.Send(new GetGamesRequest());
+            _games = await ApiClient.Get<IEnumerable<JsonResource>>($"api/JsonResource/kind/{ResourceKinds.Game}", default);
         }
         catch (Exception ex)
         {
@@ -34,7 +33,15 @@
     {
         try
         {
-            var result = await Mediator.Send(new CreateGameRequest(submission.OwnerId, submission.Name, submission.Description));
+            var data = new { name = submission.Name, description = submission.Description };
+            var resource = new GameResource
+            {
+                OwnerId = submission.OwnerId,
+                EntityId = submission.Name,
+                ResourceKind = ResourceKinds.Game,
+                Data = System.Text.Json.JsonSerializer.Deserialize<System.Text.Json.JsonElement>(System.Text.Json.JsonSerializer.Serialize(data))
+            };
+            var result = await ApiClient.Post<JsonResource, JsonResource>("api/JsonResource", resource, default);
             NotificationService.Notify(NotificationSeverity.Success, "Success", $"Game created: {result.EntityId}");
             await LoadGames();
         }

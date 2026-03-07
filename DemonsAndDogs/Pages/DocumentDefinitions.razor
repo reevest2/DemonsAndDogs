@@ -1,9 +1,8 @@
 @page "/DocumentDefinitions"
-@using MediatR
-@using Mediator.Mediator.Contracts
+@using AppConstants
 @using Models.Common
 @using UIComponents
-@inject IMediator Mediator
+@inject IApiClient ApiClient
 @inject NotificationService NotificationService
 
 <PageTitle>Document Definitions</PageTitle>
@@ -26,7 +25,7 @@
     {
         try
         {
-            _games = await Mediator.Send(new GetGamesRequest());
+            _games = await ApiClient.Get<IEnumerable<JsonResource>>($"api/JsonResource/kind/{ResourceKinds.Game}", default);
         }
         catch (Exception ex)
         {
@@ -38,7 +37,7 @@
     {
         try
         {
-            _definitions = await Mediator.Send(new GetDocumentDefinitionsRequest(gameId));
+            _definitions = await ApiClient.Get<IEnumerable<JsonResource>>($"api/JsonResource/query?resourceKind={ResourceKinds.DocumentDefinition}&gameId={gameId}", default);
         }
         catch (Exception ex)
         {
@@ -50,8 +49,15 @@
     {
         try
         {
-            var result = await Mediator.Send(new CreateDocumentDefinitionRequest(
-                submission.OwnerId, submission.GameId, submission.Name, submission.JsonContent));
+            var resource = new DocumentDefinitionResource
+            {
+                OwnerId = submission.OwnerId,
+                GameId = submission.GameId,
+                EntityId = submission.Name,
+                ResourceKind = ResourceKinds.DocumentDefinition,
+                Data = System.Text.Json.JsonSerializer.Deserialize<System.Text.Json.JsonElement>(submission.JsonContent)
+            };
+            var result = await ApiClient.Post<JsonResource, JsonResource>("api/JsonResource", resource, default);
             NotificationService.Notify(NotificationSeverity.Success, "Success", $"Definition created: {result.EntityId}");
             await OnGameSelected(submission.GameId);
         }

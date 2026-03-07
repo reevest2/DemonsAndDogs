@@ -1,0 +1,18 @@
+using API.Client.Abstraction;
+using Mediator.Mediator.Contracts.Session;
+using Models.Session;
+
+namespace API.Client;
+
+public class SessionClient(IApiClient apiClient) : ISessionClient
+{
+    public async Task<SessionState> StartSessionAsync(StartSessionRequest request, CancellationToken ct = default)
+    {
+        return await apiClient.Post<StartSessionRequest, SessionState>("api/session/start", request, ct);
+    }
+
+    public async Task<SessionEvent> PerformActionAsync(PerformActionRequest request, CancellationToken ct = default)
+    {
+        return await apiClient.Post<PerformActionRequest, SessionEvent>("api/session/action", request, ct);
+    }
+}

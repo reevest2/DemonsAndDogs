@@ -1,8 +1,8 @@
-@page "/CreateSchema"
-@using MediatR
-@using Mediator.Mediator.Contracts
+﻿@page "/CreateSchema"
+@using AppConstants
+@using Models.Common
 @using UIComponents
-@inject IMediator Mediator
+@inject IApiClient ApiClient
 @inject NotificationService NotificationService
 
 <PageTitle>Create Schema</PageTitle>
@@ -14,7 +14,14 @@
     {
         try
         {
-            var result = await Mediator.Send(new CreateSchemaRequest(submission.OwnerId, string.Empty, submission.ResourceKind, submission.JsonContent));
+            var resource = new SchemaResource
+            {
+                OwnerId = submission.OwnerId,
+                ResourceKind = ResourceKinds.Schema,
+                EntityId = submission.ResourceKind,
+                Data = System.Text.Json.JsonSerializer.Deserialize<System.Text.Json.JsonElement>(submission.JsonContent)
+            };
+            var result = await ApiClient.Post<JsonResource, JsonResource>("api/JsonResource", resource, default);
             NotificationService.Notify(NotificationSeverity.Success, "Success", $"Schema created with ID: {result.Id}");
         }
         catch (Exception ex)

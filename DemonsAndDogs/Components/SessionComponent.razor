@@ -1,0 +1,130 @@
+@using API.Client.Abstraction
+@using Mediator.Mediator.Contracts.Session
+@using Models.Session
+@using Models.GameSystems
+@inject ISessionClient SessionClient
+
+<div class="container-fluid py-4">
+    @if (_sessionState == null)
+    {
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <div class="card shadow">
+                    <div class="card-header bg-dark text-white text-center">
+                        <h3 class="mb-0">Start New Session</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-group mb-3">
+                            <label class="font-weight-bold">Character Name</label>
+                            <input class="form-control" @bind="_characterName" placeholder="Enter character name..." />
+                        </div>
+                        <div class="form-group mb-4">
+                            <label class="font-weight-bold">Game System</label>
+                            <select class="form-control" @bind="_systemId">
+                                <option value="dnd5e">Dungeons & Dragons 5th Edition</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-primary btn-block btn-lg" @onclick="StartSession">
+                            <i class="oi oi-play mr-2"></i>Start Adventure
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="row">
+            <div class="col-md-3">
+                <CharacterSheetComponent Schema="_sessionState.CharacterSheetSchema" />
+            </div>
+            <div class="col-md-6">
+                <div class="card mb-3 shadow-sm border-0 bg-light">
+                    <div class="card-body text-center">
+                        <h2 class="mb-3">@_sessionState.CharacterName</h2>
+                        <div class="d-flex justify-content-center gap-3">
+                            <button class="btn btn-primary btn-lg px-4" @onclick="RollSkillCheck">
+                                <i class="oi oi-bolt mr-2"></i>Roll Stealth
+                            </button>
+                            <button class="btn btn-danger btn-lg px-4" @onclick="MakeAttack">
+                                <i class="oi oi-target mr-2"></i>Attack
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <ActionLogComponent Events="_sessionState.EventLog" />
+            </div>
+            <div class="col-md-3">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-header bg-info text-white">DM Narration</div>
+                    <div class="card-body">
+                        <p class="text-muted italic">Narration will appear here in Phase 4.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private SessionState? _sessionState;
+    private string _characterName = "Adventurer";
+    private string _systemId = "dnd5e";
+
+    private async Task StartSession()
+    {
+        try
+        {
+            var request = new StartSessionRequest(_characterName, _systemId);
+            _sessionState = await SessionClient.StartSessionAsync(request);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error starting session: {ex.Message}");
+        }
+    }
+
+    private async Task RollSkillCheck()
+    {
+        if (_sessionState == null) return;
+        
+        try
+        {
+            var context = new SkillCheckContext(_sessionState.SessionId, "stealth", 3, 2, 15);
+            var request = new PerformActionRequest(_sessionState.SessionId, ActionType.SkillCheck, SkillCheckContext: context);
+            var result = await SessionClient.PerformActionAsync(request);
+            
+            UpdateLocalLog(result);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error performing skill check: {ex.Message}");
+        }
+    }
+
+    private async Task MakeAttack()
+    {
+        if (_sessionState == null) return;
+        
+        try
+        {
+            var context = new AttackContext("longsword", 5, 14);
+            var request = new PerformActionRequest(_sessionState.SessionId, ActionType.Attack, AttackContext: context);
+            var result = await SessionClient.PerformActionAsync(request);
+            
+            UpdateLocalLog(result);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error performing attack: {ex.Message}");
+        }
+    }
+
+    private void UpdateLocalLog(SessionEvent result)
+    {
+        if (_sessionState == null) return;
+        var newLog = new List<SessionEvent>(_sessionState.EventLog) { result };
+        _sessionState = _sessionState with { EventLog = newLog };
+    }
+}

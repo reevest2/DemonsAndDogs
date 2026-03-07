@@ -2,6 +2,7 @@ using API.Services;
 using API.Services.Abstraction;
 using DataAccess;
 using DataAccess.Abstraction;
+using Mediator;
 using Microsoft.Extensions.DependencyInjection;
 using Models.Common;
 
@@ -23,5 +24,6 @@ public static class DIConfiguration
     {
         services.AddScoped<IJsonResourceService, JsonResourceService>();
         services.AddSingleton<IGameSystemRegistry, GameSystemRegistry>();
+        services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(MediatorAssemblyMarker).Assembly));
     }
 }

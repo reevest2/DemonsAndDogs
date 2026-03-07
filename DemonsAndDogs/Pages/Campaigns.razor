@@ -1,9 +1,8 @@
 @page "/Campaigns"
-@using MediatR
-@using Mediator.Mediator.Contracts
+@using AppConstants
 @using Models.Common
 @using UIComponents
-@inject IMediator Mediator
+@inject IApiClient ApiClient
 @inject NotificationService NotificationService
 
 <PageTitle>Campaigns</PageTitle>
@@ -26,7 +25,7 @@
     {
         try
         {
-            _games = await Mediator.Send(new GetGamesRequest());
+            _games = await ApiClient.Get<IEnumerable<JsonResource>>($"api/JsonResource/kind/{ResourceKinds.Game}", default);
         }
         catch (Exception ex)
         {
@@ -38,7 +37,7 @@
     {
         try
         {
-            _campaigns = await Mediator.Send(new GetCampaignsRequest(gameId));
+            _campaigns = await ApiClient.Get<IEnumerable<JsonResource>>($"api/JsonResource/query?resourceKind={ResourceKinds.Campaign}&gameId={gameId}", default);
         }
         catch (Exception ex)
         {
@@ -50,8 +49,16 @@
     {
         try
         {
-            var result = await Mediator.Send(new CreateCampaignRequest(
-                submission.OwnerId, submission.GameId, submission.Name, submission.Description));
+            var data = new { name = submission.Name, description = submission.Description };
+            var resource = new CampaignResource
+            {
+                OwnerId = submission.OwnerId,
+                GameId = submission.GameId,
+                EntityId = submission.Name,
+                ResourceKind = ResourceKinds.Campaign,
+                Data = System.Text.Json.JsonSerializer.Deserialize<System.Text.Json.JsonElement>(System.Text.Json.JsonSerializer.Serialize(data))
+            };
+            var result = await ApiClient.Post<JsonResource, JsonResource>("api/JsonResource", resource, default);
             NotificationService.Notify(NotificationSeverity.Success, "Success", $"Campaign created: {result.EntityId}");
             await OnGameSelected(submission.GameId);
         }

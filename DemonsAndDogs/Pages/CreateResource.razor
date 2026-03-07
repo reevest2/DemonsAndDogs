@@ -1,10 +1,8 @@
 @page "/CreateResource"
-@using MediatR
-@using Mediator.Mediator.Contracts
+@using AppConstants
 @using UIComponents
 @using Models.Common
-@using AppConstants
-@inject IMediator Mediator
+@inject IApiClient ApiClient
 @inject NotificationService NotificationService
 
 <PageTitle>Create Resource</PageTitle>
@@ -23,7 +21,7 @@
     {
         try
         {
-            _schemas = await Mediator.Send(new GetResourcesByKindRequest(ResourceKinds.Schema));
+            _schemas = await ApiClient.Get<IEnumerable<JsonResource>>($"api/JsonResource/kind/{ResourceKinds.Schema}", default);
         }
         catch (Exception ex)
         {
@@ -35,12 +33,25 @@
     {
         try
         {
-            var result = await Mediator.Send(new CreateResourceRequest(
-                submission.OwnerId, 
-                submission.EntityId, 
-                submission.ResourceKind, 
-                submission.SchemaId, 
-                submission.JsonContent));
+            JsonResource resource = submission.ResourceKind switch
+            {
+                ResourceKinds.Campaign => new CampaignResource(),
+                ResourceKinds.Game => new GameResource(),
+                ResourceKinds.Schema => new SchemaResource(),
+                ResourceKinds.DocumentDefinition => new DocumentDefinitionResource(),
+                ResourceKinds.Document => new DocumentResource(),
+                ResourceKinds.Character => new CharacterResource(),
+                _ => throw new ArgumentException($"Unsupported ResourceKind: {submission.ResourceKind}")
+            };
+            resource = resource with
+            {
+                OwnerId = submission.OwnerId,
+                EntityId = submission.EntityId,
+                ResourceKind = submission.ResourceKind,
+                Schema = submission.SchemaId,
+                Data = System.Text.Json.JsonSerializer.Deserialize<System.Text.Json.JsonElement>(submission.JsonContent)
+            };
+            var result = await ApiClient.Post<JsonResource, JsonResource>("api/JsonResource", resource, default);
             
             NotificationService.Notify(NotificationSeverity.Success, "Success", $"Resource created with ID: {result.Id}");
         }
