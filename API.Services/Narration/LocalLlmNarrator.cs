@@ -20,27 +20,28 @@ public class LocalLlmNarrator(HttpClient httpClient, IOptions<LocalLlmOptions> o
         var request = new
         {
             model = _options.ModelId,
-            messages = new[]
-            {
-                new { role = "system", content = _options.SystemPrompt },
-                new { role = "user", content = prompt }
-            },
+            input = prompt, 
             stream = true
         };
 
-        var url = _options.BaseUrl + "/v1/chat/completions";
-        var response = await httpClient.PostAsJsonAsync(url, request);
-        response.EnsureSuccessStatusCode();
-
-        var stream = await response.Content.ReadAsStreamAsync();
+        var url = _options.BaseUrl.TrimEnd('/') + "/v1/chat";
         
         return new NarrationResult(
             Text: string.Empty,
-            TokenStream: StreamTokensAsync(stream));
+            TokenStream: StreamTokensAsync(url, request));
     }
 
-    private async IAsyncEnumerable<string> StreamTokensAsync(Stream stream)
+    private async IAsyncEnumerable<string> StreamTokensAsync(string url, object request)
     {
+        using var requestMessage = new HttpRequestMessage(HttpMethod.Post, url)
+        {
+            Content = JsonContent.Create(request)
+        };
+
+        using var response = await httpClient.SendAsync(requestMessage, HttpCompletionOption.ResponseHeadersRead);
+        response.EnsureSuccessStatusCode();
+
+        using var stream = await response.Content.ReadAsStreamAsync();
         using var reader = new StreamReader(stream);
         while (!reader.EndOfStream)
         {
@@ -50,6 +51,8 @@ public class LocalLlmNarrator(HttpClient httpClient, IOptions<LocalLlmOptions> o
 
             if (line.StartsWith("data: "))
             {
+                var json2 = line.Substring(6);
+                Console.WriteLine($"[LLM RAW] {json2}");
                 var json = line.Substring(6);
                 JsonNode? node;
                 try 
