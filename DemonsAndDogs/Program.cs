@@ -3,6 +3,7 @@ using API.Client.Abstraction;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Radzen;
+using UIComponents.Services;
 
 namespace DemonsAndDogs;
 
@@ -24,6 +25,7 @@ public class Program
         builder.Services.AddScoped<ICampaignClient, CampaignClient>();
         builder.Services.AddScoped<ICharacterClient, CharacterClient>();
         builder.Services.AddScoped<IGameSystemClient, GameSystemClient>();
+        builder.Services.AddScoped<UIComponents.Services.ThemeService>();
         //Http client to the API
         builder.Services.AddScoped(_ => new HttpClient { BaseAddress = new Uri("https://localhost:44390/") }); //TODO: Put in settings somewhere
 

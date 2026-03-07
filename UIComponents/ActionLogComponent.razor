@@ -1,30 +1,30 @@
 @using Models.Session
 @using Models.GameSystems
 
-<div class="card shadow-sm h-100">
-    <div class="card-header bg-primary text-white">Action Log</div>
+<div class="card h-100">
+    <div class="card-header glow">Action Log</div>
     <div class="card-body overflow-auto" style="max-height: 500px;">
         @if (Events != null && Events.Count > 0)
         {
             @foreach (var evt in Events.OrderByDescending(e => e.Timestamp))
             {
-                <div class="alert @GetAlertClass(evt) mb-2 border-0 shadow-sm p-2">
-                    <div class="d-flex justify-content-between">
-                        <span class="badge badge-dark mb-1">@evt.EventType</span>
-                        <small class="text-muted">@evt.Timestamp.ToString("HH:mm:ss")</small>
+                <div class="mb-2 p-2" style="border-left: 4px solid @GetEventColor(evt); background-color: rgba(0,0,0,0.05);">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span class="badge" style="background-color: @GetEventColor(evt);">@evt.EventType</span>
+                        <small>@evt.Timestamp.ToString("HH:mm:ss")</small>
                     </div>
-                    <div>@evt.Description</div>
+                    <div style="font-family: var(--font-body);">@evt.Description</div>
                     
                     @if (evt.CheckResult != null)
                     {
-                        <div class="mt-1 small">
+                        <div class="mt-1 small" style="font-family: var(--font-mono);">
                             <span class="mr-2">Roll: @evt.CheckResult.RollValue</span>
                             <span class="font-weight-bold">Total: @evt.CheckResult.TotalResult</span>
                         </div>
                     }
                     else if (evt.AttackResult != null)
                     {
-                        <div class="mt-1 small">
+                        <div class="mt-1 small" style="font-family: var(--font-mono);">
                             <span class="mr-2">Roll: @evt.AttackResult.AttackRoll</span>
                             <span class="font-weight-bold">Total: @evt.AttackResult.TotalAttackResult</span>
                         </div>
@@ -34,8 +34,8 @@
         }
         else
         {
-            <div class="text-center p-5 text-muted">
-                <i class="oi oi-list"></i>
+            <div class="text-center p-5 opacity-50">
+                <span>📜</span>
                 <p class="mt-2">No actions performed yet.</p>
             </div>
         }
@@ -45,16 +45,16 @@
 @code {
     [Parameter] public IReadOnlyList<SessionEvent>? Events { get; set; }
 
-    private string GetAlertClass(SessionEvent evt)
+    private string GetEventColor(SessionEvent evt)
     {
         if (evt.CheckResult != null)
         {
-            return evt.CheckResult.IsSuccess ? "alert-success" : "alert-warning";
+            return evt.CheckResult.IsSuccess ? "var(--accent-primary)" : "var(--accent-secondary)";
         }
         if (evt.AttackResult != null)
         {
-            return evt.AttackResult.IsHit ? "alert-danger" : "alert-secondary";
+            return evt.AttackResult.IsHit ? "#8b2020" : "#555";
         }
-        return "alert-light";
+        return "var(--border-color)";
     }
 }

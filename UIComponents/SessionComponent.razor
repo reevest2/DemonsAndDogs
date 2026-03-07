@@ -8,10 +8,7 @@
     @if (_sessionState == null)
     {
         <div class="text-center py-5">
-            <div class="spinner-border text-primary" role="status">
-                <span class="visually-hidden">Loading session...</span>
-            </div>
-            <p class="mt-2">Connecting to session...</p>
+            <p class="mt-2 glow">Connecting to session...</p>
         </div>
     }
     else
@@ -21,15 +18,15 @@
                 <CharacterSheetComponent Schema="_sessionState.CharacterSheetSchema" />
             </div>
             <div class="col-md-6">
-                <div class="card mb-3 shadow-sm border-0 bg-light">
+                <div class="card mb-3">
                     <div class="card-body text-center">
-                        <h2 class="mb-3">@_sessionState.CharacterName</h2>
+                        <h1 class="glow mb-3">@_sessionState.CharacterName</h1>
                         <div class="d-flex justify-content-center gap-3">
-                            <button class="btn btn-primary btn-lg px-4" @onclick="RollSkillCheck">
-                                <i class="oi oi-bolt mr-2"></i>Roll Stealth
+                            <button class="btn-primary" @onclick="RollSkillCheck" style="font-size: 1.25rem;">
+                                ⚡ Roll Stealth
                             </button>
-                            <button class="btn btn-danger btn-lg px-4" @onclick="MakeAttack">
-                                <i class="oi oi-target mr-2"></i>Attack
+                            <button class="btn-primary" @onclick="MakeAttack" style="background-color: var(--accent-secondary); font-size: 1.25rem;">
+                                ⚔ Attack
                             </button>
                         </div>
                     </div>
@@ -38,10 +35,10 @@
                 <ActionLogComponent Events="_sessionState.EventLog" />
             </div>
             <div class="col-md-3">
-                <div class="card h-100 shadow-sm">
-                    <div class="card-header bg-info text-white">DM Narration</div>
+                <div class="card h-100">
+                    <div class="card-header glow">DM Narration</div>
                     <div class="card-body">
-                        <p class="text-muted italic">Narration will appear here in Phase 4.</p>
+                        <p class="opacity-50 italic">Narration will appear here in Phase 4.</p>
                     </div>
                 </div>
             </div>

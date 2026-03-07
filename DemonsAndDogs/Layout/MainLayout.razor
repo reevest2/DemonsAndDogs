@@ -1,20 +1,49 @@
-@inherits LayoutComponentBase
-<div class="page">
-    <div class="sidebar">
-        <NavMenu/>
-    </div>
+﻿@inherits LayoutComponentBase
+@inject UIComponents.Services.ThemeService ThemeService
+@inject NavigationManager NavigationManager
+@implements IDisposable
+
+<div class="main-layout" data-theme="@ThemeService.CurrentTheme">
+    <NavMenu />
 
     <RadzenDialog />
     <RadzenNotification />
     <RadzenTooltip />
     <RadzenContextMenu />
-    <main>
-        <div class="top-row px-4">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
-        </div>
 
-        <article class="content px-4">
+    <main>
+        <div class="container page-fade-in">
             @Body
-        </article>
+        </div>
     </main>
+
+    <footer class="text-center p-4">
+        <div class="divider"></div>
+        <p>&copy; @DateTime.Now.Year — Demons & Dogs — Your AI-powered TTRPG companion</p>
+    </footer>
 </div>
+
+@code {
+    protected override void OnInitialized()
+    {
+        ThemeService.OnThemeChanged += StateHasChanged;
+        NavigationManager.LocationChanged += OnLocationChanged;
+    }
+
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        var relativePath = NavigationManager.ToBaseRelativePath(e.Location);
+        // Revert to fantasy if leaving a session page
+        if (!relativePath.StartsWith("session", StringComparison.OrdinalIgnoreCase) && 
+            ThemeService.CurrentTheme != "fantasy")
+        {
+            ThemeService.SetTheme("fantasy");
+        }
+    }
+
+    public void Dispose()
+    {
+        ThemeService.OnThemeChanged -= StateHasChanged;
+        NavigationManager.LocationChanged -= OnLocationChanged;
+    }
+}
