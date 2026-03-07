@@ -5,17 +5,17 @@ using Mediator.Mediator.Contracts.Campaigns;
 
 namespace Mediator.Mediator.Handlers.Campaigns;
 
-public class GetCampaignsHandler(ICampaignService service) : IRequestHandler<GetCampaignsRequest, IEnumerable<JsonResource>>
+public class GetCampaignsHandler(ICampaignService service) : IRequestHandler<GetCampaignsRequest, IEnumerable<CampaignResource>>
 {
-    public async Task<IEnumerable<JsonResource>> Handle(GetCampaignsRequest request, CancellationToken cancellationToken)
+    public async Task<IEnumerable<CampaignResource>> Handle(GetCampaignsRequest request, CancellationToken cancellationToken)
     {
         return await service.GetAllAsync();
     }
 }
 
-public class GetCampaignHandler(ICampaignService service) : IRequestHandler<GetCampaignRequest, JsonResource?>
+public class GetCampaignHandler(ICampaignService service) : IRequestHandler<GetCampaignRequest, CampaignResource?>
 {
-    public async Task<JsonResource?> Handle(GetCampaignRequest request, CancellationToken cancellationToken)
+    public async Task<CampaignResource?> Handle(GetCampaignRequest request, CancellationToken cancellationToken)
     {
         return await service.GetByIdAsync(request.Id);
     }

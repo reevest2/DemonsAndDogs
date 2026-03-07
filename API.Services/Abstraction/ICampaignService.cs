@@ -1,1 +1,9 @@
-using Models.Common; namespace API.Services.Abstraction; public interface ICampaignService { Task<IEnumerable<JsonResource>> GetAllAsync(); Task<JsonResource?> GetByIdAsync(string id); }
+using Models.Common;
+
+namespace API.Services.Abstraction;
+
+public interface ICampaignService
+{
+    Task<IEnumerable<CampaignResource>> GetAllAsync();
+    Task<CampaignResource?> GetByIdAsync(string id);
+}

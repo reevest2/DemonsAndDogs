@@ -5,18 +5,18 @@ namespace API.Client;
 
 public class CharacterClient(IApiClient apiClient) : ICharacterClient
 {
-    public async Task<IEnumerable<JsonResource>> GetAllAsync(CancellationToken ct = default)
+    public async Task<IEnumerable<CharacterResource>> GetAllAsync(CancellationToken ct = default)
     {
-        return await apiClient.Get<IEnumerable<JsonResource>>("api/character", ct);
+        return await apiClient.Get<IEnumerable<CharacterResource>>("api/character", ct);
     }
 
-    public async Task<JsonResource?> GetByIdAsync(string id, CancellationToken ct = default)
+    public async Task<CharacterResource?> GetByIdAsync(string id, CancellationToken ct = default)
     {
-        return await apiClient.Get<JsonResource>($"api/character/{id}", ct);
+        return await apiClient.Get<CharacterResource>($"api/character/{id}", ct);
     }
 
-    public async Task<IEnumerable<JsonResource>> GetBySystemIdAsync(string systemId, CancellationToken ct = default)
+    public async Task<IEnumerable<CharacterResource>> GetBySystemIdAsync(string systemId, CancellationToken ct = default)
     {
-        return await apiClient.Get<IEnumerable<JsonResource>>($"api/character/system/{systemId}", ct);
+        return await apiClient.Get<IEnumerable<CharacterResource>>($"api/character/system/{systemId}", ct);
     }
 }

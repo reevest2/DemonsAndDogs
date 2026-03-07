@@ -1,9 +1,19 @@
 using System.Text.Json;
+using System.Text.Json.Serialization;
+using AppConstants;
 
 namespace Models.Common;
 
+[JsonPolymorphic(TypeDiscriminatorPropertyName = "Kind")]
+[JsonDerivedType(typeof(CampaignResource), ResourceKinds.Campaign)]
+[JsonDerivedType(typeof(CharacterResource), ResourceKinds.Character)]
+[JsonDerivedType(typeof(DocumentDefinitionResource), ResourceKinds.DocumentDefinition)]
+[JsonDerivedType(typeof(DocumentResource), ResourceKinds.Document)]
+[JsonDerivedType(typeof(GameResource), ResourceKinds.Game)]
+[JsonDerivedType(typeof(SchemaResource), ResourceKinds.Schema)]
 public abstract record JsonResource
 {
+    [JsonPropertyName("Kind")]
     public abstract string Kind { get; }
 
     public string Id { get; init; } = Guid.NewGuid().ToString();

@@ -4,7 +4,7 @@ namespace API.Client.Abstraction;
 
 public interface ICharacterClient
 {
-    Task<IEnumerable<JsonResource>> GetAllAsync(CancellationToken ct = default);
-    Task<JsonResource?> GetByIdAsync(string id, CancellationToken ct = default);
-    Task<IEnumerable<JsonResource>> GetBySystemIdAsync(string systemId, CancellationToken ct = default);
+    Task<IEnumerable<CharacterResource>> GetAllAsync(CancellationToken ct = default);
+    Task<CharacterResource?> GetByIdAsync(string id, CancellationToken ct = default);
+    Task<IEnumerable<CharacterResource>> GetBySystemIdAsync(string systemId, CancellationToken ct = default);
 }

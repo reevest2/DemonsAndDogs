@@ -7,9 +7,9 @@ namespace API.Services.Mock;
 
 public class MockCampaignService : ICampaignService
 {
-    private static readonly List<JsonResource> _campaigns = new()
+    private static readonly List<CampaignResource> _campaigns = new()
     {
-        new CampaignResource
+        new()
         {
             Id = "mock-campaign-1",
             EntityId = "Lost Mine of Phandelver",
@@ -17,7 +17,7 @@ public class MockCampaignService : ICampaignService
             ResourceKind = ResourceKinds.Campaign,
             Data = JsonSerializer.Deserialize<JsonElement>(@"{ ""name"": ""Lost Mine of Phandelver"", ""description"": ""A classic D&D 5e starter adventure."" }")
         },
-        new CampaignResource
+        new()
         {
             Id = "mock-campaign-2",
             EntityId = "Curse of Strahd",
@@ -27,7 +27,7 @@ public class MockCampaignService : ICampaignService
         }
     };
 
-    public Task<IEnumerable<JsonResource>> GetAllAsync() => Task.FromResult<IEnumerable<JsonResource>>(_campaigns);
+    public Task<IEnumerable<CampaignResource>> GetAllAsync() => Task.FromResult<IEnumerable<CampaignResource>>(_campaigns);
 
-    public Task<JsonResource?> GetByIdAsync(string id) => Task.FromResult(_campaigns.FirstOrDefault(c => c.Id == id));
+    public Task<CampaignResource?> GetByIdAsync(string id) => Task.FromResult(_campaigns.FirstOrDefault(c => c.Id == id));
 }
