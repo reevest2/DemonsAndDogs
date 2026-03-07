@@ -36,7 +36,6 @@ public static class DIConfiguration
             // Real implementations will be registered here when they exist
         }
 
-        services.AddScoped<IJsonResourceService, JsonResourceService>();
         services.AddSingleton<IGameSystemRegistry, GameSystemRegistry>();
         services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(MediatorAssemblyMarker).Assembly));
     }

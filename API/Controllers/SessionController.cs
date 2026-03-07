@@ -10,14 +10,13 @@ namespace API.Controllers;
 public class SessionController(IMediator mediator) : ControllerBase
 {
     [HttpPost("start")]
-    public async Task<IActionResult> Start([FromBody] StartSessionRequest request)
+    public async Task<ActionResult<SessionState>> Start([FromBody] StartSessionRequest request)
     {
         var result = await mediator.Send(request);
         return Ok(result);
     }
-
     [HttpPost("action")]
-    public async Task<IActionResult> Action([FromBody] PerformActionRequest request)
+    public async Task<ActionResult<SessionEvent>> Action([FromBody] PerformActionRequest request)
     {
         var result = await mediator.Send(request);
         return Ok(result);
