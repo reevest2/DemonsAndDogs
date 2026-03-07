@@ -19,6 +19,7 @@
     <ItemGroup>
       <ProjectReference Include="..\AppConstants\AppConstants.csproj" />
       <ProjectReference Include="..\Models\Models.csproj" />
+      <ProjectReference Include="..\API.Client\API.Client.csproj" />
     </ItemGroup>
 
 </Project>

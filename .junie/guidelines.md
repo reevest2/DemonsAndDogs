@@ -42,6 +42,9 @@ Tests/
 - Services injected by interface only, never concrete type
 - No magic strings — use constants from `AppConstants`
 
+### Blazor WASM
+- All Blazor components live in the UIComponents project, not in DemonsAndDogs. Pages in DemonsAndDogs reference components from UIComponents. The only files in DemonsAndDogs are pages, layouts, and Program.cs.
+
 ### DTOs and Models
 - Use records for all DTOs and domain models — no classes for data transfer
 - All API resources are `JsonResource` classes defined in `Models`
