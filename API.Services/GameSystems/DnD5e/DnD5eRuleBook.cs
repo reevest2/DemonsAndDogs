@@ -12,7 +12,7 @@ public class DnD5eRuleBook : IRuleBook
 
     public CheckResult ResolveSkillCheck(SkillCheckContext context)
     {
-        var roll = Random.Shared.Next(1, 21);
+        var roll = RollD20();
         var total = roll + context.AbilityModifier + context.ProficiencyBonus;
 
         if (context.AdditionalModifiers != null)
@@ -23,7 +23,7 @@ public class DnD5eRuleBook : IRuleBook
             }
         }
 
-        var isSuccess = context.DifficultyClass == null || total >= context.DifficultyClass;
+        var isSuccess = roll == 20 || (roll != 1 && (context.DifficultyClass == null || total >= context.DifficultyClass));
         var message = isSuccess ? "Success" : "Failure";
         
         if (roll == 20) message = "Natural 20! " + message;
@@ -34,7 +34,7 @@ public class DnD5eRuleBook : IRuleBook
 
     public AttackResult ResolveAttack(AttackContext context)
     {
-        var roll = Random.Shared.Next(1, 21);
+        var roll = RollD20();
         var total = roll + context.AttackModifier;
 
         if (context.AdditionalModifiers != null)
@@ -46,11 +46,12 @@ public class DnD5eRuleBook : IRuleBook
         }
 
         var isCriticalHit = roll == 20;
-        var isHit = isCriticalHit || (context.TargetArmorClass == null || total >= context.TargetArmorClass);
+        var isCriticalMiss = roll == 1;
+        var isHit = isCriticalHit || (!isCriticalMiss && (context.TargetArmorClass == null || total >= context.TargetArmorClass));
         var message = isHit ? "Hit" : "Miss";
 
         if (isCriticalHit) message = "Critical Hit!";
-        else if (roll == 1) message = "Critical Miss!";
+        else if (isCriticalMiss) message = "Critical Miss!";
 
         return new AttackResult(
             AttackRoll: roll,
@@ -58,6 +59,11 @@ public class DnD5eRuleBook : IRuleBook
             IsHit: isHit,
             IsCriticalHit: isCriticalHit,
             Message: message);
+    }
+
+    protected virtual int RollD20()
+    {
+        return Random.Shared.Next(1, 21);
     }
 
     public CharacterSheetSchema GetCharacterSheetSchema()
