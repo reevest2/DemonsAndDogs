@@ -1,7 +1,7 @@
 @using API.Client.Abstraction
 @using Models.Common
 @inject ICampaignClient CampaignClient
-@inject IApiClient ApiClient
+@inject ICharacterClient CharacterClient
 
 <div class="container py-4">
     @if (_campaign == null)
@@ -71,8 +71,8 @@
 @code {
     [Parameter] public string CampaignId { get; set; } = "";
 
-    private JsonResource? _campaign;
-    private IEnumerable<JsonResource>? _characters;
+    private CampaignResource? _campaign;
+    private IEnumerable<CharacterResource>? _characters;
 
     protected override async Task OnParametersSetAsync()
     {
@@ -83,15 +83,15 @@
         // Fetch characters for this campaign
         try 
         {
-            _characters = await ApiClient.Get<IEnumerable<JsonResource>>($"api/JsonResource/query?resourceKind=character&campaignId={CampaignId}", default);
+            _characters = (await CharacterClient.GetAllAsync()).Where(c => c.CampaignId == CampaignId);
         }
         catch 
         {
-            _characters = Array.Empty<JsonResource>();
+            _characters = Array.Empty<CharacterResource>();
         }
     }
 
-    private string GetDescription(JsonResource resource)
+    private string GetDescription(CampaignResource resource)
     {
         if (resource.Data.TryGetProperty("description", out var prop))
         {

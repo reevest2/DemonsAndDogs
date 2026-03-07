@@ -46,14 +46,14 @@
 </div>
 
 @code {
-    private IEnumerable<JsonResource>? _campaigns;
+    private IEnumerable<CampaignResource>? _campaigns;
 
     protected override async Task OnInitializedAsync()
     {
         _campaigns = await CampaignClient.GetAllAsync();
     }
 
-    private string GetDescription(JsonResource resource)
+    private string GetDescription(CampaignResource resource)
     {
         if (resource.Data.TryGetProperty("description", out var prop))
         {

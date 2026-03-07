@@ -61,7 +61,7 @@
 @code {
     [Parameter] public string CharacterId { get; set; } = "";
 
-    private JsonResource? _character;
+    private CharacterResource? _character;
     private CharacterSheetSchema? _schema;
 
     protected override async Task OnParametersSetAsync()
