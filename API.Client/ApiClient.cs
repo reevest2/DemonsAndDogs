@@ -29,35 +29,25 @@ public sealed class ApiClient : IApiClient
         using var stream = await response.Content.ReadAsStreamAsync(ct);
         using var reader = new StreamReader(stream);
 
-        while (!reader.EndOfStream && !ct.IsCancellationRequested)
+        while (true)
         {
             var line = await reader.ReadLineAsync(ct);
+            if (line == null) break;
             if (string.IsNullOrWhiteSpace(line)) continue;
             if (line.StartsWith("data: "))
             {
-                var data = line["data: ".Length..].Trim();
+                var data = line["data: ".Length..];
                 if (data == "[DONE]") break;
 
-                string? token = null;
-                try
+                if (data.StartsWith("[ERROR]"))
                 {
-                    using var json = JsonDocument.Parse(data);
-                    if (json.RootElement.TryGetProperty("choices", out var choices) &&
-                        choices.GetArrayLength() > 0 &&
-                        choices[0].TryGetProperty("delta", out var delta) &&
-                        delta.TryGetProperty("content", out var content))
-                    {
-                        token = content.GetString();
-                    }
-                }
-                catch (JsonException)
-                {
-                    // Skip malformed chunks
+                    yield return data;
+                    continue;
                 }
 
-                if (!string.IsNullOrEmpty(token))
+                if (!string.IsNullOrEmpty(data))
                 {
-                    yield return token;
+                    yield return data;
                 }
             }
         }
