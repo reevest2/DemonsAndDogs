@@ -51,8 +51,6 @@ public class LocalLlmNarrator(HttpClient httpClient, IOptions<LocalLlmOptions> o
 
             if (line.StartsWith("data: "))
             {
-                var json2 = line.Substring(6);
-                Console.WriteLine($"[LLM RAW] {json2}");
                 var json = line.Substring(6);
                 JsonNode? node;
                 try 
@@ -64,7 +62,9 @@ public class LocalLlmNarrator(HttpClient httpClient, IOptions<LocalLlmOptions> o
                     continue;
                 }
                 
-                var token = node?["choices"]?[0]?["delta"]?["content"]?.ToString();
+                var token = node?["type"]?.ToString() == "message.delta" 
+                    ? node?["content"]?.ToString() 
+                    : null;
                 if (!string.IsNullOrEmpty(token))
                 {
                     yield return token;

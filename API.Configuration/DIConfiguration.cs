@@ -6,6 +6,7 @@ using DataAccess.Abstraction;
 using Mediator;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using Models.Common;
 
 using API.Services.Narration;
@@ -27,8 +28,24 @@ public static class DIConfiguration
 
     public static void ConfigureServices(this IServiceCollection services, IConfiguration configuration)
     {
+        services.Configure<NarrationOptions>(configuration.GetSection("Narration"));
         services.Configure<LocalLlmOptions>(configuration.GetSection("LocalLlm"));
-        services.AddHttpClient<INarrator, LocalLlmNarrator>();
+
+        // Register narrators with keyed HttpClient
+        services.AddHttpClient(NarrationOptions.LmStudio);
+        // services.AddHttpClient(NarrationOptions.Ollama);
+        // services.AddHttpClient(NarrationOptions.Anthropic);
+
+        services.AddKeyedScoped<INarrator, LocalLlmNarrator>(NarrationOptions.LmStudio, (sp, key) =>
+        {
+            var client = sp.GetRequiredService<IHttpClientFactory>().CreateClient((string)key!);
+            var options = sp.GetRequiredService<IOptions<LocalLlmOptions>>();
+            return new LocalLlmNarrator(client, options);
+        });
+
+        // Register INarrator via NarratorFactory
+        services.AddScoped<NarratorFactory>();
+        services.AddScoped<INarrator>(sp => sp.GetRequiredService<NarratorFactory>().Create());
 
         var useMockData = configuration.GetValue<bool>("UseMockData");
 
