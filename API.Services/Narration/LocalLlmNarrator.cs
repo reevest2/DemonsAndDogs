@@ -1,5 +1,6 @@
 using System.Net.Http.Json;
 using System.Text.Json.Nodes;
+using AppConstants;
 using Microsoft.Extensions.Options;
 using Models.Interfaces;
 using Models.Narration;
@@ -9,7 +10,7 @@ public class LocalLlmNarrator(HttpClient httpClient, IOptions<LocalLlmOptions> o
 {
     private readonly LocalLlmOptions _options = options.Value;
 
-    public async Task<NarrationResult> NarrateAsync(GameEvent gameEvent, string? Tone = "neutral")
+    public async Task<NarrationResult> NarrateAsync(GameEvent gameEvent, string? Tone = NarrationTones.Neutral)
     {
         var metadataStr = gameEvent.Metadata != null 
             ? string.Join(", ", gameEvent.Metadata.Select(m => $"{m.Key}: {m.Value}")) 
@@ -62,8 +63,8 @@ public class LocalLlmNarrator(HttpClient httpClient, IOptions<LocalLlmOptions> o
                     continue;
                 }
                 
-                var token = node?["type"]?.ToString() == "message.delta" 
-                    ? node?["content"]?.ToString() 
+                var token = node?[LmStudioEventTypes.TypeField]?.ToString() == LmStudioEventTypes.MessageDelta 
+                    ? node?[LmStudioEventTypes.ContentField]?.ToString() 
                     : null;
                 if (!string.IsNullOrEmpty(token))
                 {

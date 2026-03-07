@@ -56,9 +56,9 @@ a JSON object with a `type` field. Only `message.delta` events carry tokens:
 
 ```
 data: {"type":"chat.start","model_instance_id":"google/gemma-3-4b"}
-data: {"type":"message.delta","message":"Gimli"}
-data: {"type":"message.delta","message":" swings"}
-data: {"type":"message.delta","message":" his axe..."}
+data: {"type":"message.delta","content":"Gimli"}
+data: {"type":"message.delta","content":" swings"}
+data: {"type":"message.delta","content":" his axe..."}
 data: {"type":"chat.end"}
 data: [DONE]
 ```
@@ -67,7 +67,7 @@ The parser in `StreamTokensAsync` must:
 1. Strip the `data: ` prefix
 2. Skip `[DONE]`
 3. Parse as JSON
-4. Only yield `message` when `type == "message.delta"`
+4. Only yield `content` when `type == "message.delta"`
 5. Ignore all other event types (`chat.start`, `chat.end`, etc.)
 
 ## Stream Lifetime (Important)

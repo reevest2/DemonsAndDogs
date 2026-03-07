@@ -1,3 +1,4 @@
+using AppConstants;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Models.Interfaces;
@@ -12,9 +13,9 @@ public class NarratorFactory(IServiceProvider serviceProvider, IOptions<Narratio
         
         return provider switch
         {
-            NarrationOptions.LmStudio => serviceProvider.GetRequiredKeyedService<INarrator>(NarrationOptions.LmStudio),
-            // Ollama: serviceProvider.GetRequiredKeyedService<INarrator>(NarrationOptions.Ollama)
-            // Anthropic: serviceProvider.GetRequiredKeyedService<INarrator>(NarrationOptions.Anthropic)
+            NarrationProviders.LmStudio => serviceProvider.GetRequiredKeyedService<INarrator>(NarrationProviders.LmStudio),
+            // Ollama: serviceProvider.GetRequiredKeyedService<INarrator>(NarrationProviders.Ollama)
+            // Anthropic: serviceProvider.GetRequiredKeyedService<INarrator>(NarrationProviders.Anthropic)
             _ => throw new NotSupportedException($"Narration provider '{provider}' is not supported.")
         };
     }

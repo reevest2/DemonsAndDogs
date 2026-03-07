@@ -1,3 +1,4 @@
+using AppConstants;
 using API.Services;
 using API.Services.Abstraction;
 using API.Services.Mock;
@@ -32,11 +33,11 @@ public static class DIConfiguration
         services.Configure<LocalLlmOptions>(configuration.GetSection("LocalLlm"));
 
         // Register narrators with keyed HttpClient
-        services.AddHttpClient(NarrationOptions.LmStudio);
-        // services.AddHttpClient(NarrationOptions.Ollama);
-        // services.AddHttpClient(NarrationOptions.Anthropic);
+        services.AddHttpClient(NarrationProviders.LmStudio);
+        // services.AddHttpClient(NarrationProviders.Ollama);
+        // services.AddHttpClient(NarrationProviders.Anthropic);
 
-        services.AddKeyedScoped<INarrator, LocalLlmNarrator>(NarrationOptions.LmStudio, (sp, key) =>
+        services.AddKeyedScoped<INarrator, LocalLlmNarrator>(NarrationProviders.LmStudio, (sp, key) =>
         {
             var client = sp.GetRequiredService<IHttpClientFactory>().CreateClient((string)key!);
             var options = sp.GetRequiredService<IOptions<LocalLlmOptions>>();

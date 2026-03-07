@@ -1,3 +1,4 @@
+using AppConstants;
 using MediatR;
 using Mediator.Mediator.Contracts.Session;
 using Models.Interfaces;
@@ -31,7 +32,7 @@ public class NarrateActionHandler(INarrator narrator) : IRequestHandler<NarrateA
             Metadata: BuildMetadata(lastEvent)
         );
 
-        return await narrator.NarrateAsync(gameEvent, "dramatic");
+        return await narrator.NarrateAsync(gameEvent, NarrationTones.Dramatic);
     }
 
     private Dictionary<string, string> BuildMetadata(SessionEvent sessionEvent)
