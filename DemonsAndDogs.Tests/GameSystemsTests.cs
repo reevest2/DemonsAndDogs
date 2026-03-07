@@ -11,7 +11,7 @@ public class GameSystemsTests
     public void DnD5eRuleBook_SkillCheck_ReturnsValidResult()
     {
         var ruleBook = new DnD5eRuleBook();
-        var context = new SkillCheckContext("stealth", 3, 2, 15);
+        var context = new SkillCheckContext("test-char", "stealth", 3, 2, 15);
         
         var result = ruleBook.ResolveSkillCheck(context);
         

@@ -1,6 +1,7 @@
 namespace Models.GameSystems;
 
 public record SkillCheckContext(
+    string CharacterId,
     string SkillId, 
     int AbilityModifier, 
     int ProficiencyBonus, 
