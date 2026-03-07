@@ -8,6 +8,9 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Models.Common;
 
+using API.Services.Narration;
+using Models.Interfaces;
+
 namespace API.Configuration;
 
 public static class DIConfiguration
@@ -24,6 +27,9 @@ public static class DIConfiguration
 
     public static void ConfigureServices(this IServiceCollection services, IConfiguration configuration)
     {
+        services.Configure<LocalLlmOptions>(configuration.GetSection("LocalLlm"));
+        services.AddHttpClient<INarrator, LocalLlmNarrator>();
+
         var useMockData = configuration.GetValue<bool>("UseMockData");
 
         if (useMockData)

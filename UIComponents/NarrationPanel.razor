@@ -1,0 +1,74 @@
+@using System.Text
+@using System.IO
+@inject HttpClient Http
+
+<div class="narration-panel card @(ThemeClass) mt-4 mb-4 glow-@(Theme)">
+    <div class="card-header border-bottom border-secondary">
+        <h3 class="heading-@(Theme) m-0">Mordecai's Narration</h3>
+    </div>
+    <div class="card-body">
+        <p class="narration-text">@DisplayedText<span class="cursor">|</span></p>
+    </div>
+</div>
+
+<style>
+    .narration-text {
+        font-family: var(--font-body);
+        font-style: italic;
+        line-height: 1.6;
+        min-height: 4em;
+        font-size: 1.1rem;
+        color: var(--text-on-card);
+    }
+    .cursor {
+        font-weight: bold;
+        animation: blink 1s step-end infinite;
+        color: var(--accent-primary);
+        margin-left: 2px;
+    }
+    @@keyframes blink {
+        from, to { opacity: 0; }
+        50% { opacity: 1; }
+    }
+</style>
+
+@code {
+    [Parameter] public string Theme { get; set; } = "fantasy";
+
+    private string DisplayedText { get; set; } = "";
+    private string ThemeClass => Theme == "steampunk" ? "card-steampunk" : "card-fantasy";
+
+    public async Task StartNarration(string sessionId)
+    {
+        DisplayedText = "";
+        StateHasChanged();
+
+        try
+        {
+            var url = $"api/narration/stream/{sessionId}";
+            using var response = await Http.GetAsync(url, HttpCompletionOption.ResponseHeadersRead);
+            using var stream = await response.Content.ReadAsStreamAsync();
+            using var reader = new StreamReader(stream);
+
+            while (!reader.EndOfStream)
+            {
+                var line = await reader.ReadLineAsync();
+                if (line?.StartsWith("data: ") == true)
+                {
+                    var token = line.Substring(6);
+                    foreach (var ch in token)
+                    {
+                        DisplayedText += ch;
+                        StateHasChanged();
+                        await Task.Delay(15);
+                    }
+                }
+            }
+        }
+        catch (Exception)
+        {
+            DisplayedText = "The shadows grow silent...";
+            StateHasChanged();
+        }
+    }
+}

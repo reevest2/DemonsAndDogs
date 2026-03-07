@@ -1,0 +1,1 @@
+namespace API.Services.Narration; public record LocalLlmOptions(string BaseUrl, string ModelId, string SystemPrompt);

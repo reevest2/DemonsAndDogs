@@ -2,6 +2,8 @@
 @using Mediator.Mediator.Contracts.Session
 @using Models.Session
 @using Models.GameSystems
+@using UIComponents.Services
+@inject UIComponents.Services.ThemeService ThemeService
 @inject ISessionClient SessionClient
 
 <div class="container-fluid py-4">
@@ -15,12 +17,12 @@
     {
         <div class="row">
             <div class="col-md-3">
-                <CharacterSheetComponent Schema="_sessionState.CharacterSheetSchema" />
+                <CharacterSheetComponent Schema="_sessionState.CharacterSheetSchema" Theme="@ThemeService.CurrentTheme" />
             </div>
             <div class="col-md-6">
-                <div class="card mb-3">
+                <div class="card @(ThemeClass) mb-3 glow-@(ThemeService.CurrentTheme)">
                     <div class="card-body text-center">
-                        <h1 class="glow mb-3">@_sessionState.CharacterName</h1>
+                        <h1 class="heading-@(ThemeService.CurrentTheme) mb-3">@_sessionState.CharacterName</h1>
                         <div class="d-flex justify-content-center gap-3">
                             <button class="btn-primary" @onclick="RollSkillCheck" style="font-size: 1.25rem;">
                                 ⚡ Roll Stealth
@@ -32,15 +34,10 @@
                     </div>
                 </div>
                 
-                <ActionLogComponent Events="_sessionState.EventLog" />
+                <ActionLogComponent Events="_sessionState.EventLog" Theme="@ThemeService.CurrentTheme" />
             </div>
             <div class="col-md-3">
-                <div class="card h-100">
-                    <div class="card-header glow">DM Narration</div>
-                    <div class="card-body">
-                        <p class="opacity-50 italic">Narration will appear here in Phase 4.</p>
-                    </div>
-                </div>
+                <NarrationPanel @ref="_narrationPanel" Theme="@ThemeService.CurrentTheme" />
             </div>
         </div>
     }
@@ -49,6 +46,8 @@
 @code {
     [Parameter] public string? SessionId { get; set; }
     private SessionState? _sessionState;
+    private NarrationPanel? _narrationPanel;
+    private string ThemeClass => ThemeService.CurrentTheme == "steampunk" ? "card-steampunk" : "card-fantasy";
 
     protected override async Task OnParametersSetAsync()
     {
@@ -75,7 +74,7 @@
             var request = new PerformActionRequest(_sessionState.SessionId, ActionType.SkillCheck, SkillCheckContext: context);
             var result = await SessionClient.PerformActionAsync(request);
             
-            UpdateLocalLog(result);
+            await UpdateLocalLog(result);
         }
         catch (Exception ex)
         {
@@ -93,7 +92,7 @@
             var request = new PerformActionRequest(_sessionState.SessionId, ActionType.Attack, AttackContext: context);
             var result = await SessionClient.PerformActionAsync(request);
             
-            UpdateLocalLog(result);
+            await UpdateLocalLog(result);
         }
         catch (Exception ex)
         {
@@ -101,10 +100,15 @@
         }
     }
 
-    private void UpdateLocalLog(SessionEvent result)
+    private async Task UpdateLocalLog(SessionEvent result)
     {
         if (_sessionState == null) return;
         var newLog = new List<SessionEvent>(_sessionState.EventLog) { result };
         _sessionState = _sessionState with { EventLog = newLog };
+
+        if (_narrationPanel != null)
+        {
+            await _narrationPanel.StartNarration(_sessionState.SessionId);
+        }
     }
 }

@@ -10,4 +10,5 @@ public record GameEvent(
 public record NarrationResult(
     string Text,
     string? AudioUrl = null,
-    string? ImagePrompt = null);
+    string? ImagePrompt = null,
+    IAsyncEnumerable<string>? TokenStream = null);
