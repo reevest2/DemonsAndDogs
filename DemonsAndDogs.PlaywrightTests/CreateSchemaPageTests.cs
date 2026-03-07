@@ -1,4 +1,4 @@
-﻿using Microsoft.Playwright;
+using Microsoft.Playwright;
 using Microsoft.Playwright.NUnit;
 
 namespace DemonsAndDogs.PlaywrightTests;

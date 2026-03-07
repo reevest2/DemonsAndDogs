@@ -1,7 +1,7 @@
-﻿using AppConstants;
+using AppConstants;
 using Mediator.Mediator.Contracts;
 using Mediator.Mediator.Handlers;
-using Models.Resources;
+using Models.Common;
 using NSubstitute;
 
 namespace DemonsAndDogs.Tests;
@@ -20,7 +20,7 @@ public class GetGamesHandlerTests
     [Fact]
     public async Task Handle_CallsCorrectApiEndpoint()
     {
-        var expected = new List<JsonResource> { new() { EntityId = "D&D 5e", ResourceKind = ResourceKinds.Game } };
+        var expected = new List<JsonResource> { new GameResource { EntityId = "D&D 5e", ResourceKind = ResourceKinds.Game } };
 
         _apiClient.Get<IEnumerable<JsonResource>>(
             Arg.Any<string>(),
@@ -39,8 +39,8 @@ public class GetGamesHandlerTests
     {
         var expected = new List<JsonResource>
         {
-            new() { EntityId = "D&D 5e", ResourceKind = ResourceKinds.Game },
-            new() { EntityId = "Warhammer", ResourceKind = ResourceKinds.Game }
+            new GameResource { EntityId = "D&D 5e", ResourceKind = ResourceKinds.Game },
+            new GameResource { EntityId = "Warhammer", ResourceKind = ResourceKinds.Game }
         };
 
         _apiClient.Get<IEnumerable<JsonResource>>(

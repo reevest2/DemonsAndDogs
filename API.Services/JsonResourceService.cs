@@ -1,7 +1,7 @@
-﻿using API.Services.Abstraction;
+using API.Services.Abstraction;
 using DataAccess.Abstraction;
 using Microsoft.Extensions.Logging;
-using Models.Resources;
+using Models.Common;
 
 namespace API.Services;
 

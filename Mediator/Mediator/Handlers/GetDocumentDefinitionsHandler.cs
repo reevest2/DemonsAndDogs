@@ -1,7 +1,7 @@
-﻿using AppConstants;
+using AppConstants;
 using MediatR;
 using Mediator.Mediator.Contracts;
-using Models.Resources;
+using Models.Common;
 
 namespace Mediator.Mediator.Handlers;
 

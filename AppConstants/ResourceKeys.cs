@@ -1,1 +1,1 @@
-﻿namespace AppConstants;
+namespace AppConstants;

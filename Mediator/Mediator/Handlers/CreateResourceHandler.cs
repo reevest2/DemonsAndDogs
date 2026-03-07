@@ -1,8 +1,8 @@
-﻿using System.Text.Json;
+using System.Text.Json;
 using AppConstants;
 using MediatR;
 using Mediator.Mediator.Contracts;
-using Models.Resources;
+using Models.Common;
 
 namespace Mediator.Mediator.Handlers;
 
@@ -10,7 +10,18 @@ public class CreateResourceHandler(IApiClient apiClient) : IRequestHandler<Creat
 {
     public async Task<JsonResource> Handle(CreateResourceRequest request, CancellationToken cancellationToken)
     {
-        var resource = new JsonResource
+        JsonResource resource = request.ResourceKind switch
+        {
+            ResourceKinds.Campaign => new CampaignResource(),
+            ResourceKinds.Game => new GameResource(),
+            ResourceKinds.Schema => new SchemaResource(),
+            ResourceKinds.DocumentDefinition => new DocumentDefinitionResource(),
+            ResourceKinds.Document => new DocumentResource(),
+            ResourceKinds.Character => new CharacterResource(),
+            _ => throw new ArgumentException($"Unsupported ResourceKind: {request.ResourceKind}")
+        };
+
+        resource = resource with
         {
             OwnerId = request.OwnerId,
             EntityId = request.EntityId,

@@ -1,4 +1,4 @@
-﻿namespace AppConstants;
+namespace AppConstants;
 
 public static class Configuration
 {

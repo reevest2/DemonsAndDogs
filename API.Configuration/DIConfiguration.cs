@@ -1,9 +1,9 @@
-﻿using API.Services;
+using API.Services;
 using API.Services.Abstraction;
 using DataAccess;
 using DataAccess.Abstraction;
 using Microsoft.Extensions.DependencyInjection;
-using Models.Resources;
+using Models.Common;
 
 namespace API.Configuration;
 

@@ -1,8 +1,8 @@
-﻿using System.Text.Json;
+using System.Text.Json;
 using AppConstants;
 using MediatR;
 using Mediator.Mediator.Contracts;
-using Models.Resources;
+using Models.Common;
 
 namespace Mediator.Mediator.Handlers;
 
@@ -16,7 +16,7 @@ public class CreateSchemaHandler(IApiClient apiClient) : IRequestHandler<CreateS
     /// <returns>A task that represents the asynchronous operation. The task result contains the created <see cref="JsonResource"/>.</returns>
     public async Task<JsonResource> Handle(CreateSchemaRequest request, CancellationToken cancellationToken)
     {
-        var resource = new JsonResource
+        var resource = new SchemaResource
         {
             OwnerId = request.OwnerId,
             EntityId = request.Name,

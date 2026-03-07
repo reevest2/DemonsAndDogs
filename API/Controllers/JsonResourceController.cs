@@ -1,7 +1,7 @@
-﻿using API.Services.Abstraction;
+using API.Services.Abstraction;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Models.Resources;
+using Models.Common;
 
 namespace API.Controllers;
 
@@ -53,12 +53,28 @@ public class JsonResourceController(IJsonResourceService service) : ControllerBa
     /// <summary>
     /// Queries resources based on multiple filters.
     /// </summary>
-    /// <param name="query">The query filters.</param>
     /// <returns>A collection of resources matching the filters.</returns>
     [HttpGet("query")]
-    public async Task<ActionResult<IEnumerable<JsonResource>>> Query([FromQuery] JsonResourceQuery query)
+    public async Task<ActionResult<IEnumerable<JsonResource>>> Query(
+        [FromQuery] string? entityId,
+        [FromQuery] string? ownerId,
+        [FromQuery] string? subjectId,
+        [FromQuery] string? campaignId,
+        [FromQuery] string? rulesetId,
+        [FromQuery] string? gameId,
+        [FromQuery] string? resourceKind)
     {
-        var resources = await service.QueryAsync(query.ApplyTo);
+        var resources = await service.QueryAsync(q =>
+        {
+            if (!string.IsNullOrEmpty(entityId)) q = q.Where(r => r.EntityId == entityId);
+            if (!string.IsNullOrEmpty(ownerId)) q = q.Where(r => r.OwnerId == ownerId);
+            if (!string.IsNullOrEmpty(subjectId)) q = q.Where(r => r.SubjectId == subjectId);
+            if (!string.IsNullOrEmpty(campaignId)) q = q.Where(r => r.CampaignId == campaignId);
+            if (!string.IsNullOrEmpty(rulesetId)) q = q.Where(r => r.RulesetId == rulesetId);
+            if (!string.IsNullOrEmpty(gameId)) q = q.Where(r => r.GameId == gameId);
+            if (!string.IsNullOrEmpty(resourceKind)) q = q.Where(r => r.ResourceKind == resourceKind);
+            return q;
+        });
         return Ok(resources);
     }
 
@@ -83,7 +99,9 @@ public class JsonResourceController(IJsonResourceService service) : ControllerBa
     [HttpPut("{id}")]
     public async Task<ActionResult<JsonResource>> Update(string id, [FromBody] JsonResource resource)
     {
-        resource.Id = id;
+        if (id != resource.Id)
+            return BadRequest("ID mismatch.");
+            
         var updated = await service.UpdateAsync(resource);
         if (updated == null)
             return NotFound();

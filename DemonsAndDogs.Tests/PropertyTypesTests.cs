@@ -1,4 +1,4 @@
-﻿using AppConstants;
+using AppConstants;
 
 namespace DemonsAndDogs.Tests;
 

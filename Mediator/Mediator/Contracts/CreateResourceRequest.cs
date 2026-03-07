@@ -1,5 +1,5 @@
-﻿using MediatR;
-using Models.Resources;
+using MediatR;
+using Models.Common;
 
 namespace Mediator.Mediator.Contracts;
 

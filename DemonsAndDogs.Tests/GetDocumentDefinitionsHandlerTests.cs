@@ -1,7 +1,7 @@
-﻿using AppConstants;
+using AppConstants;
 using Mediator.Mediator.Contracts;
 using Mediator.Mediator.Handlers;
-using Models.Resources;
+using Models.Common;
 using NSubstitute;
 
 namespace DemonsAndDogs.Tests;
@@ -37,8 +37,8 @@ public class GetDocumentDefinitionsHandlerTests
     {
         var expected = new List<JsonResource>
         {
-            new() { EntityId = "Character Sheet", ResourceKind = ResourceKinds.DocumentDefinition },
-            new() { EntityId = "Spell List", ResourceKind = ResourceKinds.DocumentDefinition }
+            new DocumentDefinitionResource { EntityId = "Character Sheet", ResourceKind = ResourceKinds.DocumentDefinition },
+            new DocumentDefinitionResource { EntityId = "Spell List", ResourceKind = ResourceKinds.DocumentDefinition }
         };
 
         _apiClient.Get<IEnumerable<JsonResource>>(

@@ -1,7 +1,7 @@
-﻿using AppConstants;
+using AppConstants;
 using Mediator.Mediator.Contracts;
 using Mediator.Mediator.Handlers;
-using Models.Resources;
+using Models.Common;
 using NSubstitute;
 
 namespace DemonsAndDogs.Tests;

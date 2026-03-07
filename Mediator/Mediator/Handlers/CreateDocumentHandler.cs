@@ -1,8 +1,8 @@
-﻿using System.Text.Json;
+using System.Text.Json;
 using AppConstants;
 using MediatR;
 using Mediator.Mediator.Contracts;
-using Models.Resources;
+using Models.Common;
 
 namespace Mediator.Mediator.Handlers;
 
@@ -10,7 +10,7 @@ public class CreateDocumentHandler(IApiClient apiClient) : IRequestHandler<Creat
 {
     public async Task<JsonResource> Handle(CreateDocumentRequest request, CancellationToken cancellationToken)
     {
-        var resource = new JsonResource
+        var resource = new DocumentResource
         {
             OwnerId = request.OwnerId,
             EntityId = request.Name,

@@ -1,8 +1,8 @@
-﻿using System.Text.Json;
+using System.Text.Json;
 using AppConstants;
 using MediatR;
 using Mediator.Mediator.Contracts;
-using Models.Resources;
+using Models.Common;
 
 namespace Mediator.Mediator.Handlers;
 
@@ -12,7 +12,7 @@ public class CreateCampaignHandler(IApiClient apiClient) : IRequestHandler<Creat
     {
         var data = new { name = request.Name, description = request.Description };
 
-        var resource = new JsonResource
+        var resource = new CampaignResource
         {
             OwnerId = request.OwnerId,
             EntityId = request.Name,

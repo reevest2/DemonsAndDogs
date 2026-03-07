@@ -1,7 +1,7 @@
-﻿using AppConstants;
+using AppConstants;
 using Mediator.Mediator.Contracts;
 using Mediator.Mediator.Handlers;
-using Models.Resources;
+using Models.Common;
 using NSubstitute;
 
 namespace DemonsAndDogs.Tests;
@@ -37,8 +37,8 @@ public class GetCampaignsHandlerTests
     {
         var expected = new List<JsonResource>
         {
-            new() { EntityId = "Campaign 1", ResourceKind = ResourceKinds.Campaign },
-            new() { EntityId = "Campaign 2", ResourceKind = ResourceKinds.Campaign }
+            new CampaignResource { EntityId = "Campaign 1", ResourceKind = ResourceKinds.Campaign },
+            new CampaignResource { EntityId = "Campaign 2", ResourceKind = ResourceKinds.Campaign }
         };
 
         _apiClient.Get<IEnumerable<JsonResource>>(
