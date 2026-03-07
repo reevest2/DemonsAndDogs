@@ -1,5 +1,8 @@
 # DemonsAndDogs — Developer Guidelines
 
+## Getting Started
+Before writing any code: call `GetStarted` from the MCP server to load project context, then call `GetDoc` for the specific spec relevant to your task. If no spec exists for the task, stop and ask the user to create one first.
+
 ## Stack
 - Blazor WASM (.NET 10), ASP.NET Core Web API, Azure
 - MediatR for all request/response flows
@@ -92,6 +95,15 @@ public class ResolveSkillCheckHandler(GameSystemRegistry registry)
 - `Documentation` project embeds them as assembly resources at build time
 - `MCPServer` exposes them via MCP tools to Junie on demand
 - When adding a significant feature, add a corresponding doc in `docs/`
+
+## Spec-Driven Development
+Every feature must have a spec in `docs/` before implementation begins. Read the spec completely before writing any code. If the spec has a "Test Cases" section, write those tests first before writing implementation.
+
+## No Magic Strings
+All string constants must live in `AppConstants/`. Before adding any string literal, check if a constant exists. If not, add one. This applies to event type names, provider names, route segments, tone names, and SSE protocol strings.
+
+## Before You Finish
+After completing a task: check if `docs/current-state.md` needs updating, check if `docs/roadmap.md` status needs updating, run the build to confirm no errors.
 
 ## Prompt Template
 Use this structure for every Junie prompt:

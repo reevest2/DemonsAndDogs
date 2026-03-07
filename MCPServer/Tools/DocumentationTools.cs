@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.Reflection;
+using System.Text;
 using Documentation;
 using ModelContextProtocol.Server;
 
@@ -79,6 +80,84 @@ public static class DocumentationTools
         });
 
         return string.Join("\n\n---\n\n", sections);
+    }
+
+    /// <summary>
+    /// Call this at the start of every task to load full project context.
+    /// Returns index, current state, and available docs in one call.
+    /// </summary>
+    [McpServerTool]
+    [Description("Call this at the start of every task to load full project context. Returns index, current state, and available docs in one call.")]
+    public static string GetStarted()
+    {
+        var assembly = GetAssembly();
+        var allResources = assembly.GetManifestResourceNames()
+            .Where(n => n.EndsWith(".md", StringComparison.OrdinalIgnoreCase))
+            .ToList();
+
+        var sb = new StringBuilder();
+
+        sb.AppendLine("# MASTER INDEX (index.md)");
+        sb.AppendLine(ReadResource(assembly, allResources, "index.md"));
+        sb.AppendLine("\n---\n");
+
+        sb.AppendLine("# CURRENT STATE (current-state.md)");
+        sb.AppendLine(ReadResource(assembly, allResources, "current-state.md"));
+        sb.AppendLine("\n---\n");
+
+        sb.AppendLine("# AVAILABLE DOCUMENTATION INDEX");
+        foreach (var resource in allResources.OrderBy(n => n))
+        {
+            var name = Path.GetFileNameWithoutExtension(resource);
+            var description = GetDocDescription(assembly, resource);
+            sb.AppendLine($"- **{name}**: {description}");
+        }
+
+        return sb.ToString();
+    }
+
+    private static string ReadResource(Assembly assembly, IEnumerable<string> resources, string name)
+    {
+        var resource = resources.FirstOrDefault(n => n.Equals(name, StringComparison.OrdinalIgnoreCase) 
+                                                     || n.EndsWith("." + name, StringComparison.OrdinalIgnoreCase));
+        
+        if (resource == null)
+        {
+            return $"[ERROR: {name} not found. Please ensure this file exists in the 'docs/' folder and is correctly embedded in the Documentation project.]";
+        }
+
+        using var stream = assembly.GetManifestResourceStream(resource)!;
+        using var reader = new StreamReader(stream);
+        return reader.ReadToEnd();
+    }
+
+    private static string GetDocDescription(Assembly assembly, string resource)
+    {
+        using var stream = assembly.GetManifestResourceStream(resource)!;
+        using var reader = new StreamReader(stream);
+
+        string? firstHeading = null;
+        string? firstParagraph = null;
+
+        while (!reader.EndOfStream)
+        {
+            var line = reader.ReadLine()?.Trim();
+            if (string.IsNullOrWhiteSpace(line)) continue;
+
+            if (line.StartsWith("#") && firstHeading == null)
+            {
+                firstHeading = line.TrimStart('#').Trim();
+                continue;
+            }
+
+            if (!line.StartsWith("#"))
+            {
+                firstParagraph = line;
+                break;
+            }
+        }
+
+        return firstParagraph ?? firstHeading ?? "No description available.";
     }
 
     private static Assembly GetAssembly() =>

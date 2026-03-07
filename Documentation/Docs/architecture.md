@@ -21,7 +21,7 @@ The Demons and Dogs solution is organized into the following projects:
 - **AppConstants** — Shared constant values, enums, and ResourceKinds. No logic.
 - **Mediator** — MediatR request contracts in `/Contracts`, handlers in `/Handlers`.
 - **UIComponents** — Shared Blazor components reused across pages.
-- **Documentation** — Class library that embeds docs/ markdown files as assembly resources for the MCPServer to serve. Uses a wildcard glob — no manual file registration needed.
+- **Documentation** — Class library containing embedded Markdown documentation files.
 - **MCPServer** — MCP server that serves project documentation to AI tools on demand.
 
 ### Tests
