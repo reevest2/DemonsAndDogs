@@ -1,5 +1,5 @@
 ﻿# Claude Project Context
-# Generated: 2026-03-07 15:32:03
+# Generated: 2026-03-07 15:56:05
 # Solution: DemonsAndDogs
 # ================================================================
 
@@ -424,35 +424,25 @@ public sealed class ApiClient : IApiClient
         using var stream = await response.Content.ReadAsStreamAsync(ct);
         using var reader = new StreamReader(stream);
 
-        while (!reader.EndOfStream && !ct.IsCancellationRequested)
+        while (true)
         {
             var line = await reader.ReadLineAsync(ct);
+            if (line == null) break;
             if (string.IsNullOrWhiteSpace(line)) continue;
             if (line.StartsWith("data: "))
             {
-                var data = line["data: ".Length..].Trim();
+                var data = line["data: ".Length..];
                 if (data == "[DONE]") break;
 
-                string? token = null;
-                try
+                if (data.StartsWith("[ERROR]"))
                 {
-                    using var json = JsonDocument.Parse(data);
-                    if (json.RootElement.TryGetProperty("choices", out var choices) &&
-                        choices.GetArrayLength() > 0 &&
-                        choices[0].TryGetProperty("delta", out var delta) &&
-                        delta.TryGetProperty("content", out var content))
-                    {
-                        token = content.GetString();
-                    }
-                }
-                catch (JsonException)
-                {
-                    // Skip malformed chunks
+                    yield return data;
+                    continue;
                 }
 
-                if (!string.IsNullOrEmpty(token))
+                if (!string.IsNullOrEmpty(data))
                 {
-                    yield return token;
+                    yield return data;
                 }
             }
         }
@@ -1307,24 +1297,33 @@ public class NarrationController(IMediator mediator) : ControllerBase
     [HttpGet("stream/{sessionId}")]
     public async Task GetNarrationStream(string sessionId)
     {
-        Response.ContentType = "text/event-stream";
-        Response.Headers.Append("Cache-Control", "no-cache");
-        Response.Headers.Append("Connection", "keep-alive");
-
-        var result = await mediator.Send(new NarrateActionRequest(sessionId));
-
-        if (result.TokenStream != null)
+        try
         {
-            await foreach (var token in result.TokenStream.WithCancellation(HttpContext.RequestAborted))
+            Response.ContentType = "text/event-stream";
+            Response.Headers.Append("Cache-Control", "no-cache");
+            Response.Headers.Append("Connection", "keep-alive");
+
+            var result = await mediator.Send(new NarrateActionRequest(sessionId));
+
+            if (result.TokenStream != null)
             {
-                await Response.WriteAsync($"data: {token}\n\n");
+                await foreach (var token in result.TokenStream.WithCancellation(HttpContext.RequestAborted))
+                {
+                    await Response.WriteAsync($"data: {token}\n\n");
+                    await Response.Body.FlushAsync();
+                }
+            }
+            else if (!string.IsNullOrEmpty(result.Text))
+            {
+                await Response.WriteAsync($"data: {result.Text}\n\n");
                 await Response.Body.FlushAsync();
             }
         }
-        else if (!string.IsNullOrEmpty(result.Text))
+        catch (Exception ex)
         {
-            await Response.WriteAsync($"data: {result.Text}\n\n");
+            await Response.WriteAsync($"data: [ERROR] {ex.Message}: {ex.StackTrace}\n\n");
             await Response.Body.FlushAsync();
+            throw;
         }
     }
 }
@@ -5401,6 +5400,17 @@ public record SessionState(
     </div>
     <div class="card-body">
         <p class="narration-text">@DisplayedText<span class="cursor">|</span></p>
+        @if (!string.IsNullOrEmpty(ErrorMessage))
+        {
+            <div class="error-container">
+                <strong>An error occurred in the shadows:</strong>
+                <p>@ErrorMessage</p>
+                @if (!string.IsNullOrEmpty(ErrorStackTrace))
+                {
+                    <pre class="error-stack">@ErrorStackTrace</pre>
+                }
+            </div>
+        }
     </div>
 </div>
 
@@ -5423,17 +5433,37 @@ public record SessionState(
         from, to { opacity: 0; }
         50% { opacity: 1; }
     }
+    .error-container {
+        color: #ff4d4d;
+        border: 1px solid #ff4d4d;
+        background: rgba(255, 77, 77, 0.1);
+        padding: 1rem;
+        margin-top: 1rem;
+        border-radius: 4px;
+        font-family: monospace;
+    }
+    .error-stack {
+        font-size: 0.8rem;
+        white-space: pre-wrap;
+        margin-top: 0.5rem;
+        border-top: 1px solid rgba(255, 77, 77, 0.3);
+        padding-top: 0.5rem;
+    }
 </style>
 
 @code {
     [Parameter] public string Theme { get; set; } = "fantasy";
 
     private string DisplayedText { get; set; } = "";
+    private string? ErrorMessage { get; set; }
+    private string? ErrorStackTrace { get; set; }
     private string ThemeClass => Theme == "steampunk" ? "card-steampunk" : "card-fantasy";
 
     public async Task StartNarration(string sessionId)
     {
         DisplayedText = "";
+        ErrorMessage = null;
+        ErrorStackTrace = null;
         StateHasChanged();
 
         try
@@ -5441,6 +5471,13 @@ public record SessionState(
             var url = $"api/narration/stream/{sessionId}";
             await foreach (var token in ApiClient.GetStream(url))
             {
+                if (token.StartsWith("[ERROR]"))
+                {
+                    ErrorMessage = token.Replace("[ERROR]", "").Trim();
+                    StateHasChanged();
+                    break;
+                }
+
                 foreach (var ch in token)
                 {
                     DisplayedText += ch;
@@ -5449,10 +5486,12 @@ public record SessionState(
                 }
             }
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            DisplayedText = "The shadows grow silent...";
+            ErrorMessage = ex.Message;
+            ErrorStackTrace = ex.StackTrace;
             StateHasChanged();
+            throw;
         }
     }
 }

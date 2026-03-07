@@ -39,12 +39,6 @@ public sealed class ApiClient : IApiClient
                 var data = line["data: ".Length..];
                 if (data == "[DONE]") break;
 
-                if (data.StartsWith("[ERROR]"))
-                {
-                    yield return data;
-                    continue;
-                }
-
                 if (!string.IsNullOrEmpty(data))
                 {
                     yield return data;
