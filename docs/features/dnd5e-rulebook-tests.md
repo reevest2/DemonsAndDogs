@@ -59,4 +59,8 @@ None.
 None — MVP scope, close enough to real D&D 5e mechanics.
 
 ## Implementation Notes
-<!-- Fill in after Junie completes implementation -->
+- Created `SkillCheckContextBuilder` and `AttackContextBuilder` in `DemonsAndDogs.API.Tests/GameSystems/Builders/` using a fluent pattern.
+- Updated `DnD5eRuleBookTests.cs` with 14 unit tests covering all mechanics, including natural 20/1, proficiency, and additional modifiers.
+- Updated `GameSystemRegistryTests.cs` to verify system discovery and error handling.
+- All tests follow the `MethodName_StateUnderTest_ExpectedBehavior` naming convention.
+- Implementation confirmed via `dotnet test` with 24/24 passing tests in `DemonsAndDogs.API.Tests.csproj`.

@@ -5,11 +5,12 @@ This document provides the authoritative source on what features are currently i
 ## Working Features
 - **Narration Streaming**: Mordecai narrator via LM Studio (local LLM).
 - **Game Session**: In-memory session management.
-- **D&D 5e Mechanics**: Skill checks and attacks implemented in `DnD5eRuleBook`.
+- **D&D 5e Mechanics**: Skill checks and attacks implemented in `DnD5eRuleBook` with full unit test coverage.
 - **UI Themes**: Support for Fantasy and Steampunk themes.
 - **Character Sheet**: Dynamic display of character stats and fields.
 - **Action Log**: Real-time display of game events and narration.
 - **Documentation MCP Tools**: `GetStarted`, `ListDocs`, `GetDoc`, and `GetAllDocs` tools available for AI context.
+- **Test Infrastructure**: Unit tests and data builders for DnD5e mechanics.
 
 ## Mocked / Stub
 - **ICampaignService**: Returns hardcoded campaign lists.

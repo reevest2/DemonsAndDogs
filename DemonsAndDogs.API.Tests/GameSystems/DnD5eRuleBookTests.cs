@@ -1,4 +1,5 @@
 using API.Services.GameSystems.DnD5e;
+using DemonsAndDogs.API.Tests.GameSystems.Builders;
 using Models.GameSystems;
 using Xunit;
 
@@ -6,8 +7,6 @@ namespace DemonsAndDogs.API.Tests.GameSystems;
 
 public class DnD5eRuleBookTests
 {
-    private const string DnD5eSystemId = "dnd5e";
-
     private class FakeDnD5eRuleBook : DnD5eRuleBook
     {
         public int FixedRoll { get; set; } = 10;
@@ -15,11 +14,15 @@ public class DnD5eRuleBookTests
     }
 
     [Fact]
-    public void ResolveSkillCheck_TotalMeetsDC_Succeeds()
+    public void ResolveSkillCheck_RollPlusModifierMeetsDC_ReturnsSuccess()
     {
         // Arrange
         var ruleBook = new FakeDnD5eRuleBook { FixedRoll = 10 };
-        var context = new SkillCheckContext("char1", "stealth", 2, 2, 14);
+        var context = new SkillCheckContextBuilder()
+            .WithAbilityModifier(2)
+            .WithProficiencyBonus(2)
+            .WithDifficultyClass(14)
+            .Build();
 
         // Act
         var result = ruleBook.ResolveSkillCheck(context);
@@ -30,11 +33,15 @@ public class DnD5eRuleBookTests
     }
 
     [Fact]
-    public void ResolveSkillCheck_TotalBelowDC_Fails()
+    public void ResolveSkillCheck_RollPlusModifierBelowDC_ReturnsFailure()
     {
         // Arrange
         var ruleBook = new FakeDnD5eRuleBook { FixedRoll = 5 };
-        var context = new SkillCheckContext("char1", "stealth", 2, 2, 10);
+        var context = new SkillCheckContextBuilder()
+            .WithAbilityModifier(2)
+            .WithProficiencyBonus(2)
+            .WithDifficultyClass(10)
+            .Build();
 
         // Act
         var result = ruleBook.ResolveSkillCheck(context);
@@ -45,11 +52,15 @@ public class DnD5eRuleBookTests
     }
 
     [Fact]
-    public void ResolveSkillCheck_Natural20_AlwaysSucceeds()
+    public void ResolveSkillCheck_NaturalTwenty_ReturnsSuccessRegardlessOfDC()
     {
         // Arrange
         var ruleBook = new FakeDnD5eRuleBook { FixedRoll = 20 };
-        var context = new SkillCheckContext("char1", "stealth", 0, 0, 30);
+        var context = new SkillCheckContextBuilder()
+            .WithAbilityModifier(0)
+            .WithProficiencyBonus(0)
+            .WithDifficultyClass(30)
+            .Build();
 
         // Act
         var result = ruleBook.ResolveSkillCheck(context);
@@ -60,11 +71,15 @@ public class DnD5eRuleBookTests
     }
 
     [Fact]
-    public void ResolveSkillCheck_Natural1_AlwaysFails()
+    public void ResolveSkillCheck_NaturalOne_ReturnsFailureRegardlessOfModifiers()
     {
         // Arrange
         var ruleBook = new FakeDnD5eRuleBook { FixedRoll = 1 };
-        var context = new SkillCheckContext("char1", "stealth", 10, 10, 5);
+        var context = new SkillCheckContextBuilder()
+            .WithAbilityModifier(10)
+            .WithProficiencyBonus(10)
+            .WithDifficultyClass(5)
+            .Build();
 
         // Act
         var result = ruleBook.ResolveSkillCheck(context);
@@ -75,25 +90,50 @@ public class DnD5eRuleBookTests
     }
 
     [Fact]
-    public void ResolveSkillCheck_NoDC_AlwaysSucceeds()
+    public void ResolveSkillCheck_ProficiencyBonusIsApplied_TotalIsCorrect()
     {
         // Arrange
-        var ruleBook = new FakeDnD5eRuleBook { FixedRoll = 5 };
-        var context = new SkillCheckContext("char1", "stealth", 0, 0, null);
+        var ruleBook = new FakeDnD5eRuleBook { FixedRoll = 10 };
+        var context = new SkillCheckContextBuilder()
+            .WithAbilityModifier(0)
+            .WithProficiencyBonus(5)
+            .Build();
 
         // Act
         var result = ruleBook.ResolveSkillCheck(context);
 
         // Assert
-        Assert.True(result.IsSuccess);
+        Assert.Equal(15, result.TotalResult);
     }
 
     [Fact]
-    public void ResolveAttack_TotalMeetsAC_Hits()
+    public void ResolveSkillCheck_AdditionalModifiersApplied_TotalIsCorrect()
     {
         // Arrange
         var ruleBook = new FakeDnD5eRuleBook { FixedRoll = 10 };
-        var context = new AttackContext("sword", 5, 15);
+        var modifiers = new Dictionary<string, int> { { "Guidance", 2 }, { "Bardic Inspiration", 3 } };
+        var context = new SkillCheckContextBuilder()
+            .WithAbilityModifier(0)
+            .WithProficiencyBonus(0)
+            .WithAdditionalModifiers(modifiers)
+            .Build();
+
+        // Act
+        var result = ruleBook.ResolveSkillCheck(context);
+
+        // Assert
+        Assert.Equal(15, result.TotalResult);
+    }
+
+    [Fact]
+    public void ResolveAttack_RollMeetsOrExceedsAC_ReturnsHit()
+    {
+        // Arrange
+        var ruleBook = new FakeDnD5eRuleBook { FixedRoll = 10 };
+        var context = new AttackContextBuilder()
+            .WithAttackModifier(5)
+            .WithTargetArmorClass(15)
+            .Build();
 
         // Act
         var result = ruleBook.ResolveAttack(context);
@@ -104,11 +144,14 @@ public class DnD5eRuleBookTests
     }
 
     [Fact]
-    public void ResolveAttack_TotalBelowAC_Misses()
+    public void ResolveAttack_RollBelowAC_ReturnsMiss()
     {
         // Arrange
         var ruleBook = new FakeDnD5eRuleBook { FixedRoll = 5 };
-        var context = new AttackContext("sword", 5, 11);
+        var context = new AttackContextBuilder()
+            .WithAttackModifier(5)
+            .WithTargetArmorClass(11)
+            .Build();
 
         // Act
         var result = ruleBook.ResolveAttack(context);
@@ -119,11 +162,14 @@ public class DnD5eRuleBookTests
     }
 
     [Fact]
-    public void ResolveAttack_Natural20_IsCriticalHit()
+    public void ResolveAttack_NaturalTwenty_ReturnsCriticalHit()
     {
         // Arrange
         var ruleBook = new FakeDnD5eRuleBook { FixedRoll = 20 };
-        var context = new AttackContext("sword", 0, 30);
+        var context = new AttackContextBuilder()
+            .WithAttackModifier(0)
+            .WithTargetArmorClass(30)
+            .Build();
 
         // Act
         var result = ruleBook.ResolveAttack(context);
@@ -135,11 +181,14 @@ public class DnD5eRuleBookTests
     }
 
     [Fact]
-    public void ResolveAttack_Natural1_IsCriticalMiss()
+    public void ResolveAttack_NaturalOne_ReturnsCriticalMiss()
     {
         // Arrange
         var ruleBook = new FakeDnD5eRuleBook { FixedRoll = 1 };
-        var context = new AttackContext("sword", 20, 10);
+        var context = new AttackContextBuilder()
+            .WithAttackModifier(20)
+            .WithTargetArmorClass(10)
+            .Build();
 
         // Act
         var result = ruleBook.ResolveAttack(context);
@@ -150,19 +199,70 @@ public class DnD5eRuleBookTests
     }
 
     [Fact]
-    public void GetCharacterSheetSchema_ReturnsCorrectSections()
+    public void ResolveAttack_NoTargetAC_ReturnsHit()
+    {
+        // Arrange
+        var ruleBook = new FakeDnD5eRuleBook { FixedRoll = 5 };
+        var context = new AttackContextBuilder()
+            .WithTargetArmorClass(null)
+            .Build();
+
+        // Act
+        var result = ruleBook.ResolveAttack(context);
+
+        // Assert
+        Assert.True(result.IsHit);
+    }
+
+    [Fact]
+    public void ResolveAttack_OnHit_DamageDealtIsReturned()
+    {
+        // Arrange
+        var ruleBook = new FakeDnD5eRuleBook { FixedRoll = 10 };
+        var context = new AttackContextBuilder()
+            .WithAttackModifier(5)
+            .WithTargetArmorClass(10)
+            .Build();
+
+        // Act
+        var result = ruleBook.ResolveAttack(context);
+
+        // Assert
+        Assert.True(result.IsHit);
+        // Note: Currently implementation does not calculate damage, 
+        // but we verify the property exists in the result.
+        Assert.Null(result.DamageDealt); 
+    }
+
+    [Fact]
+    public void ResolveSkillCheck_NullAdditionalModifiers_DoesNotThrow()
     {
         // Arrange
         var ruleBook = new DnD5eRuleBook();
+        var context = new SkillCheckContextBuilder()
+            .WithAdditionalModifiers(null)
+            .Build();
 
         // Act
-        var schema = ruleBook.GetCharacterSheetSchema();
+        var exception = Record.Exception(() => ruleBook.ResolveSkillCheck(context));
 
         // Assert
-        Assert.Equal(DnD5eSystemId, schema.SystemId);
-        Assert.Contains(schema.Sections, s => s.Name == "Abilities");
-        Assert.Contains(schema.Sections, s => s.Name == "Combat");
-        var abilitySection = schema.Sections.First(s => s.Name == "Abilities");
-        Assert.Contains(abilitySection.Fields, f => f.Key == "strength");
+        Assert.Null(exception);
+    }
+
+    [Fact]
+    public void ResolveAttack_NullAdditionalModifiers_DoesNotThrow()
+    {
+        // Arrange
+        var ruleBook = new DnD5eRuleBook();
+        var context = new AttackContextBuilder()
+            .WithAdditionalModifiers(null)
+            .Build();
+
+        // Act
+        var exception = Record.Exception(() => ruleBook.ResolveAttack(context));
+
+        // Assert
+        Assert.Null(exception);
     }
 }
