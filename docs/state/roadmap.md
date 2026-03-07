@@ -36,6 +36,7 @@ Update this doc when a feature moves to Done.
 | `DnD5eRuleBook` Unit tests | Planned | Full coverage for 5e mechanics |
 | Scoped `SessionStore` | Planned | Replace static `SessionStore` with scoped service |
 | `Run-Tests.ps1` | Planned | Rider External Tool for quick test runs |
+| DnD5e RuleBook Unit Tests spec | Planned | See docs/features/dnd5e-rulebook-tests.md |
 
 ## Milestone 4 — Clean Code
 
@@ -52,3 +53,4 @@ Update this doc when a feature moves to Done.
 | `docs/session-persistence.md` | Planned | Persistence specification |
 | Real persistence | Planned | Using hybrid JSON model from `data-model.md` |
 | Flip `UseMockData` flag | Planned | Switch to real repositories |
+

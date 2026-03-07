@@ -54,6 +54,12 @@ For more details, see [../core/architecture.md](../core/architecture.md).
 |---|---|
 | [ui-themes.md](../ui/ui-themes.md) | Design system, themes, and CSS architecture. |
 
+
+### Features
+| Document | Description |
+|---|---|
+| [features/dnd5e-rulebook-tests.md](../features/dnd5e-rulebook-tests.md) | DnD5e RuleBook Unit Tests feature spec |
+
 ### State
 | Document | Description |
 |---|---|
@@ -73,3 +79,4 @@ When working on this project, AI assistants must adhere to these rules:
 - **Test First**: Write spec-driven test cases (xUnit or bUnit) before starting the implementation.
 - **Clean Controllers**: Controllers must remain one-line MediatR senders.
 - **Records Only**: Use C# records for all data transfer and domain models.
+
