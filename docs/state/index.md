@@ -6,8 +6,8 @@ Demons and Dogs is a high-performance, multi-system TTRPG engine built with Blaz
 
 Before writing any code or starting a new feature, AI tools **must**:
 1.  **Call `GetStarted`** from the MCP server to initialize context and see the current project state.
-2.  **Read the relevant spec doc** in `docs/` for any feature you are working on. Specs drive implementation.
-3.  **Identify patterns** in `docs/architecture.md` and `docs/best-practices.md` before adding new logic.
+2.  **Read the relevant spec doc** in `docs/features/` for any feature you are working on. Specs drive implementation.
+3.  **Identify patterns** in `docs/core/architecture.md` and `docs/core/best-practices.md` before adding new logic.
 
 ## Project Structure
 
@@ -30,21 +30,35 @@ The solution follows a clean architecture with MediatR-driven communication and 
     - **MCPServer**: MCP server exposing project documentation and state to AI tools.
 - **Tests/**: Various test projects using xUnit, bUnit, and Playwright.
 
-For more details, see [architecture.md](architecture.md).
+For more details, see [../core/architecture.md](../core/architecture.md).
 
 ## Documentation Index
 
+### Core
 | Document | Description |
 |---|---|
-| [architecture.md](architecture.md) | High-level system design, project structure, and key patterns. |
-| [best-practices.md](best-practices.md) | Coding standards, Blazor patterns, and TTRPG-specific rules. |
-| [data-model.md](data-model.md) | Hybrid relational/JSON schema for game system flexibility. |
-| [game-engine.md](game-engine.md) | Game system extension points, `IRuleBook`, and system registry. |
-| [game-session.md](game-session.md) | Session state management, event logging, and game flow. |
-| [narration-lmstudio.md](narration-lmstudio.md) | LM Studio local AI narration setup and troubleshooting. |
+| [architecture.md](../core/architecture.md) | High-level system design, project structure, and key patterns. |
+| [best-practices.md](../core/best-practices.md) | Coding standards, Blazor patterns, and TTRPG-specific rules. |
+| [data-model.md](../core/data-model.md) | Hybrid relational/JSON schema for game system flexibility. |
+| [game-engine.md](../core/game-engine.md) | Game system extension points, `IRuleBook`, and system registry. |
+| [game-session.md](../core/game-session.md) | Session state management, event logging, and game flow. |
+| [testing.md](../core/testing.md) | Test project map, naming conventions, and bUnit/xUnit patterns. |
+
+### Integrations
+| Document | Description |
+|---|---|
+| [narration-lmstudio.md](../integrations/narration-lmstudio.md) | LM Studio local AI narration setup and troubleshooting. |
+
+### UI
+| Document | Description |
+|---|---|
+| [ui-themes.md](../ui/ui-themes.md) | Design system, themes, and CSS architecture. |
+
+### State
+| Document | Description |
+|---|---|
+| [current-state.md](current-state.md) | Authoritative source on current implementation status. |
 | [roadmap.md](roadmap.md) | Feature roadmap with milestone status tracking. |
-| [testing.md](testing.md) | Test project map, naming conventions, and bUnit/xUnit patterns. |
-| [ui-themes.md](ui-themes.md) | Design system, themes, and CSS architecture. |
 
 ## Current State
 
@@ -55,7 +69,7 @@ For the authoritative source on what features are currently implemented, what is
 When working on this project, AI assistants must adhere to these rules:
 - **Spec-Driven Development**: Always read the relevant spec doc before writing code.
 - **No Hardcoded Values**: Never hardcode values that belong in `AppConstants`.
-- **Follow Patterns**: Adhere to the architectural patterns defined in `best-practices.md`.
+- **Follow Patterns**: Adhere to the architectural patterns defined in `docs/core/best-practices.md`.
 - **Test First**: Write spec-driven test cases (xUnit or bUnit) before starting the implementation.
 - **Clean Controllers**: Controllers must remain one-line MediatR senders.
 - **Records Only**: Use C# records for all data transfer and domain models.

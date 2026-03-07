@@ -58,7 +58,4 @@ Avoid magic strings throughout. Use constants from the `AppConstants` project.
 Resource kinds, route segments, claim types, and error codes are all constants.
 
 ### Embedded Documentation
-Documentation is stored as `.md` files in `docs/` at the repo root and linked
-into the `Documentation` class library as embedded assembly resources.
-The `MCPServer` project exposes these via MCP tools so AI assistants can
-retrieve project guidance on demand.
+Documentation is stored as `.md` files in `docs/` subfolders (e.g., `core/`, `state/`, `features/`, `integrations/`, `ui/`) at the repo root and linked into the `Documentation` class library as embedded assembly resources. The `MCPServer` project exposes these via MCP tools so AI assistants can retrieve project guidance on demand.

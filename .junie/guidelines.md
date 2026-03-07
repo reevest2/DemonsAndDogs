@@ -91,19 +91,19 @@ public class ResolveSkillCheckHandler(GameSystemRegistry registry)
 7. Add a doc to `docs/game-systems/{name}.md`
 
 ## Documentation & MCP
-- Docs live as `.md` files in `docs/` at the repo root — easy to find and edit
+- Docs live as `.md` files in `docs/` subfolders — organized and easy to find
 - `Documentation` project embeds them as assembly resources at build time
 - `MCPServer` exposes them via MCP tools to Junie on demand
-- When adding a significant feature, add a corresponding doc in `docs/`
+- When adding a significant feature, add a corresponding doc in `docs/features/`
 
 ## Spec-Driven Development
-Every feature must have a spec in `docs/` before implementation begins. Read the spec completely before writing any code. If the spec has a "Test Cases" section, write those tests first before writing implementation.
+Every feature must have a spec in `docs/features/` before implementation begins. Read the spec completely before writing any code. If the spec has a "Test Cases" section, write those tests first before writing implementation.
 
 ## No Magic Strings
 All string constants must live in `AppConstants/`. Before adding any string literal, check if a constant exists. If not, add one. This applies to event type names, provider names, route segments, tone names, and SSE protocol strings.
 
 ## Before You Finish
-After completing a task: check if `docs/current-state.md` needs updating, check if `docs/roadmap.md` status needs updating, run the build to confirm no errors.
+After completing a task: check if `docs/state/current-state.md` needs updating, check if `docs/state/roadmap.md` status needs updating, run the build to confirm no errors.
 
 ## Prompt Template
 Use this structure for every Junie prompt:

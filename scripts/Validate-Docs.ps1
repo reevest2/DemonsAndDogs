@@ -3,9 +3,9 @@ param(
 )
 
 $DocsFolder = Join-Path $SolutionRoot "docs"
-$IndexFile = Join-Path $DocsFolder "index.md"
-$CurrentStateFile = Join-Path $DocsFolder "current-state.md"
-$RoadmapFile = Join-Path $DocsFolder "roadmap.md"
+$IndexFile = Join-Path $DocsFolder "state\index.md"
+$CurrentStateFile = Join-Path $DocsFolder "state\current-state.md"
+$RoadmapFile = Join-Path $DocsFolder "state\roadmap.md"
 
 $ErrorCount = 0
 $WarningCount = 0
@@ -41,24 +41,40 @@ if ($IndexContent -match $TableRegex) {
 $TableLinks = [regex]::Matches($TableContent, '\[[^\]]+\]\(([^)]+\.md)\)') | ForEach-Object { $_.Groups[1].Value }
 
 # 4. Check every .md file in docs/ has a corresponding entry in index.md
-$AllMdFiles = Get-ChildItem -Path $DocsFolder -Filter "*.md" | Where-Object { $_.Name -ne "index.md" }
+$AllMdFiles = Get-ChildItem -Path $DocsFolder -Filter "*.md" -Recurse | Where-Object { $_.Name -ne "index.md" -and $_.Name -ne ".gitkeep" }
 
 foreach ($file in $AllMdFiles) {
-    if ($AllLinksInIndex -contains $file.Name) {
+    $MatchFound = $false
+    foreach ($link in $AllLinksInIndex) {
+        try {
+            $resolvedLinkPath = [System.IO.Path]::GetFullPath((Join-Path (Split-Path $IndexFile) $link))
+            if ($resolvedLinkPath -eq $file.FullName) {
+                $MatchFound = $true
+                break
+            }
+        } catch { }
+    }
+
+    if ($MatchFound) {
         $PassCount++
     } else {
-        Write-Host "ERROR: $($file.Name) is missing from index.md" -ForegroundColor Red
+        Write-Host "ERROR: $($file.FullName) is missing from index.md" -ForegroundColor Red
         $ErrorCount++
     }
 }
 
 # 5. Check every link in index.md's Documentation Index table points to a file that exists
 foreach ($link in $TableLinks) {
-    $fullPath = Join-Path $DocsFolder $link
-    if (Test-Path $fullPath) {
-        $PassCount++
-    } else {
-        Write-Host "ERROR: Broken link in index.md table points to non-existent file: $link" -ForegroundColor Red
+    try {
+        $fullPath = [System.IO.Path]::GetFullPath((Join-Path (Split-Path $IndexFile) $link))
+        if (Test-Path $fullPath) {
+            $PassCount++
+        } else {
+            Write-Host "ERROR: Broken link in index.md table points to non-existent file: $link" -ForegroundColor Red
+            $ErrorCount++
+        }
+    } catch {
+        Write-Host "ERROR: Invalid path format in link: $link" -ForegroundColor Red
         $ErrorCount++
     }
 }

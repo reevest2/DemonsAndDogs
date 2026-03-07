@@ -1,5 +1,5 @@
 ﻿# Claude Project Context
-# Generated: 2026-03-07 16:04:57
+# Generated: 2026-03-07 16:53:32
 # Solution: DemonsAndDogs
 # ================================================================
 
@@ -216,6 +216,9 @@ These constraints are architectural invariants of the DemonsAndDogs solution.
 ```md
 # DemonsAndDogs — Developer Guidelines
 
+## Getting Started
+Before writing any code: call `GetStarted` from the MCP server to load project context, then call `GetDoc` for the specific spec relevant to your task. If no spec exists for the task, stop and ask the user to create one first.
+
 ## Stack
 - Blazor WASM (.NET 10), ASP.NET Core Web API, Azure
 - MediatR for all request/response flows
@@ -304,10 +307,19 @@ public class ResolveSkillCheckHandler(GameSystemRegistry registry)
 7. Add a doc to `docs/game-systems/{name}.md`
 
 ## Documentation & MCP
-- Docs live as `.md` files in `docs/` at the repo root — easy to find and edit
+- Docs live as `.md` files in `docs/` subfolders — organized and easy to find
 - `Documentation` project embeds them as assembly resources at build time
 - `MCPServer` exposes them via MCP tools to Junie on demand
-- When adding a significant feature, add a corresponding doc in `docs/`
+- When adding a significant feature, add a corresponding doc in `docs/features/`
+
+## Spec-Driven Development
+Every feature must have a spec in `docs/features/` before implementation begins. Read the spec completely before writing any code. If the spec has a "Test Cases" section, write those tests first before writing implementation.
+
+## No Magic Strings
+All string constants must live in `AppConstants/`. Before adding any string literal, check if a constant exists. If not, add one. This applies to event type names, provider names, route segments, tone names, and SSE protocol strings.
+
+## Before You Finish
+After completing a task: check if `docs/state/current-state.md` needs updating, check if `docs/state/roadmap.md` status needs updating, run the build to confirm no errors.
 
 ## Prompt Template
 Use this structure for every Junie prompt:
@@ -3140,7 +3152,7 @@ public class Program
 ]
 ```
 
-## FILE: docs\architecture.md
+## FILE: docs\core\architecture.md
 ```md
 # Architecture
 
@@ -3165,7 +3177,7 @@ The Demons and Dogs solution is organized into the following projects:
 - **AppConstants** — Shared constant values, enums, and ResourceKinds. No logic.
 - **Mediator** — MediatR request contracts in `/Contracts`, handlers in `/Handlers`.
 - **UIComponents** — Shared Blazor components reused across pages.
-- **Documentation** — Class library containing embedded Markdown documentation files.
+- **Documentation** — Class library that embeds docs/ markdown files as assembly resources for the MCPServer to serve. Uses a wildcard glob — no manual file registration needed.
 - **MCPServer** — MCP server that serves project documentation to AI tools on demand.
 
 ### Tests
@@ -3202,13 +3214,10 @@ Avoid magic strings throughout. Use constants from the `AppConstants` project.
 Resource kinds, route segments, claim types, and error codes are all constants.
 
 ### Embedded Documentation
-Documentation is stored as `.md` files in `docs/` at the repo root and linked
-into the `Documentation` class library as embedded assembly resources.
-The `MCPServer` project exposes these via MCP tools so AI assistants can
-retrieve project guidance on demand.
+Documentation is stored as `.md` files in `docs/` subfolders (e.g., `core/`, `state/`, `features/`, `integrations/`, `ui/`) at the repo root and linked into the `Documentation` class library as embedded assembly resources. The `MCPServer` project exposes these via MCP tools so AI assistants can retrieve project guidance on demand.
 ```
 
-## FILE: docs\best-practices.md
+## FILE: docs\core\best-practices.md
 ```md
 # Best Practices
 
@@ -3248,7 +3257,7 @@ retrieve project guidance on demand.
 - Character sheet schema is always driven by IRuleBook.GetCharacterSheetSchema()
 ```
 
-## FILE: docs\data-model.md
+## FILE: docs\core\data-model.md
 ```md
 # Data Model
 
@@ -3347,7 +3356,7 @@ hybrid model will be implemented post-MVP in the DataAccess project.
 Switch from mock to real by flipping UseMockData in appsettings.
 ```
 
-## FILE: docs\game-engine.md
+## FILE: docs\core\game-engine.md
 ```md
 # Game Engine
 
@@ -3450,7 +3459,7 @@ Blazor page
 ```
 ```
 
-## FILE: docs\game-session.md
+## FILE: docs\core\game-session.md
 ```md
 # Game Session
 
@@ -3536,7 +3545,97 @@ SessionComponent
 ```
 ```
 
-## FILE: docs\narration-lmstudio.md
+## FILE: docs\core\testing.md
+```md
+# Testing Guidelines
+
+## Test Projects
+
+| Project | Purpose | Framework |
+|---|---|---|
+| `DemonsAndDogs.API.Tests` | Unit tests for API layer, handlers, services, rulebooks | xUnit |
+| `DemonsAndDogs.Tests` | Unit tests for Blazor components | xUnit + bUnit |
+| `DemonsAndDogs.PlaywrightTests` | End-to-end browser tests | Playwright |
+
+## What to Test
+
+### API Tests (highest priority)
+- Game system mechanics — `DnD5eRuleBook` skill checks, attacks, natural 20/1
+- `GameSystemRegistry` — reflection discovery, unknown system throws `KeyNotFoundException`
+- MediatR handlers — correct delegation to services, correct response shape
+- Mock services — return expected hardcoded data
+
+### Blazor Component Tests
+- Components render without errors
+- Dynamic `CharacterSheetSchema` fields render correctly
+- Event log displays session events in order
+- Navigation links point to correct routes
+
+### Playwright Tests (end-to-end)
+- Full happy path: Home → Campaigns → New Session → Active Session
+- Skill check produces a result in the event log
+- Navigation works correctly across all pages
+
+## Patterns
+
+### Naming Convention
+```
+MethodName_StateUnderTest_ExpectedBehavior
+ResolveSkillCheck_NaturalTwenty_ReturnsSuccess
+ResolveSkillCheck_TotalBelowDC_ReturnsFailure
+GameSystemRegistry_UnknownSystemId_ThrowsKeyNotFoundException
+```
+
+### API Test Structure (xUnit)
+```csharp
+public class DnD5eRuleBookTests
+{
+    private readonly DnD5eRuleBook _sut = new();
+
+    [Fact]
+    public void ResolveSkillCheck_WhenTotalMeetsDC_ReturnsSuccess()
+    {
+        // Arrange
+        var context = new SkillCheckContext("char1", "athletics", 5, 3, 15);
+
+        // Act
+        var result = _sut.ResolveSkillCheck(context);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.IsType<CheckResult>(result);
+    }
+}
+```
+
+### Blazor Component Test Structure (bUnit)
+```csharp
+public class ActionLogComponentTests : TestContext
+{
+    [Fact]
+    public void ActionLog_WithEvents_RendersAllEvents()
+    {
+        // Arrange
+        var events = new List<SessionEvent> { ... };
+
+        // Act
+        var cut = RenderComponent<ActionLogComponent>(
+            p => p.Add(c => c.Events, events));
+
+        // Assert
+        Assert.Equal(events.Count, cut.FindAll(".event-item").Count);
+    }
+}
+```
+
+## What NOT to Test
+- Mock service return values (they're hardcoded, testing them adds no value)
+- EF Core queries (test repositories against a real test DB or use integration tests)
+- Controller routing (covered by Playwright)
+- Pure record constructors
+```
+
+## FILE: docs\integrations\narration-lmstudio.md
 ```md
 # Narration: LM Studio Integration
 
@@ -3693,7 +3792,1041 @@ in `appsettings.Development.json`.
 | Model not found | Wrong `ModelId` | Match exactly to LM Studio's loaded model identifier |
 ```
 
-## FILE: docs\testing.md
+## FILE: docs\state\current-state.md
+```md
+# Current State
+
+This document provides the authoritative source on what features are currently implemented, what is mocked, and what's planned next for the Demons and Dogs project.
+
+## Working Features
+- **Narration Streaming**: Mordecai narrator via LM Studio (local LLM).
+- **Game Session**: In-memory session management.
+- **D&D 5e Mechanics**: Skill checks and attacks implemented in `DnD5eRuleBook`.
+- **UI Themes**: Support for Fantasy and Steampunk themes.
+- **Character Sheet**: Dynamic display of character stats and fields.
+- **Action Log**: Real-time display of game events and narration.
+- **Documentation MCP Tools**: `GetStarted`, `ListDocs`, `GetDoc`, and `GetAllDocs` tools available for AI context.
+
+## Mocked / Stub
+- **ICampaignService**: Returns hardcoded campaign lists.
+- **ICharacterService**: Returns hardcoded character data.
+- **Data Access**: No real database; all persistence is currently mocked or in-memory.
+- **Character Stats**: All characters currently default to stats of 10.
+- **Game Systems List**: Hardcoded to only show D&D 5e.
+
+## In-Memory Only (Not Persisted)
+- **SessionStore**: Uses a static `ConcurrentDictionary` to store active sessions. 
+- **Wiped on API Restart**: All session progress is lost when the API project restarts.
+
+## Not Started
+- **Session Persistence**: Saving sessions to a database (EF Core).
+- **Real Character Stats**: System-specific stat generation and storage.
+- **Art Generation**: AI-generated portraits and scene backgrounds.
+- **Rulebook Upload**: PDF/Text parsing for new game systems.
+- **Second Game System**: Integration of a non-dnd5e system (e.g., Call of Cthulhu).
+- **Cloud Narrator Provider**: Integration with Azure OpenAI or Anthropic API.
+
+## Known Issues
+- **Magic Strings**: Some narration code still uses hardcoded strings instead of `AppConstants`.
+- **Async Patterns**: `CancellationToken` is missing from several async method signatures.
+- **SessionStore Design**: `SessionStore` is a static class, making it difficult to test and not DI-friendly.
+
+## Configuration Notes
+- **LM Studio**: Must be running locally for narration to work.
+- **Local API URL**: BaseUrl must be set to `http://127.0.0.1:1234/api` in settings.
+- **Setup Guide**: Refer to [narration-lmstudio.md](narration-lmstudio.md) for full local LLM configuration instructions.
+```
+
+## FILE: docs\state\index.md
+```md
+# Demons and Dogs — Master Index
+
+Demons and Dogs is a high-performance, multi-system TTRPG engine built with Blazor WASM and .NET 10. It features AI-powered narration and a flexible game system architecture that allows for rapid integration of different rulebooks like D&D 5e, Call of Cthulhu, and Pathfinder. The core goal is to provide a unified platform for digital TTRPG sessions with rich, dynamic character sheets and immersive AI storytelling.
+
+## Read This First
+
+Before writing any code or starting a new feature, AI tools **must**:
+1.  **Call `GetStarted`** from the MCP server to initialize context and see the current project state.
+2.  **Read the relevant spec doc** in `docs/features/` for any feature you are working on. Specs drive implementation.
+3.  **Identify patterns** in `docs/core/architecture.md` and `docs/core/best-practices.md` before adding new logic.
+
+## Project Structure
+
+The solution follows a clean architecture with MediatR-driven communication and clear separation of concerns:
+
+- **Apps/**
+    - **DemonsAndDogs**: Blazor WASM frontend. Contains pages, layouts, and the entry point. Delegates all logic to `API.Client`.
+- **API/**
+    - **API**: Thin ASP.NET Core controllers that send MediatR requests.
+    - **API.Client**: Typed HTTP client for Blazor-to-API communication.
+    - **API.Configuration**: Dependency injection registration and startup configuration.
+    - **API.Services**: Business logic services and `IRuleBook` implementations.
+- **Infrastructure/**
+    - **Models**: Shared records for DTOs, domain models, and `JsonResource` definitions.
+    - **DataAccess**: EF Core repositories and abstractions for data persistence.
+    - **AppConstants**: Shared constants, enums, and resource kinds. No business logic.
+    - **Mediator**: MediatR contracts (Requests/Responses) and their corresponding Handlers.
+    - **UIComponents**: Shared Razor components used by the Blazor WASM frontend.
+    - **Documentation**: Embedded Markdown files served via assembly resources.
+    - **MCPServer**: MCP server exposing project documentation and state to AI tools.
+- **Tests/**: Various test projects using xUnit, bUnit, and Playwright.
+
+For more details, see [../core/architecture.md](../core/architecture.md).
+
+## Documentation Index
+
+### Core
+| Document | Description |
+|---|---|
+| [architecture.md](../core/architecture.md) | High-level system design, project structure, and key patterns. |
+| [best-practices.md](../core/best-practices.md) | Coding standards, Blazor patterns, and TTRPG-specific rules. |
+| [data-model.md](../core/data-model.md) | Hybrid relational/JSON schema for game system flexibility. |
+| [game-engine.md](../core/game-engine.md) | Game system extension points, `IRuleBook`, and system registry. |
+| [game-session.md](../core/game-session.md) | Session state management, event logging, and game flow. |
+| [testing.md](../core/testing.md) | Test project map, naming conventions, and bUnit/xUnit patterns. |
+
+### Integrations
+| Document | Description |
+|---|---|
+| [narration-lmstudio.md](../integrations/narration-lmstudio.md) | LM Studio local AI narration setup and troubleshooting. |
+
+### UI
+| Document | Description |
+|---|---|
+| [ui-themes.md](../ui/ui-themes.md) | Design system, themes, and CSS architecture. |
+
+### State
+| Document | Description |
+|---|---|
+| [current-state.md](current-state.md) | Authoritative source on current implementation status. |
+| [roadmap.md](roadmap.md) | Feature roadmap with milestone status tracking. |
+
+## Current State
+
+For the authoritative source on what features are currently implemented, what is mocked, and what's next on the roadmap, see [current-state.md](current-state.md).
+
+## Working With AI
+
+When working on this project, AI assistants must adhere to these rules:
+- **Spec-Driven Development**: Always read the relevant spec doc before writing code.
+- **No Hardcoded Values**: Never hardcode values that belong in `AppConstants`.
+- **Follow Patterns**: Adhere to the architectural patterns defined in `docs/core/best-practices.md`.
+- **Test First**: Write spec-driven test cases (xUnit or bUnit) before starting the implementation.
+- **Clean Controllers**: Controllers must remain one-line MediatR senders.
+- **Records Only**: Use C# records for all data transfer and domain models.
+```
+
+## FILE: docs\state\roadmap.md
+```md
+# Roadmap
+
+Update this doc when a feature moves to Done.
+
+## Principles
+- **Spec First**: Features are specced before any code is written.
+- **Test Cases in Spec**: Every spec must include clear, reproducible test cases.
+- **Tests Before Implementation**: Write unit or component tests before adding logic.
+- **No Magic Strings**: All constants belong in the `AppConstants` project.
+- **Always Read Relevant Docs**: Call `GetStarted` and read spec docs before coding.
+
+## Milestone 1 — AI Context Foundation
+
+| Feature | Status | Notes |
+|---|---|---|
+| `docs/index.md` | Done | Master entry point for AI tools |
+| `docs/current-state.md` | Done | What's real vs mocked |
+| `docs/roadmap.md` | Done | This document |
+| Update `.junie/guidelines.md` | Done | Always call GetStarted before coding |
+| GetStarted MCP tool | Done | Returns `index.md` + doc list in one call |
+| `Sync-Docs.ps1` | Removed | Not needed — Documentation.csproj uses wildcard glob to embed docs directly from docs/ folder |
+
+## Milestone 2 — Spec-Driven Workflow
+
+| Feature | Status | Notes |
+|---|---|---|
+| `New-Spec.ps1` scaffold script | In Progress | Automated spec creation |
+| Spec template | Planned | Template with required sections including Test Cases |
+| Update `testing.md` | Planned | Document spec-first workflow |
+
+## Milestone 3 — TDD Foundation
+
+| Feature | Status | Notes |
+|---|---|---|
+| Test data builders | Planned | Builders for `SkillCheckContext`, `AttackContext`, `SessionState` |
+| `DnD5eRuleBook` Unit tests | Planned | Full coverage for 5e mechanics |
+| Scoped `SessionStore` | Planned | Replace static `SessionStore` with scoped service |
+| `Run-Tests.ps1` | Planned | Rider External Tool for quick test runs |
+
+## Milestone 4 — Clean Code
+
+| Feature | Status | Notes |
+|---|---|---|
+| Narration magic strings | Planned | Finish magic strings in narration logic |
+| `Check-MagicStrings.ps1` | Planned | Linting tool for magic strings |
+| CancellationToken audit | Planned | Ensure all async methods are cancelable |
+
+## Milestone 5 — Real Data
+
+| Feature | Status | Notes |
+|---|---|---|
+| `docs/session-persistence.md` | Planned | Persistence specification |
+| Real persistence | Planned | Using hybrid JSON model from `data-model.md` |
+| Flip `UseMockData` flag | Planned | Switch to real repositories |
+```
+
+## FILE: docs\ui\ui-themes.md
+```md
+# UI Themes
+
+## Overview
+Demons and Dogs supports two visual themes selectable per campaign.
+Theme is stored on the `CampaignResource` and applied at the app level
+when a campaign is active. Default theme is Fantasy.
+
+## Theme Implementation
+Themes are implemented as CSS custom property sets applied to the `<body>` tag
+via a `data-theme` attribute: `<body data-theme="fantasy">` or `<body data-theme="steampunk">`.
+
+A `ThemeService` in `DemonsAndDogs` manages the active theme and persists it
+to localStorage so it survives page refreshes.
+
+## Fantasy Theme
+**Concept:** Ancient tome, candlelit tavern, parchment and ink.
+
+### Palette
+```css
+[data-theme="fantasy"] {
+  --bg-primary: #1a1209;        /* near-black, warm */
+  --bg-secondary: #2c1f0e;      /* dark brown */
+  --bg-card: #f4e4c1;           /* aged parchment */
+  --bg-card-dark: #2a1a0a;      /* dark card variant */
+  --text-primary: #f4e4c1;      /* parchment text on dark */
+  --text-on-card: #2c1a0a;      /* dark ink on parchment */
+  --accent-primary: #c9973a;    /* antique gold */
+  --accent-secondary: #8b2020;  /* deep crimson */
+  --accent-glow: #e8b84b;       /* golden glow */
+  --border-color: #8b6914;      /* aged gold border */
+  --shadow-color: rgba(0,0,0,0.7);
+}
+```
+
+### Typography
+- **Display/headings:** `Cinzel` (Google Fonts) — Roman-inspired serif, regal
+- **Body:** `Crimson Text` (Google Fonts) — elegant readable serif
+- **Monospace/rolls:** `MedievalSharp` or fallback `Georgia`
+
+### Visual Details
+- Parchment texture on cards (CSS noise filter or SVG texture)
+- Decorative corner flourishes on cards using CSS border-image or pseudo-elements
+- Subtle vignette on page background
+- Golden glow on hover states and active elements
+- Flickering animation on accent elements (subtle, not distracting)
+- Horizontal rules styled as ornamental dividers
+
+### Key Classes
+```css
+.card-fantasy        /* parchment card with decorative border */
+.btn-fantasy         /* aged metal button with gold accent */
+.heading-fantasy     /* Cinzel font with letter-spacing */
+.divider-fantasy     /* ornamental horizontal rule */
+.glow-fantasy        /* golden glow effect */
+```
+
+## Steampunk Theme
+**Concept:** Victorian inventor's workshop, brass and iron, gas lamps.
+
+### Palette
+```css
+[data-theme="steampunk"] {
+  --bg-primary: #0d0d0d;        /* near-black */
+  --bg-secondary: #1a1208;      /* very dark brown-black */
+  --bg-card: #1c1208;           /* dark leather card */
+  --text-primary: #d4a853;      /* warm brass text */
+  --text-on-card: #c8a96e;      /* aged brass on dark */
+  --accent-primary: #b87333;    /* copper */
+  --accent-secondary: #8b6914;  /* aged brass */
+  --accent-glow: #ff6b1a;       /* hot ember orange */
+  --border-color: #8b6914;      /* brass border */
+  --shadow-color: rgba(0,0,0,0.8);
+}
+```
+
+### Typography
+- **Display/headings:** `Special Elite` (Google Fonts) — typewriter, mechanical
+- **Body:** `Libre Baskerville` (Google Fonts) — Victorian-era serif
+- **Monospace/rolls:** `Courier Prime`
+
+### Visual Details
+- Riveted metal texture on cards using CSS repeating gradients
+- Gear/cog decorative elements on section headers (CSS or SVG)
+- Amber/orange glow on hover (ember effect)
+- Steam/smoke subtle animation on certain elements
+- Horizontal rules styled as pipe fittings
+- Copper and brass metallic gradients on buttons
+
+### Key Classes
+```css
+.card-steampunk      /* riveted dark metal card */
+.btn-steampunk       /* brass button with copper gradient */
+.heading-steampunk   /* Special Elite with mechanical styling */
+.divider-steampunk   /* pipe-fitting horizontal rule */
+.glow-steampunk      /* ember orange glow effect */
+```
+
+## ThemeService
+```csharp
+// DemonsAndDogs/Services/ThemeService.cs
+public class ThemeService
+{
+    public string CurrentTheme { get; private set; } = "fantasy";
+    public event Action? OnThemeChanged;
+
+    public void SetTheme(string theme)
+    {
+        CurrentTheme = theme;
+        OnThemeChanged?.Invoke();
+    }
+}
+```
+
+Applied in `MainLayout.razor`:
+```razor
+<body data-theme="@ThemeService.CurrentTheme">
+```
+
+## Per-Campaign Theme
+`CampaignResource` has a `Theme` property (`"fantasy"` or `"steampunk"`).
+When a player enters a session, `ThemeService.SetTheme(campaign.Theme)` is called.
+Theme reverts to default (`"fantasy"`) when leaving a session.
+
+## Google Fonts to Import
+```html
+<!-- In index.html -->
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Text:ital,wght@0,400;0,600;1,400&family=Special+Elite&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+```
+```
+
+## FILE: Documentation\Docs\architecture.md
+```md
+# Architecture
+
+## Project Structure
+
+The Demons and Dogs solution is organized into the following projects:
+
+### Apps
+- **DemonsAndDogs** — Blazor WASM front-end. Pages and layouts only, no business logic.
+  Pages delegate to `API.Client`. Each page has a single encapsulating component.
+- **UIComponents** — Reusable Razor/Blazor UI components shared across the front-end.
+
+### API Layer
+- **API** — ASP.NET Core Web API with thin controllers. One line per action: `return await _mediator.Send(request)`.
+- **API.Client** — Typed HTTP client for consuming the API from Blazor. Only way Blazor talks to the backend.
+- **API.Configuration** — DI registration, config binding, and startup helpers.
+- **API.Services** — Business logic services. Interfaces live in `API.Services/Abstraction`.
+
+### Infrastructure
+- **Models** — Shared domain models, DTOs, contracts, interfaces, and JsonResource definitions.
+- **DataAccess** — Data access layer. Interfaces in `DataAccess/Abstraction`. No DbContext outside this project.
+- **AppConstants** — Shared constant values, enums, and ResourceKinds. No logic.
+- **Mediator** — MediatR request contracts in `/Contracts`, handlers in `/Handlers`.
+- **UIComponents** — Shared Blazor components reused across pages.
+- **Documentation** — Class library containing embedded Markdown documentation files.
+- **MCPServer** — MCP server that serves project documentation to AI tools on demand.
+
+### Tests
+- **DemonsAndDogs.Tests** — Unit tests for the Blazor front-end.
+- **DemonsAndDogs.API.Tests** — Unit tests for the API layer.
+- **DemonsAndDogs.PlaywrightTests** — End-to-end browser tests using Playwright.
+
+## Key Patterns
+
+### Mediator Pattern
+Requests are defined as records in `Mediator/Contracts` and handled by corresponding
+handlers in `Mediator/Handlers`. Controllers only call `_mediator.Send()`.
+This decouples request initiation from handling and keeps controllers thin.
+
+### Service Abstraction
+API services define interfaces in `Abstraction` folders, allowing for dependency
+injection and testability. Never inject concrete types.
+
+### Records for DTOs
+Records are used for all DTOs and domain models to ensure immutability and type safety.
+Controllers, handlers, and services pass records between layers.
+
+### JsonResource Pattern
+All API resources are defined as `JsonResource` classes in the `Models` project.
+Resource kinds are constants defined in `AppConstants/ResourceKinds.cs`.
+This ensures consistent serialization and easy discoverability.
+
+### Pages Have a Single Component
+Each page in the Blazor app has a single component that encapsulates the page's
+logic and UI. Parameters are defined as properties on the component.
+
+### No Magic Strings
+Avoid magic strings throughout. Use constants from the `AppConstants` project.
+Resource kinds, route segments, claim types, and error codes are all constants.
+
+### Embedded Documentation
+Documentation is stored as `.md` files in `docs/` at the repo root and linked
+into the `Documentation` class library as embedded assembly resources.
+The `MCPServer` project exposes these via MCP tools so AI assistants can
+retrieve project guidance on demand.
+```
+
+## FILE: Documentation\Docs\best-practices.md
+```md
+# Best Practices
+
+## C# / .NET
+- Use records for all DTOs and domain models — no classes for data transfer
+- Use primary constructors for services: `public class MyService(IRepo repo)`
+- Prefer `IReadOnlyList<T>` over `List<T>` for return types
+- Use `sealed` on classes that aren't designed for inheritance
+- Cancellation tokens on every async public method signature
+
+## Blazor WASM
+- Pages have one component — logic and UI in a single encapsulating component
+- Component parameters are properties, not constructor args
+- Use `API.Client` exclusively — never inject services directly into pages
+- Avoid `StateHasChanged()` calls — prefer proper reactive patterns
+
+## API
+- Controllers are one line: `return await _mediator.Send(request)`
+- Return `IActionResult` not concrete types from controllers
+- Use `[ProducesResponseType]` attributes on all controller actions
+- Validate at the handler level using FluentValidation, not in controllers
+
+## MediatR
+- Requests are records in `Mediator/Contracts/`
+- One handler per request — no handler does two things
+- Handlers are thin orchestrators — real logic in services
+- Use notifications for cross-cutting events (not requests)
+
+## Data Access
+- Repositories abstract all EF Core — no DbContext outside DataAccess
+- Use interfaces from `DataAccess/Abstraction` everywhere
+- No raw SQL unless in a named query class
+
+## TTRPG Specific
+- All game rule resolution goes through IRuleBook — never hardcode rules
+- No game system logic in API.Services directly — only in GameSystems/{Name}/
+- Character sheet schema is always driven by IRuleBook.GetCharacterSheetSchema()
+```
+
+## FILE: Documentation\Docs\current-state.md
+```md
+# Current State
+
+This document provides the authoritative source on what features are currently implemented, what is mocked, and what's planned next for the Demons and Dogs project.
+
+## Working Features
+- **Narration Streaming**: Mordecai narrator via LM Studio (local LLM).
+- **Game Session**: In-memory session management.
+- **D&D 5e Mechanics**: Skill checks and attacks implemented in `DnD5eRuleBook`.
+- **UI Themes**: Support for Fantasy and Steampunk themes.
+- **Character Sheet**: Dynamic display of character stats and fields.
+- **Action Log**: Real-time display of game events and narration.
+- **Documentation MCP Tools**: `GetStarted`, `ListDocs`, `GetDoc`, and `GetAllDocs` tools available for AI context.
+
+## Mocked / Stub
+- **ICampaignService**: Returns hardcoded campaign lists.
+- **ICharacterService**: Returns hardcoded character data.
+- **Data Access**: No real database; all persistence is currently mocked or in-memory.
+- **Character Stats**: All characters currently default to stats of 10.
+- **Game Systems List**: Hardcoded to only show D&D 5e.
+
+## In-Memory Only (Not Persisted)
+- **SessionStore**: Uses a static `ConcurrentDictionary` to store active sessions. 
+- **Wiped on API Restart**: All session progress is lost when the API project restarts.
+
+## Not Started
+- **Session Persistence**: Saving sessions to a database (EF Core).
+- **Real Character Stats**: System-specific stat generation and storage.
+- **Art Generation**: AI-generated portraits and scene backgrounds.
+- **Rulebook Upload**: PDF/Text parsing for new game systems.
+- **Second Game System**: Integration of a non-dnd5e system (e.g., Call of Cthulhu).
+- **Cloud Narrator Provider**: Integration with Azure OpenAI or Anthropic API.
+
+## Known Issues
+- **Magic Strings**: Some narration code still uses hardcoded strings instead of `AppConstants`.
+- **Async Patterns**: `CancellationToken` is missing from several async method signatures.
+- **SessionStore Design**: `SessionStore` is a static class, making it difficult to test and not DI-friendly.
+
+## Configuration Notes
+- **LM Studio**: Must be running locally for narration to work.
+- **Local API URL**: BaseUrl must be set to `http://127.0.0.1:1234/api` in settings.
+- **Setup Guide**: Refer to [narration-lmstudio.md](narration-lmstudio.md) for full local LLM configuration instructions.
+```
+
+## FILE: Documentation\Docs\data-model.md
+```md
+# Data Model
+
+## Design Decision: Hybrid Typed Shell + JSON Stats
+
+### The Problem
+Different TTRPG game systems have completely incompatible data shapes:
+- D&D 5e: `Strength`, `Dexterity`, `SpellSlots`, `HP`
+- Call of Cthulhu: `Sanity`, `Luck`, `Mythos`, `Occupation`
+- Pathfinder: `BAB`, `CMB`, `CMD`, `Feats`
+
+A fixed relational schema can't support arbitrary game systems without
+constant migrations. But fully untyped JSON loses queryability and type safety.
+
+### The Solution: Hybrid Entities
+Fixed columns for common fields, `JsonDocument` column for system-specific data.
+
+```csharp
+public class CharacterEntity
+{
+    public string Id { get; set; }
+    public string Name { get; set; }
+    public string SystemId { get; set; }      // "dnd5e", "cthulhu", "pathfinder"
+    public string CampaignId { get; set; }
+    public string OwnerId { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public DateTime? UpdatedAt { get; set; }
+    public bool IsDeleted { get; set; }
+    public JsonDocument Stats { get; set; }   // system-specific stats blob
+    public string SchemaVersion { get; set; } // for future migrations
+}
+```
+
+### Why This Works
+- Queryable on common fields: `WHERE SystemId = 'dnd5e' AND CampaignId = '...'`
+- Flexible stats: any game system works with zero schema migrations
+- PDF export: stats are already JSON, map to sheet template via CharacterSheetSchema
+- Type-safe at API boundary: IRuleBook validates and interprets the stats blob
+
+### IRuleBook as Stats Interpreter
+IRuleBook is the bridge between raw JSON stats and typed game logic:
+
+```csharp
+public interface IRuleBook
+{
+    // Validates a stats blob is well-formed for this system
+    bool ValidateStats(JsonDocument stats);
+
+    // Builds a typed context from raw stats for resolution
+    SkillCheckContext BuildSkillCheckContext(JsonDocument stats, string skillId);
+    AttackContext BuildAttackContext(JsonDocument stats, string weaponId);
+}
+```
+
+D&D 5e knows: Strength modifier = (strength - 10) / 2
+Call of Cthulhu knows: skill check = roll under skill value
+The database just stores the blob. Each rulebook owns interpretation.
+
+### API Boundary
+Controllers return concrete resource types, never the abstract JsonResource base:
+
+```csharp
+// ✅ Correct
+IEnumerable<CampaignResource> GetCampaigns()
+
+// ❌ Wrong — client can't deserialize abstract type
+IEnumerable<JsonResource> GetCampaigns()
+```
+
+JsonResource uses [JsonPolymorphic] + [JsonDerivedType] as a safety net
+for any endpoints that must return mixed resource types.
+
+## Entity Summary
+
+| Entity | Fixed Fields | Stats Blob |
+|---|---|---|
+| `CharacterEntity` | Id, Name, SystemId, CampaignId, OwnerId | Ability scores, skills, equipment |
+| `CampaignEntity` | Id, Name, SystemId, Description, OwnerId | Campaign-specific settings |
+| `SessionEntity` | Id, CampaignId, CharacterId, StartedAt | Session state, current scene |
+| `SessionEventEntity` | Id, SessionId, EventType, Timestamp | Event-specific data |
+| `GameWorldEntity` | Id, CampaignId, EntityType, Name | NPC/monster/location stats |
+| `RulebookEntity` | Id, SystemId, Name, Version | Parsed rulebook definition |
+
+## PDF Export Strategy
+Character sheet PDF generation flow:
+```
+CharacterEntity.Stats (JsonDocument)
+  → IRuleBook.GetCharacterSheetSchema()  (field labels + layout)
+    → PDF template filled with stats values
+      → exported as .pdf
+```
+
+## Implementation Note
+Mock data services are in place for MVP. Real persistence using this
+hybrid model will be implemented post-MVP in the DataAccess project.
+Switch from mock to real by flipping UseMockData in appsettings.
+```
+
+## FILE: Documentation\Docs\game-engine.md
+```md
+# Game Engine
+
+## Overview
+The TTRPG game engine supports multiple rule systems through a strategy pattern.
+Each game system implements `IRuleBook`, which is the core extension point.
+The `GameSystemRegistry` (implementing `IGameSystemRegistry`) automatically discovers these implementations via reflection.
+
+## Key Interfaces (all in Models/Interfaces/)
+
+### IRuleBook
+The primary extension point. Implement this to add a new game system.
+
+```csharp
+public interface IRuleBook
+{
+    string SystemId { get; }
+    string DisplayName { get; }
+
+    CheckResult ResolveSkillCheck(SkillCheckContext context);
+    AttackResult ResolveAttack(AttackContext context);
+    CharacterSheetSchema GetCharacterSheetSchema();
+}
+```
+
+### INarrator
+AI narration abstraction. Describes events in the game world using AI.
+
+### ICharacterSheetFactory
+Generates dynamic character sheet UI schemas based on the active game system.
+
+## Core Records (in Models/GameSystems/)
+
+### Skill Check
+```csharp
+public record SkillCheckContext(
+    string CharacterId,
+    string SkillId, 
+    int AbilityModifier, 
+    int ProficiencyBonus, 
+    int? DifficultyClass = null, 
+    Dictionary<string, int>? AdditionalModifiers = null);
+
+public record CheckResult(
+    int RollValue, 
+    int TotalResult, 
+    bool IsSuccess, 
+    string Message);
+```
+
+### Attack
+```csharp
+public record AttackContext(
+    string WeaponId,
+    int AttackModifier,
+    int? TargetArmorClass = null,
+    Dictionary<string, int>? AdditionalModifiers = null);
+
+public record AttackResult(
+    int AttackRoll,
+    int TotalAttackResult,
+    bool IsHit,
+    bool IsCriticalHit,
+    int? DamageDealt = null,
+    string? DamageType = null,
+    string Message = "");
+```
+
+## Adding a New Game System
+
+1. Add domain models to `Models/GameSystems/{Name}/`
+2. Implement `IRuleBook` in `API.Services/GameSystems/{Name}/{Name}RuleBook.cs`
+3. Decorate with `[GameSystem("system-id")]`
+4. Add MediatR contracts to `Mediator/Contracts/GameSystems/`
+5. Add handlers to `Mediator/Handlers/GameSystems/`
+6. Add a spec doc to `docs/game-systems/{name}.md`
+
+*Note: `GameSystemRegistry` automatically discovers all `[GameSystem]` decorated classes in the `API.Services` assembly.*
+
+## GameSystemAttribute
+```csharp
+[GameSystem("dnd5e")]
+public class DnD5eRuleBook : IRuleBook { ... }
+```
+
+## Game Systems
+| ID | Name | Status |
+|---|---|---|
+| `dnd5e` | Dungeons & Dragons 5th Edition | Implemented |
+
+## MediatR Flow
+```
+Blazor page
+  → API.Client.ResolveSkillCheckAsync(request)
+    → API controller
+      → _mediator.Send(new ResolveSkillCheckRequest(systemId, context))
+        → ResolveSkillCheckHandler
+          → IGameSystemRegistry.Get(systemId).ResolveSkillCheck(context)
+            → {Name}RuleBook.ResolveSkillCheck(context)
+```
+```
+
+## FILE: Documentation\Docs\game-session.md
+```md
+# Game Session
+
+## Overview
+Game sessions represent an active instance of a TTRPG play session. A session is associated with a specific character name and a game system (e.g., `dnd5e`). 
+
+The current implementation uses an in-memory `SessionStore` on the server for Phase 3, which persists for the lifetime of the API process.
+
+## Session Flow
+
+1. **Start Session**: 
+   - The user enters a character name and selects a game system in the `SessionComponent`.
+   - A `StartSessionRequest` is sent to the API.
+   - The server creates a `SessionState`, generates a `SessionId`, and initializes the `CharacterSheetSchema` from the selected rulebook.
+   - The `SessionState` is stored in the `SessionStore`.
+
+2. **Perform Action**:
+   - The user performs actions (e.g., "Roll Stealth" or "Attack") in the UI.
+   - A `PerformActionRequest` is sent to the API with the `SessionId`, `ActionType`, and relevant context.
+   - The server retrieves the session from the `SessionStore`.
+   - The rulebook resolves the action and returns a `CheckResult` or `AttackResult`.
+   - A `SessionEvent` is created, added to the session's event log, and the updated state is saved.
+   - The `SessionEvent` is returned to the client to update the local UI state.
+
+## Core Records
+
+### SessionState (Models/Session/SessionState.cs)
+Holds the complete state of an active game session.
+
+```csharp
+public record SessionState(
+    string SessionId,
+    string CharacterName,
+    string SystemId,
+    CharacterSheetSchema CharacterSheetSchema,
+    IReadOnlyList<SessionEvent> EventLog);
+```
+
+### SessionEvent (Models/Session/SessionEvent.cs)
+Represents a single action or event that occurred during the session.
+
+```csharp
+public record SessionEvent(
+    string EventType,
+    string Description,
+    DateTime Timestamp,
+    CheckResult? CheckResult = null,
+    AttackResult? AttackResult = null);
+```
+
+### Contracts (Mediator/Contracts/Session/)
+- `StartSessionRequest(string CharacterName, string SystemId)`
+- `PerformActionRequest(string SessionId, ActionType ActionType, ...)`
+- `ActionType` (Enum: `SkillCheck`, `Attack`)
+
+## In-Memory Store Pattern
+The `SessionStore` is a static class in the `Mediator` project that uses a `ConcurrentDictionary` to manage active sessions.
+
+```csharp
+// Mediator/Mediator/Handlers/Session/SessionStore.cs
+public static class SessionStore
+{
+    public static ConcurrentDictionary<string, SessionState> Sessions { get; } = new();
+}
+```
+
+This pattern allows MediatR handlers to maintain state across multiple requests without a database in the early development phases.
+
+## Blazor Component Structure
+
+The session UI is composed of several components in `DemonsAndDogs/Components/`:
+
+- **SessionComponent**: The main container. It handles the initial "Start Session" form and then orchestrates the game session UI once a session is active. It manages the `SessionState` and calls the `ISessionClient`.
+- **CharacterSheetComponent**: A read-only display of the character's stats based on the `CharacterSheetSchema` provided by the game system.
+- **ActionLogComponent**: Displays a scrollable list of `SessionEvent` objects, showing the history of rolls and actions with appropriate styling (e.g., success/failure colors).
+
+### Component Hierarchy
+```
+SessionComponent
+├── CharacterSheetComponent (Left Sidebar)
+├── ActionLogComponent (Center Column)
+└── DM Narration Card (Right Sidebar - Placeholder for Phase 4)
+```
+```
+
+## FILE: Documentation\Docs\index.md
+```md
+# Demons and Dogs — Master Index
+
+Demons and Dogs is a high-performance, multi-system TTRPG engine built with Blazor WASM and .NET 10. It features AI-powered narration and a flexible game system architecture that allows for rapid integration of different rulebooks like D&D 5e, Call of Cthulhu, and Pathfinder. The core goal is to provide a unified platform for digital TTRPG sessions with rich, dynamic character sheets and immersive AI storytelling.
+
+## Read This First
+
+Before writing any code or starting a new feature, AI tools **must**:
+1.  **Call `GetStarted`** from the MCP server to initialize context and see the current project state.
+2.  **Read the relevant spec doc** in `docs/` for any feature you are working on. Specs drive implementation.
+3.  **Identify patterns** in `docs/architecture.md` and `docs/best-practices.md` before adding new logic.
+
+## Project Structure
+
+The solution follows a clean architecture with MediatR-driven communication and clear separation of concerns:
+
+- **Apps/**
+    - **DemonsAndDogs**: Blazor WASM frontend. Contains pages, layouts, and the entry point. Delegates all logic to `API.Client`.
+- **API/**
+    - **API**: Thin ASP.NET Core controllers that send MediatR requests.
+    - **API.Client**: Typed HTTP client for Blazor-to-API communication.
+    - **API.Configuration**: Dependency injection registration and startup configuration.
+    - **API.Services**: Business logic services and `IRuleBook` implementations.
+- **Infrastructure/**
+    - **Models**: Shared records for DTOs, domain models, and `JsonResource` definitions.
+    - **DataAccess**: EF Core repositories and abstractions for data persistence.
+    - **AppConstants**: Shared constants, enums, and resource kinds. No business logic.
+    - **Mediator**: MediatR contracts (Requests/Responses) and their corresponding Handlers.
+    - **UIComponents**: Shared Razor components used by the Blazor WASM frontend.
+    - **Documentation**: Embedded Markdown files served via assembly resources.
+    - **MCPServer**: MCP server exposing project documentation and state to AI tools.
+- **Tests/**: Various test projects using xUnit, bUnit, and Playwright.
+
+For more details, see [architecture.md](architecture.md).
+
+## Documentation Index
+
+| Document | Description |
+|---|---|
+| [architecture.md](architecture.md) | High-level system design, project structure, and key patterns. |
+| [best-practices.md](best-practices.md) | Coding standards, Blazor patterns, and TTRPG-specific rules. |
+| [data-model.md](data-model.md) | Hybrid relational/JSON schema for game system flexibility. |
+| [game-engine.md](game-engine.md) | Game system extension points, `IRuleBook`, and system registry. |
+| [game-session.md](game-session.md) | Session state management, event logging, and game flow. |
+| [narration-lmstudio.md](narration-lmstudio.md) | Guide for setting up local AI narration using LM Studio. |
+| [testing.md](testing.md) | Test project map, naming conventions, and bUnit/xUnit patterns. |
+| [ui-themes.md](ui-themes.md) | Design system, themes, and CSS architecture. |
+
+## Current State
+
+For the authoritative source on what features are currently implemented, what is mocked, and what's next on the roadmap, see [current-state.md](current-state.md).
+
+## Working With AI
+
+When working on this project, AI assistants must adhere to these rules:
+- **Spec-Driven Development**: Always read the relevant spec doc before writing code.
+- **No Hardcoded Values**: Never hardcode values that belong in `AppConstants`.
+- **Follow Patterns**: Adhere to the architectural patterns defined in `best-practices.md`.
+- **Test First**: Write spec-driven test cases (xUnit or bUnit) before starting the implementation.
+- **Clean Controllers**: Controllers must remain one-line MediatR senders.
+- **Records Only**: Use C# records for all data transfer and domain models.
+```
+
+## FILE: Documentation\Docs\narration-lmstudio.md
+```md
+# Narration: LM Studio Integration
+
+## Overview
+
+AI narration is provided by a local LLM running in LM Studio. The narrator is abstracted
+behind `INarrator` in `Models/Interfaces/`. The concrete implementation is `LocalLlmNarrator`
+in `API.Services/Narration/`. Configuration lives in `appsettings.Development.json` under
+the `LocalLlm` key.
+
+## Endpoint
+
+LM Studio exposes a **non-OpenAI-compatible** chat endpoint. Use:
+
+```
+POST http://127.0.0.1:1234/api/v1/chat
+```
+
+Do **not** use `/v1/chat/completions` — that is the OpenAI-compatible endpoint and is not
+supported in the version of LM Studio used by this project.
+
+## Configuration
+
+`appsettings.Development.json`:
+
+```json
+"LocalLlm": {
+  "BaseUrl": "http://127.0.0.1:1234/api",
+  "ModelId": "google/gemma-3-4b",
+  "SystemPrompt": "You are Mordecai..."
+}
+```
+
+- `BaseUrl` must be the host + `/api` with no trailing slash. The narrator appends `/v1/chat` itself.
+- `ModelId` must match exactly the model identifier shown in LM Studio's model list.
+- Do not put a path suffix in `BaseUrl` — the narrator always appends `/v1/chat`.
+
+## Request Format
+
+LM Studio's `/api/v1/chat` uses `input` (a plain string) rather than a `messages` array:
+
+```json
+{
+  "model": "google/gemma-3-4b",
+  "input": "Character: Gimli\nAction: Attack\nOutcome: ...\nTone: dramatic",
+  "stream": true
+}
+```
+
+The system prompt is configured separately in `LocalLlmOptions` and prepended by LM Studio
+when the model is loaded. The `input` field contains only the user-facing prompt.
+
+## SSE Response Format
+
+When `stream: true`, LM Studio returns a sequence of SSE `data:` lines. Each line carries
+a JSON object with a `type` field. Only `message.delta` events carry tokens:
+
+```
+data: {"type":"chat.start","model_instance_id":"google/gemma-3-4b"}
+data: {"type":"prompt_processing.start"}
+data: {"type":"prompt_processing.progress","progress":0}
+data: {"type":"prompt_processing.progress","progress":1}
+data: {"type":"prompt_processing.end"}
+data: {"type":"message.start"}
+data: {"type":"message.delta","content":"Gimli"}
+data: {"type":"message.delta","content":" swings"}
+data: {"type":"message.delta","content":" his axe..."}
+data: {"type":"message.end"}
+data: {"type":"chat.end"}
+data: [DONE]
+```
+
+The parser in `StreamTokensAsync` must:
+1. Strip the `data: ` prefix
+2. Skip `[DONE]`
+3. Parse as JSON
+4. Only yield `content` when `type == "message.delta"`
+5. Ignore all other event types (`chat.start`, `chat.end`, `message.start`, `message.end`, `prompt_processing.*`)
+
+## Stream Lifetime (Important)
+
+`LocalLlmNarrator` uses `HttpCompletionOption.ResponseHeadersRead` so the response body
+is not buffered. The `HttpRequestMessage`, `HttpResponseMessage`, `Stream`, and `StreamReader`
+are all owned inside the `StreamTokensAsync` async iterator via `using` declarations.
+
+They must **not** be disposed before iteration completes. Do not move the HTTP call back
+into `NarrateAsync` and pass the stream out — the response will be disposed before the
+controller can iterate it, causing a 500.
+
+## Blazor WASM Streaming (Important)
+
+`ApiClient.GetStream` runs in Blazor WASM (browser/WebAssembly). The browser's HTTP stack
+does **not** support synchronous reads. This means:
+
+- **Never use `StreamReader.EndOfStream`** — it performs a synchronous read and throws
+  `net_http_synchronous_reads_not_supported`
+- Use `while (true)` and break on `null` from `ReadLineAsync` instead:
+
+```csharp
+// WRONG - throws in Blazor WASM
+while (!reader.EndOfStream)
+
+// CORRECT
+while (true)
+{
+    var line = await reader.ReadLineAsync(ct);
+    if (line == null) break;
+    ...
+}
+```
+
+## Flow
+
+```
+NarrationPanel.razor
+  -> GET api/narration/stream/{sessionId}
+  -> NarrationController
+  -> mediator.Send(NarrateActionRequest)
+  -> NarrateActionHandler
+      - looks up session from SessionStore
+      - maps last SessionEvent -> GameEvent
+  -> LocalLlmNarrator.NarrateAsync(gameEvent, "dramatic")
+      - builds prompt string
+      - returns NarrationResult with TokenStream = StreamTokensAsync(...)
+  -> NarrationController iterates TokenStream
+      - writes each token as SSE: data: {token}\n\n
+  -> NarrationPanel.razor receives tokens via ApiClient.GetStream()
+      - appends character by character with 15ms delay for typewriter effect
+```
+
+## Narrator Persona
+
+Mordecai is the configured narrator persona. System prompt characteristics:
+- Dramatic, theatrical, slightly unhinged
+- Describes action outcomes in 2-3 vivid sentences
+- Rich sensory detail, occasional fourth-wall breaks and dry wit
+- Celebrates successes, makes failures entertainingly catastrophic
+- Never explains game mechanics, never breaks character
+
+The system prompt is stored in `LocalLlmOptions.SystemPrompt` and configured per-environment
+in `appsettings.Development.json`.
+
+## Troubleshooting
+
+| Symptom | Cause | Fix |
+|---|---|---|
+| 404 from LM Studio | Wrong endpoint path | Ensure `BaseUrl` ends with `/api`, narrator appends `/v1/chat` |
+| 500 from API | Stream disposed early | Ensure HTTP call is inside the iterator, not in `NarrateAsync` |
+| `net_http_synchronous_reads_not_supported` | `StreamReader.EndOfStream` used in Blazor WASM | Replace `while (!reader.EndOfStream)` with `while (true)` and break on null from `ReadLineAsync` |
+| "The shadows grow silent..." with no error | SSE parse failure | Check `type` field - only yield `content` on `message.delta` events |
+| "The shadows grow silent..." after working | `ApiClient.GetStream` parsing wrong field | Ensure no JSON parsing in `GetStream` - yield raw `data:` value directly |
+| LM Studio logs show request but no tokens | Wrong request shape | Use `input` string, not `messages` array |
+| LM Studio returns 404 | Wrong endpoint | Use `/api/v1/chat` not `/api/v1/chat/completions` |
+| Model not found | Wrong `ModelId` | Match exactly to LM Studio's loaded model identifier |
+```
+
+## FILE: Documentation\Docs\roadmap.md
+```md
+# Roadmap
+
+Update this doc when a feature moves to Done.
+
+## Principles
+- **Spec First**: Features are specced before any code is written.
+- **Test Cases in Spec**: Every spec must include clear, reproducible test cases.
+- **Tests Before Implementation**: Write unit or component tests before adding logic.
+- **No Magic Strings**: All constants belong in the `AppConstants` project.
+- **Always Read Relevant Docs**: Call `GetStarted` and read spec docs before coding.
+
+## Milestone 1 — AI Context Foundation
+
+| Feature | Status | Notes |
+|---|---|---|
+| `docs/index.md` | Done | Master entry point for AI tools |
+| `docs/current-state.md` | Done | What's real vs mocked |
+| `docs/roadmap.md` | Done | This document |
+| Update `.junie/guidelines.md` | Done | Always call GetStarted before coding |
+| GetStarted MCP tool | Done | Returns `index.md` + doc list in one call |
+| `Sync-Docs.ps1` | Done | Pushes docs into Documentation project |
+
+## Milestone 2 — Spec-Driven Workflow
+
+| Feature | Status | Notes |
+|---|---|---|
+| `New-Spec.ps1` scaffold script | Planned | Automated spec creation |
+| Spec template | Planned | Template with required sections including Test Cases |
+| Update `testing.md` | Planned | Document spec-first workflow |
+
+## Milestone 3 — TDD Foundation
+
+| Feature | Status | Notes |
+|---|---|---|
+| Test data builders | Planned | Builders for `SkillCheckContext`, `AttackContext`, `SessionState` |
+| `DnD5eRuleBook` Unit tests | Planned | Full coverage for 5e mechanics |
+| Scoped `SessionStore` | Planned | Replace static `SessionStore` with scoped service |
+| `Run-Tests.ps1` | Planned | Rider External Tool for quick test runs |
+
+## Milestone 4 — Clean Code
+
+| Feature | Status | Notes |
+|---|---|---|
+| Narration magic strings | Planned | Finish magic strings in narration logic |
+| `Check-MagicStrings.ps1` | Planned | Linting tool for magic strings |
+| CancellationToken audit | Planned | Ensure all async methods are cancelable |
+
+## Milestone 5 — Real Data
+
+| Feature | Status | Notes |
+|---|---|---|
+| `docs/session-persistence.md` | Planned | Persistence specification |
+| Real persistence | Planned | Using hybrid JSON model from `data-model.md` |
+| Flip `UseMockData` flag | Planned | Switch to real repositories |
+```
+
+## FILE: Documentation\Docs\testing.md
 ```md
 # Testing Guidelines
 
@@ -3783,7 +4916,7 @@ public class ActionLogComponentTests : TestContext
 - Pure record constructors
 ```
 
-## FILE: docs\ui-themes.md
+## FILE: Documentation\Docs\ui-themes.md
 ```md
 # UI Themes
 
@@ -3918,24 +5051,20 @@ Theme reverts to default (`"fantasy"`) when leaving a session.
 ## FILE: Documentation\Documentation.csproj
 ```csproj
 <Project Sdk="Microsoft.NET.Sdk">
-
-    <PropertyGroup>
-        <TargetFramework>net10.0</TargetFramework>
-        <ImplicitUsings>enable</ImplicitUsings>
-        <Nullable>enable</Nullable>
-    </PropertyGroup>
-    
-    <!--
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+  <!--
       Docs live in the top-level /docs folder for easy editing.
       Embedded here as assembly resources so MCPServer can serve
       them without needing file paths on disk.
     -->
-    <ItemGroup>
-        <EmbeddedResource Include="..\docs\**\*.md"
-                          LogicalName="%(RecursiveDir)%(Filename)%(Extension)"
-                          Visible="true" />
-    </ItemGroup>
-
+  <ItemGroup>
+    <EmbeddedResource Include="..\docs\**\*.md"
+                      LogicalName="%(RecursiveDir)%(Filename)%(Extension)" />
+  </ItemGroup>
 </Project>
 ```
 
@@ -4005,6 +5134,7 @@ await builder.Build().RunAsync();
 ```cs
 using System.ComponentModel;
 using System.Reflection;
+using System.Text;
 using Documentation;
 using ModelContextProtocol.Server;
 
@@ -4084,6 +5214,84 @@ public static class DocumentationTools
         });
 
         return string.Join("\n\n---\n\n", sections);
+    }
+
+    /// <summary>
+    /// Call this at the start of every task to load full project context.
+    /// Returns index, current state, and available docs in one call.
+    /// </summary>
+    [McpServerTool]
+    [Description("Call this at the start of every task to load full project context. Returns index, current state, and available docs in one call.")]
+    public static string GetStarted()
+    {
+        var assembly = GetAssembly();
+        var allResources = assembly.GetManifestResourceNames()
+            .Where(n => n.EndsWith(".md", StringComparison.OrdinalIgnoreCase))
+            .ToList();
+
+        var sb = new StringBuilder();
+
+        sb.AppendLine("# MASTER INDEX (index.md)");
+        sb.AppendLine(ReadResource(assembly, allResources, "index.md"));
+        sb.AppendLine("\n---\n");
+
+        sb.AppendLine("# CURRENT STATE (current-state.md)");
+        sb.AppendLine(ReadResource(assembly, allResources, "current-state.md"));
+        sb.AppendLine("\n---\n");
+
+        sb.AppendLine("# AVAILABLE DOCUMENTATION INDEX");
+        foreach (var resource in allResources.OrderBy(n => n))
+        {
+            var name = Path.GetFileNameWithoutExtension(resource);
+            var description = GetDocDescription(assembly, resource);
+            sb.AppendLine($"- **{name}**: {description}");
+        }
+
+        return sb.ToString();
+    }
+
+    private static string ReadResource(Assembly assembly, IEnumerable<string> resources, string name)
+    {
+        var resource = resources.FirstOrDefault(n => n.Equals(name, StringComparison.OrdinalIgnoreCase) 
+                                                     || n.EndsWith("." + name, StringComparison.OrdinalIgnoreCase));
+        
+        if (resource == null)
+        {
+            return $"[ERROR: {name} not found. Please ensure this file exists in the 'docs/' folder and is correctly embedded in the Documentation project.]";
+        }
+
+        using var stream = assembly.GetManifestResourceStream(resource)!;
+        using var reader = new StreamReader(stream);
+        return reader.ReadToEnd();
+    }
+
+    private static string GetDocDescription(Assembly assembly, string resource)
+    {
+        using var stream = assembly.GetManifestResourceStream(resource)!;
+        using var reader = new StreamReader(stream);
+
+        string? firstHeading = null;
+        string? firstParagraph = null;
+
+        while (!reader.EndOfStream)
+        {
+            var line = reader.ReadLine()?.Trim();
+            if (string.IsNullOrWhiteSpace(line)) continue;
+
+            if (line.StartsWith("#") && firstHeading == null)
+            {
+                firstHeading = line.TrimStart('#').Trim();
+                continue;
+            }
+
+            if (!line.StartsWith("#"))
+            {
+                firstParagraph = line;
+                break;
+            }
+        }
+
+        return firstParagraph ?? firstHeading ?? "No description available.";
     }
 
     private static Assembly GetAssembly() =>
@@ -5793,5 +7001,5 @@ public class ThemeService
 ```
 
 # ================================================================
-# END OF CONTEXT - 150 files exported, 1 skipped
+# END OF CONTEXT - 164 files exported, 1 skipped
 
