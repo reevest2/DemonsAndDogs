@@ -44,6 +44,7 @@ public class JsonResourceRepository(DbContext context) : IJsonResourceRepository
 
         context.Entry(existing).Property<DateTime?>("UpdatedAt").CurrentValue = DateTime.UtcNow;
         context.Entry(existing).CurrentValues.SetValues(resource);
+        context.Entry(existing).Property(r => r.ResourceKind).IsModified = false;
         await context.SaveChangesAsync();
         return existing;
     }

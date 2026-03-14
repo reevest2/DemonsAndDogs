@@ -15,7 +15,17 @@
       "Bash(find /d/Repos/DemonsAndDogs/docs -type f -name *.md)",
       "Bash(grep -r \"class\\\\|interface\" /d/Repos/DemonsAndDogs/API.Services/Session/ --include=*.cs)",
       "Bash(dotnet sln:*)",
-      "Bash(taskkill //F //IM iisexpress.exe)"
+      "Bash(taskkill //F //IM iisexpress.exe)",
+      "Bash(find /d/Repos/DemonsAndDogs -type d \\\\\\(-iname *test* -o -iname *e2e* \\\\\\))",
+      "Bash(ls -1 /d/Repos/DemonsAndDogs/API/*.cs)",
+      "WebSearch",
+      "Bash(find D:ReposDemonsAndDogs -name *Mediator* -type d)",
+      "Bash(find D:ReposDemonsAndDogsMediator -name *.cs -type f)",
+      "Bash(grep -i \"error\\\\|fail\\\\|assert\\\\|expect\" D:/Repos/DemonsAndDogs/DemonsAndDogs.API.Tests/TestResults/*.trx)",
+      "Bash(claude --version)",
+      "Bash(npm --version)",
+      "Read(//c/Program Files/nodejs/**)",
+      "Read(//c/Program Files \\(x86\\)/nodejs/**)"
     ]
   }
 }
