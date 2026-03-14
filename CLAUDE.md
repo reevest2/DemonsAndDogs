@@ -36,8 +36,11 @@ dotnet build DemonsAndDogs.sln
 # API server (https://localhost:44390)
 dotnet run --project API/API.csproj
 
-# Blazor WebAssembly frontend (http://localhost:5150)
-dotnet run --project DemonsAndDogs/DemonsAndDogs.csproj
+# Builder app — campaign management (http://localhost:5150)
+dotnet run --project DemonsAndDogs.Builder/DemonsAndDogs.Builder.csproj
+
+# Player app — session play (http://localhost:5160)
+dotnet run --project DemonsAndDogs.Player/DemonsAndDogs.Player.csproj
 ```
 
 ### Test
@@ -58,8 +61,9 @@ dotnet test DemonsAndDogs.API.Tests/DemonsAndDogs.API.Tests.csproj
 The solution is structured as a layered monorepo with the following key projects:
 
 ### Frontend
-- **`DemonsAndDogs/`** — Blazor WebAssembly app. Pages, layout, and services. Calls the API via typed HTTP clients from `API.Client`.
-- **`UIComponents/`** — Shared Razor component library using Radzen.Blazor.
+- **`DemonsAndDogs.Builder/`** — Blazor WASM app for campaign management: campaigns, characters, documents, game systems. Runs on port 5150.
+- **`DemonsAndDogs.Player/`** — Blazor WASM app for session play: start sessions, perform actions, narration. Runs on port 5160.
+- **`UIComponents/`** — Shared Razor component library using Radzen.Blazor. Referenced by both frontend apps.
 
 ### API
 - **`API/`** — ASP.NET Core REST API. Controllers for Campaign, Character, GameSystem, Narration, and Session. Delegates to `API.Services` via MediatR.
@@ -86,7 +90,7 @@ All persisted entities extend `JsonResource` with fields: `Id`, `EntityId`, `Gam
 
 - **PostgreSQL** at `localhost:5432`, database `demonsanddogs`, user `postgres`. Requires the `pgvector` extension.
 - **LM Studio** at `http://127.0.0.1:1234/api` with model `google/gemma-3-4b` for AI narration.
-- **CORS**: API allows `http://localhost:5150`; frontend calls `https://localhost:44390`.
+- **CORS**: API allows `http://localhost:5150` (Builder) and `http://localhost:5160` (Player); both call `https://localhost:44390`.
 
 ### Testing Stack
 

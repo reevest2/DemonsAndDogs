@@ -3,6 +3,7 @@
 @inject ICampaignClient CampaignClient
 @inject ICharacterClient CharacterClient
 @inject IDocumentClient DocumentClient
+@inject AppLinksService AppLinks
 
 <div class="container py-4">
     @if (_campaign == null)
@@ -25,7 +26,7 @@
                         <p class="lead mb-0">@GetDescription(_campaign)</p>
                     </div>
                     <div class="col-auto">
-                        <a href="/session/new?campaignId=@CampaignId" class="btn-primary" style="text-decoration: none; font-size: 1.25rem;">
+                        <a href="@($"{AppLinks.PlayerBaseUrl.TrimEnd('/')}/session/new?campaignId={CampaignId}")" class="btn-primary" style="text-decoration: none; font-size: 1.25rem;">
                             Start Session
                         </a>
                     </div>

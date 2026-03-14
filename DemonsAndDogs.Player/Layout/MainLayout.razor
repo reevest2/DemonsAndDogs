@@ -1,0 +1,36 @@
+@inherits LayoutComponentBase
+@inject UIComponents.Services.ThemeService ThemeService
+@implements IDisposable
+
+<div class="main-layout" data-theme="@ThemeService.CurrentTheme">
+    <NavMenu />
+
+    <RadzenDialog />
+    <RadzenNotification />
+    <RadzenTooltip />
+    <RadzenContextMenu />
+
+    <main>
+        <div class="container page-fade-in">
+            @Body
+        </div>
+    </main>
+
+    <footer class="text-center p-4">
+        <div class="divider"></div>
+        <p>&copy; @DateTime.Now.Year — Demons & Dogs — Your AI-powered TTRPG companion</p>
+    </footer>
+</div>
+
+@code {
+    protected override void OnInitialized()
+    {
+        ThemeService.SetTheme("steampunk");
+        ThemeService.OnThemeChanged += StateHasChanged;
+    }
+
+    public void Dispose()
+    {
+        ThemeService.OnThemeChanged -= StateHasChanged;
+    }
+}

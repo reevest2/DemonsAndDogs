@@ -29,7 +29,7 @@
     <ProjectReference Include="..\Mediator\Mediator.csproj" />
     <ProjectReference Include="..\API.Client\API.Client.csproj" />
     <ProjectReference Include="..\UIComponents\UIComponents.csproj" />
-    <ProjectReference Include="..\DemonsAndDogs\DemonsAndDogs.csproj" />
+    <ProjectReference Include="..\DemonsAndDogs.Builder\DemonsAndDogs.Builder.csproj" />
   </ItemGroup>
 
 </Project>

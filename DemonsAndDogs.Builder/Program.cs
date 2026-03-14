@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Radzen;
 using UIComponents.Services;
 
-namespace DemonsAndDogs;
+namespace DemonsAndDogs.Builder;
 
 public class Program
 {
@@ -21,12 +21,12 @@ public class Program
         builder.Services.AddScoped<ContextMenuService>();
         builder.Services.AddScoped<ApiClient>();
         builder.Services.AddScoped<IApiClient>(sp => sp.GetRequiredService<ApiClient>());
-        builder.Services.AddScoped<ISessionClient, SessionClient>();
         builder.Services.AddScoped<ICampaignClient, CampaignClient>();
         builder.Services.AddScoped<ICharacterClient, CharacterClient>();
         builder.Services.AddScoped<IGameSystemClient, GameSystemClient>();
         builder.Services.AddScoped<IDocumentClient, DocumentClient>();
         builder.Services.AddScoped<UIComponents.Services.ThemeService>();
+        builder.Services.AddSingleton(new AppLinksService { PlayerBaseUrl = "http://localhost:5160" });
         //Http client to the API
         builder.Services.AddScoped(_ => new HttpClient { BaseAddress = new Uri("https://localhost:44390/") }); //TODO: Put in settings somewhere
 

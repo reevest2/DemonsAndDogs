@@ -11,7 +11,11 @@
       "Bash(xargs wc:*)",
       "Bash(wc -l /d/Repos/DemonsAndDogs/DemonsAndDogs.Tests/Components/*.cs)",
       "Bash(grep -E \"^d|\\\\.cs$|\\\\.csproj$\")",
-      "Bash(find D:ReposDemonsAndDogs -name *migration* -o -name *init*)"
+      "Bash(find D:ReposDemonsAndDogs -name *migration* -o -name *init*)",
+      "Bash(find /d/Repos/DemonsAndDogs/docs -type f -name *.md)",
+      "Bash(grep -r \"class\\\\|interface\" /d/Repos/DemonsAndDogs/API.Services/Session/ --include=*.cs)",
+      "Bash(dotnet sln:*)",
+      "Bash(taskkill //F //IM iisexpress.exe)"
     ]
   }
 }

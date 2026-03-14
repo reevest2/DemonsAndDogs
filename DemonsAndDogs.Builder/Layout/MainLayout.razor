@@ -1,6 +1,5 @@
-﻿@inherits LayoutComponentBase
+@inherits LayoutComponentBase
 @inject UIComponents.Services.ThemeService ThemeService
-@inject NavigationManager NavigationManager
 @implements IDisposable
 
 <div class="main-layout" data-theme="@ThemeService.CurrentTheme">
@@ -27,23 +26,10 @@
     protected override void OnInitialized()
     {
         ThemeService.OnThemeChanged += StateHasChanged;
-        NavigationManager.LocationChanged += OnLocationChanged;
-    }
-
-    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
-    {
-        var relativePath = NavigationManager.ToBaseRelativePath(e.Location);
-        // Revert to fantasy if leaving a session page
-        if (!relativePath.StartsWith("session", StringComparison.OrdinalIgnoreCase) && 
-            ThemeService.CurrentTheme != "fantasy")
-        {
-            ThemeService.SetTheme("fantasy");
-        }
     }
 
     public void Dispose()
     {
         ThemeService.OnThemeChanged -= StateHasChanged;
-        NavigationManager.LocationChanged -= OnLocationChanged;
     }
 }
