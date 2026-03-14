@@ -27,6 +27,7 @@ public class PerformActionHandlerTests
             "Hero",
             DnD5eSystemId,
             new CharacterSheetSchema(DnD5eSystemId, new()),
+            new Dictionary<string, int>(),
             new List<SessionEvent>());
     }
 

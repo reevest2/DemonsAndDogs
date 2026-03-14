@@ -51,7 +51,7 @@
                 }
                 else
                 {
-                    <CharacterSheetComponent Schema="_schema" />
+                    <CharacterSheetComponent Schema="_schema" Stats="_stats" />
                 }
             </div>
         </div>
@@ -63,18 +63,20 @@
 
     private CharacterResource? _character;
     private CharacterSheetSchema? _schema;
+    private IReadOnlyDictionary<string, int>? _stats;
 
     protected override async Task OnParametersSetAsync()
     {
         if (string.IsNullOrEmpty(CharacterId)) return;
 
         _character = await CharacterClient.GetByIdAsync(CharacterId);
-        
+
         if (_character != null && !string.IsNullOrEmpty(_character.GameId))
         {
-            try 
+            try
             {
                 _schema = await GameSystemClient.GetSchemaAsync(_character.GameId);
+                _stats = await CharacterClient.GetStatsAsync(CharacterId);
             }
             catch (Exception ex)
             {

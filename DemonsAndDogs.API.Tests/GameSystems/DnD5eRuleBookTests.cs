@@ -1,3 +1,4 @@
+using System.Text.Json;
 using API.Services.GameSystems.DnD5e;
 using DemonsAndDogs.API.Tests.GameSystems.Builders;
 using Models.GameSystems;
@@ -264,5 +265,75 @@ public class DnD5eRuleBookTests
 
         // Assert
         Assert.Null(exception);
+    }
+
+    // -----------------------------------------------------------------------
+    // ExtractStats
+    // -----------------------------------------------------------------------
+
+    [Fact]
+    public void ExtractStats_DataContainsAllSchemaKeys_ReturnsValueForEachField()
+    {
+        // Arrange
+        var ruleBook = new DnD5eRuleBook();
+        var data = JsonSerializer.Deserialize<JsonElement>(
+            """{"strength":18,"dexterity":14,"constitution":16,"intelligence":10,"wisdom":12,"charisma":8,"hp":45,"ac":16}""");
+
+        // Act
+        var stats = ruleBook.ExtractStats(data);
+
+        // Assert
+        Assert.Equal(18, stats["strength"]);
+        Assert.Equal(14, stats["dexterity"]);
+        Assert.Equal(16, stats["constitution"]);
+        Assert.Equal(10, stats["intelligence"]);
+        Assert.Equal(12, stats["wisdom"]);
+        Assert.Equal(8, stats["charisma"]);
+        Assert.Equal(45, stats["hp"]);
+        Assert.Equal(16, stats["ac"]);
+    }
+
+    [Fact]
+    public void ExtractStats_MissingFieldInData_FallsBackToSchemaDefault()
+    {
+        // Arrange
+        var ruleBook = new DnD5eRuleBook();
+        var data = JsonSerializer.Deserialize<JsonElement>("""{"strength":18}""");
+
+        // Act
+        var stats = ruleBook.ExtractStats(data);
+
+        // Assert
+        Assert.Equal(18, stats["strength"]);
+        Assert.Equal(10, stats["dexterity"]); // schema default
+    }
+
+    [Fact]
+    public void ExtractStats_EmptyJsonObject_ReturnsAllDefaults()
+    {
+        // Arrange
+        var ruleBook = new DnD5eRuleBook();
+        var data = JsonSerializer.Deserialize<JsonElement>("{}");
+
+        // Act
+        var stats = ruleBook.ExtractStats(data);
+
+        // Assert
+        Assert.All(stats.Values, v => Assert.Equal(10, v));
+        Assert.Equal(8, stats.Count); // 6 ability scores + hp + ac
+    }
+
+    [Fact]
+    public void ExtractStats_StrengthIs18_StatsContainStrength18()
+    {
+        // Arrange
+        var ruleBook = new DnD5eRuleBook();
+        var data = JsonSerializer.Deserialize<JsonElement>("""{"strength":18}""");
+
+        // Act
+        var stats = ruleBook.ExtractStats(data);
+
+        // Assert
+        Assert.Equal(18, stats["strength"]);
     }
 }

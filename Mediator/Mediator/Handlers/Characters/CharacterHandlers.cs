@@ -1,6 +1,7 @@
 using MediatR;
 using API.Services.Abstraction;
 using Models.Common;
+using Models.Interfaces;
 using Mediator.Mediator.Contracts.Characters;
 
 namespace Mediator.Mediator.Handlers.Characters;
@@ -26,5 +27,19 @@ public class GetCharactersBySystemHandler(ICharacterService service) : IRequestH
     public async Task<IEnumerable<CharacterResource>> Handle(GetCharactersBySystemRequest request, CancellationToken cancellationToken)
     {
         return await service.GetBySystemIdAsync(request.SystemId);
+    }
+}
+
+public class GetCharacterStatsHandler(ICharacterService characterService, IGameSystemRegistry registry)
+    : IRequestHandler<GetCharacterStatsRequest, IReadOnlyDictionary<string, int>>
+{
+    public async Task<IReadOnlyDictionary<string, int>> Handle(GetCharacterStatsRequest request, CancellationToken cancellationToken)
+    {
+        var character = await characterService.GetByIdAsync(request.CharacterId, cancellationToken);
+        if (character == null || string.IsNullOrEmpty(character.GameId))
+            return new Dictionary<string, int>();
+
+        var ruleBook = registry.Get(character.GameId);
+        return ruleBook.ExtractStats(character.Data);
     }
 }

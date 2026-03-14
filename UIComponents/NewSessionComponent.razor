@@ -101,7 +101,7 @@
                 ThemeService.SetTheme(campaign.Theme);
             }
 
-            var request = new StartSessionRequest(character.EntityId ?? "Unknown", character.GameId ?? "dnd5e");
+            var request = new StartSessionRequest(character.Id, character.EntityId ?? "Unknown", character.GameId ?? "dnd5e");
             var sessionState = await SessionClient.StartSessionAsync(request);
             
             NavigationManager.NavigateTo($"/session/{sessionState.SessionId}");

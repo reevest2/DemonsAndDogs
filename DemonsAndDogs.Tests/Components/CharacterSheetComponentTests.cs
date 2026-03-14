@@ -71,4 +71,50 @@ public class CharacterSheetComponentTests : TestContext
         // Assert
         Assert.Contains("No schema loaded.", cut.Markup);
     }
+
+    [Fact]
+    public void CharacterSheet_WithStats_DisplaysRealValuesNotDefaults()
+    {
+        // Arrange
+        var schema = new CharacterSheetSchema("dnd5e", new List<SheetSection>
+        {
+            new SheetSection("Abilities", "Ability Scores", new List<SheetField>
+            {
+                new SheetField("strength", "STR", "number", true, 10)
+            })
+        });
+        var stats = new Dictionary<string, int> { ["strength"] = 18 };
+
+        // Act
+        var cut = Render<CharacterSheetComponent>(parameters => parameters
+            .Add(p => p.Schema, schema)
+            .Add(p => p.Stats, stats));
+
+        // Assert
+        var fieldValues = cut.FindAll(".text-center.py-1");
+        Assert.Contains("18", fieldValues[0].TextContent);
+        Assert.DoesNotContain("10", fieldValues[0].TextContent);
+    }
+
+    [Fact]
+    public void CharacterSheet_WithNullStats_DisplaysSchemaDefaultValues()
+    {
+        // Arrange
+        var schema = new CharacterSheetSchema("dnd5e", new List<SheetSection>
+        {
+            new SheetSection("Abilities", "Ability Scores", new List<SheetField>
+            {
+                new SheetField("strength", "STR", "number", true, 10)
+            })
+        });
+
+        // Act
+        var cut = Render<CharacterSheetComponent>(parameters => parameters
+            .Add(p => p.Schema, schema)
+            .Add(p => p.Stats, (IReadOnlyDictionary<string, int>?)null));
+
+        // Assert
+        var fieldValues = cut.FindAll(".text-center.py-1");
+        Assert.Contains("10", fieldValues[0].TextContent);
+    }
 }

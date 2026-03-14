@@ -19,4 +19,9 @@ public class CharacterClient(IApiClient apiClient) : ICharacterClient
     {
         return await apiClient.Get<IEnumerable<CharacterResource>>($"api/character/system/{systemId}", ct);
     }
+
+    public async Task<IReadOnlyDictionary<string, int>> GetStatsAsync(string id, CancellationToken ct = default)
+    {
+        return await apiClient.Get<Dictionary<string, int>>($"api/character/{id}/stats", ct);
+    }
 }

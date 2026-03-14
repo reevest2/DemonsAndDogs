@@ -61,6 +61,7 @@ For more details, see [../core/architecture.md](../core/architecture.md).
 | [features/dnd5e-rulebook-tests.md](../features/dnd5e-rulebook-tests.md) | DnD5e RuleBook Unit Tests feature spec |
 | [features/session-persistence.md](../features/session-persistence.md) | Session Persistence feature spec |
 | [features/real-campaign-character-services.md](../features/real-campaign-character-services.md) | Real Campaign and Character Services feature spec |
+| [features/real-character-stats.md](../features/real-character-stats.md) | Real Character Stats — load actual stats from CharacterResource.Data into session and character detail views |
 
 ### Templates
 | Document | Description |

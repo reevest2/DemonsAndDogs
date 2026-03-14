@@ -27,4 +27,8 @@ public class CharacterController(IMediator mediator) : ControllerBase
     {
         return Ok(await mediator.Send(new GetCharactersBySystemRequest(systemId), cancellationToken));
     }
+
+    [HttpGet("{id}/stats")]
+    public async Task<ActionResult<IReadOnlyDictionary<string, int>>> GetStats(string id, CancellationToken cancellationToken)
+        => Ok(await mediator.Send(new GetCharacterStatsRequest(id), cancellationToken));
 }

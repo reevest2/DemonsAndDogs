@@ -59,4 +59,4 @@ Update this doc when a feature moves to Done.
 
 | Feature | Status | Notes |
 |---|---|---|
-| Real Character Stats | In Progress | System-specific stat generation and storage via CharacterResource.Data |
+| Real Character Stats | Done | ExtractStats on IRuleBook, Stats on SessionState, GET /character/{id}/stats, CharacterSheetComponent renders real values |

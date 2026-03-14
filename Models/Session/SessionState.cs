@@ -7,4 +7,5 @@ public record SessionState(
     string CharacterName,
     string SystemId,
     CharacterSheetSchema CharacterSheetSchema,
+    IReadOnlyDictionary<string, int> Stats,
     IReadOnlyList<SessionEvent> EventLog);

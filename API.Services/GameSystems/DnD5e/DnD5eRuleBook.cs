@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Models.Attributes;
 using Models.GameSystems;
 using Models.Interfaces;
@@ -59,6 +60,25 @@ public class DnD5eRuleBook : IRuleBook
             IsHit: isHit,
             IsCriticalHit: isCriticalHit,
             Message: message);
+    }
+
+    public IReadOnlyDictionary<string, int> ExtractStats(JsonElement data)
+    {
+        var schema = GetCharacterSheetSchema();
+        var result = new Dictionary<string, int>();
+
+        foreach (var section in schema.Sections)
+        {
+            foreach (var field in section.Fields)
+            {
+                if (data.TryGetProperty(field.Key, out var element) && element.TryGetInt32(out var value))
+                    result[field.Key] = value;
+                else
+                    result[field.Key] = field.DefaultValue is int defaultInt ? defaultInt : 0;
+            }
+        }
+
+        return result;
     }
 
     protected virtual int RollD20()

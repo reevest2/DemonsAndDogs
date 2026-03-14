@@ -14,16 +14,15 @@ This document provides the authoritative source on what features are currently i
 - **Session Persistence**: `ISessionPersistence` + `JsonSessionPersistence` wired into all session handlers. Sessions written to DB on start/action, loaded from DB on cache miss.
 - **ICampaignService**: `JsonCampaignService` reads `CampaignResource` from DB via `IJsonResourceRepository`. Seeded with 1 campaign on startup.
 - **ICharacterService**: `JsonCharacterService` reads `CharacterResource` from DB via `IJsonResourceRepository`. Seeded with 2 characters on startup.
+- **Real Character Stats**: `IRuleBook.ExtractStats()` extracts stats from `CharacterResource.Data` using schema field keys. `SessionState.Stats` populated on session start. Character detail page calls `GET /api/character/{id}/stats`. Both views render real values.
 
 ## Mocked / Stub
-- **Character Stats**: All characters currently default to stats of 10.
 - **Game Systems List**: Hardcoded to only show D&D 5e.
 
 ## In-Memory Cache (Write-Through to DB)
 - **SessionStore**: `ISessionStore` singleton with `ConcurrentDictionary` backing acts as a write-through cache. Sessions are persisted to the DB via `ISessionPersistence` on every write and reloaded from DB on cache miss.
 
 ## Not Started
-- **Real Character Stats**: System-specific stat generation and storage.
 - **Art Generation**: AI-generated portraits and scene backgrounds.
 - **Rulebook Upload**: PDF/Text parsing for new game systems.
 - **Second Game System**: Integration of a non-dnd5e system (e.g., Call of Cthulhu).

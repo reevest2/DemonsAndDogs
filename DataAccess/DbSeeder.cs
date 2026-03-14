@@ -30,7 +30,7 @@ public static class DbSeeder
                 GameId = GameSystemIds.DnD5e,
                 ResourceKind = ResourceKinds.Character,
                 Data = JsonSerializer.Deserialize<JsonElement>(
-                    """{ "name": "Gimli", "race": "Dwarf", "class": "Fighter", "stats": { "str": 18, "dex": 12, "con": 16, "int": 10, "wis": 12, "cha": 8 } }""")
+                    """{ "name": "Gimli", "race": "Dwarf", "class": "Fighter", "strength": 18, "dexterity": 12, "constitution": 16, "intelligence": 10, "wisdom": 12, "charisma": 8, "hp": 45, "ac": 16 }""")
             },
             new CharacterResource
             {
@@ -39,7 +39,7 @@ public static class DbSeeder
                 GameId = GameSystemIds.DnD5e,
                 ResourceKind = ResourceKinds.Character,
                 Data = JsonSerializer.Deserialize<JsonElement>(
-                    """{ "name": "Legolas", "race": "Elf", "class": "Ranger", "stats": { "str": 12, "dex": 18, "con": 14, "int": 12, "wis": 14, "cha": 12 } }""")
+                    """{ "name": "Legolas", "race": "Elf", "class": "Ranger", "strength": 12, "dexterity": 18, "constitution": 14, "intelligence": 12, "wisdom": 14, "charisma": 12, "hp": 38, "ac": 14 }""")
             }
         );
 

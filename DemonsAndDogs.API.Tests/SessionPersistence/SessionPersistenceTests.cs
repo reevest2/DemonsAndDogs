@@ -93,11 +93,13 @@ file static class TestData
     public static SessionState EmptySession(string sessionId) =>
         new(sessionId, "Hero", SystemId,
             new CharacterSheetSchema(SystemId, []),
+            new Dictionary<string, int>(),
             []);
 
     public static SessionState SessionWithEvents(string sessionId) =>
         new(sessionId, "Hero", SystemId,
             new CharacterSheetSchema(SystemId, []),
+            new Dictionary<string, int>(),
             [new SessionEvent("SkillCheck", "Rolled stealth", DateTime.UtcNow)]);
 
     public static FakeGameRegistry Registry => new();
@@ -215,10 +217,10 @@ public class SessionPersistenceTests
     {
         // Arrange
         var spy = new SpySessionPersistence();
-        var handler = new StartSessionHandler(TestData.Registry, new SessionStore(), spy);
+        var handler = new StartSessionHandler(TestData.Registry, new SessionStore(), spy, new NullCharacterService());
 
         // Act
-        var state = await handler.Handle(new StartSessionRequest("Hero", "dnd5e"), default);
+        var state = await handler.Handle(new StartSessionRequest("char-1", "Hero", "dnd5e"), default);
 
         // Assert
         Assert.Single(spy.Saved);

@@ -17,7 +17,7 @@
                             <div class="p-2" style="background-color: rgba(0,0,0,0.05); border-radius: 4px; border: 1px solid var(--border-color);">
                                 <span class="d-block small opacity-75" style="font-family: var(--font-display); text-transform: uppercase;">@field.Label</span>
                                 <div class="text-center py-1" style="font-family: var(--font-mono); font-size: 1.2rem; color: var(--accent-primary);">
-                                    @field.DefaultValue
+                                    @(Stats != null && Stats.TryGetValue(field.Key, out var v) ? v : field.DefaultValue)
                                 </div>
                             </div>
                         </div>
@@ -36,6 +36,7 @@
 
 @code {
     [Parameter] public CharacterSheetSchema? Schema { get; set; }
+    [Parameter] public IReadOnlyDictionary<string, int>? Stats { get; set; }
     [Parameter] public string Theme { get; set; } = "fantasy";
     private string ThemeClass => Theme == "steampunk" ? "card-steampunk" : "card-fantasy";
 }
