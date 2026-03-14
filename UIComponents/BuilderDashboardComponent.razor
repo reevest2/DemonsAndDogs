@@ -1,0 +1,124 @@
+@using API.Client.Abstraction
+@using Models.Common
+@using Models.GameSystems
+@inject ICampaignClient CampaignClient
+@inject ICharacterClient CharacterClient
+@inject IGameSystemClient GameSystemClient
+
+<div class="container py-5">
+    <div class="text-center mb-5">
+        <h1 class="glow" style="font-size: 4rem;">Demons & Dogs</h1>
+        <p class="lead" style="font-size: 1.25rem; font-family: var(--font-display);">Campaign Workshop</p>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="row row-cols-1 row-cols-md-3 g-4 mb-5">
+        <div class="col">
+            <a href="/campaigns" style="text-decoration: none; color: inherit;">
+                <div class="card h-100 stat-card">
+                    <div class="stat-number">@(_campaigns?.Count() ?? 0)</div>
+                    <div class="stat-label">Campaigns</div>
+                </div>
+            </a>
+        </div>
+        <div class="col">
+            <a href="/characters" style="text-decoration: none; color: inherit;">
+                <div class="card h-100 stat-card">
+                    <div class="stat-number">@(_characters?.Count() ?? 0)</div>
+                    <div class="stat-label">Characters</div>
+                </div>
+            </a>
+        </div>
+        <div class="col">
+            <a href="/systems" style="text-decoration: none; color: inherit;">
+                <div class="card h-100 stat-card">
+                    <div class="stat-number">@(_gameSystems?.Count() ?? 0)</div>
+                    <div class="stat-label">Game Systems</div>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="glow mb-0">Your Campaigns</h2>
+        @if (_campaigns != null && _campaigns.Any())
+        {
+            <a href="/campaigns" class="btn-secondary" style="text-decoration: none; font-size: 0.85rem;">View All</a>
+        }
+    </div>
+
+    @if (_campaigns == null)
+    {
+        <div class="text-center py-5">
+            <p class="glow">Loading...</p>
+        </div>
+    }
+    else if (!_campaigns.Any())
+    {
+        <div class="card py-5 text-center">
+            <p class="mb-0">No campaigns yet. <a href="/campaigns">Get started</a> by creating one!</p>
+        </div>
+    }
+    else
+    {
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+            @foreach (var campaign in _campaigns.Take(3))
+            {
+                <div class="col">
+                    <div class="card h-100 campaign-card">
+                        <div class="card-body">
+                            <h3 class="card-title glow">@campaign.EntityId</h3>
+                            <p class="card-text">@GetDescription(campaign)</p>
+                        </div>
+                        <div class="card-footer pt-0 pb-3">
+                            <a href="/campaigns/@campaign.Id" class="btn-primary d-block text-center" style="text-decoration: none;">
+                                View Details
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    private IEnumerable<CampaignResource>? _campaigns;
+    private IEnumerable<CharacterResource>? _characters;
+    private IEnumerable<GameSystemDescriptor>? _gameSystems;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var campaignTask = SafeLoad(() => CampaignClient.GetAllAsync());
+        var characterTask = SafeLoad(() => CharacterClient.GetAllAsync());
+        var systemTask = SafeLoad(() => GameSystemClient.GetAllAsync());
+
+        await Task.WhenAll(campaignTask, characterTask, systemTask);
+
+        _campaigns = await campaignTask;
+        _characters = await characterTask;
+        _gameSystems = await systemTask;
+    }
+
+    private async Task<IEnumerable<T>> SafeLoad<T>(Func<Task<IEnumerable<T>>> loader)
+    {
+        try
+        {
+            return await loader();
+        }
+        catch
+        {
+            return Enumerable.Empty<T>();
+        }
+    }
+
+    private string GetDescription(CampaignResource resource)
+    {
+        if (resource.Data.TryGetProperty("description", out var prop))
+        {
+            return prop.GetString() ?? "No description available.";
+        }
+        return "No description available.";
+    }
+}

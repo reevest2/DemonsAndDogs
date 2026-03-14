@@ -121,3 +121,28 @@ code {
     color: var(--accent-secondary);
     font-family: var(--font-mono);
 }
+
+/* Dashboard */
+.stat-card {
+    text-align: center;
+    padding: 1.5rem;
+    transition: transform 0.2s;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+}
+
+.stat-card .stat-number {
+    font-size: 2.5rem;
+    font-family: var(--font-display);
+    color: var(--accent-primary);
+}
+
+.stat-card .stat-label {
+    font-family: var(--font-display);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
