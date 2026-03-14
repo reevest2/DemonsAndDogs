@@ -1,0 +1,27 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:github.com)",
+      "WebSearch",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:api.github.com)",
+      "WebFetch(domain:jangwook.net)",
+      "WebFetch(domain:kenhuangus.substack.com)",
+      "WebFetch(domain:www.contextstudios.ai)",
+      "WebFetch(domain:quantumzeitgeist.com)",
+      "Bash(git -C \"D:/Repos/Jarvis2.0/Jarvis2.0\" log --all --oneline)",
+      "Bash(dotnet --version)",
+      "Bash(dotnet new:*)",
+      "Bash(dotnet sln:*)",
+      "Bash(dotnet add:*)",
+      "Bash(rm -f Class1.cs Jarvis2.0.csproj)",
+      "Bash(rm -rf obj/)",
+      "Bash(dotnet build:*)",
+      "Bash(ls *.sln)",
+      "Bash(dotnet test:*)",
+      "Bash(mv \"Jarvis2.0.slnx\" \"reCurse.slnx\")",
+      "Bash(mv \"src/Jarvis2.0.Core.csproj\" \"src/reCurse.Core.csproj\")",
+      "Bash(mv \"tests/Jarvis2.0.Tests.csproj\" \"tests/reCurse.Tests.csproj\")"
+    ]
+  }
+}
