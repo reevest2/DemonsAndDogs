@@ -1,0 +1,285 @@
+@using API.Client.Abstraction
+@using Models.Common
+@using System.Text.Json
+@inject IDocumentClient DocumentClient
+
+<div class="card p-4 mb-4">
+    <h5 class="glow mb-3">@(Document == null ? "New Document" : "Edit Document")</h5>
+
+    @if (_step == 1)
+    {
+        <p class="mb-3">Choose a document type:</p>
+        <div class="row row-cols-2 row-cols-md-4 g-3">
+            @foreach (var cat in _categories)
+            {
+                <div class="col">
+                    <button class="card h-100 w-100 text-center p-3 btn-secondary" style="cursor:pointer; border:none;" @onclick="() => SelectCategory(cat.Key)">
+                        <div style="font-size:2rem;">@cat.Value.Icon</div>
+                        <div class="mt-1">@cat.Value.Label</div>
+                    </button>
+                </div>
+            }
+        </div>
+        <div class="mt-3">
+            <button class="btn-secondary btn-sm" @onclick="OnCancelled">Cancel</button>
+        </div>
+    }
+    else
+    {
+        <div class="mb-3">
+            <label class="form-label">Title</label>
+            <input class="form-control" @bind="_title" placeholder="Enter title..." />
+        </div>
+
+        @if (_category == "npc")
+        {
+            <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                    <label class="form-label">Race</label>
+                    <input class="form-control" @bind="_npc_race" placeholder="e.g. Human, Dwarf, Elf..." />
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Class / Role</label>
+                    <input class="form-control" @bind="_npc_class" placeholder="e.g. Blacksmith, Guard, Wizard..." />
+                </div>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Motivation</label>
+                <input class="form-control" @bind="_npc_motivation" placeholder="What does this NPC want?" />
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Secret</label>
+                <input class="form-control" @bind="_npc_secret" placeholder="What are they hiding?" />
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Notes</label>
+                <textarea class="form-control" rows="4" @bind="_notes" placeholder="Additional notes..."></textarea>
+            </div>
+        }
+        else if (_category == "location")
+        {
+            <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                    <label class="form-label">Type</label>
+                    <input class="form-control" @bind="_location_type" placeholder="e.g. City, Dungeon, Wilderness..." />
+                </div>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Description</label>
+                <textarea class="form-control" rows="3" @bind="_location_description" placeholder="Describe the location..."></textarea>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Notable Features</label>
+                <textarea class="form-control" rows="2" @bind="_location_features" placeholder="What stands out?"></textarea>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Dangers</label>
+                <input class="form-control" @bind="_location_dangers" placeholder="What threats lurk here?" />
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Notes</label>
+                <textarea class="form-control" rows="3" @bind="_notes" placeholder="Additional notes..."></textarea>
+            </div>
+        }
+        else if (_category == "quest")
+        {
+            <div class="mb-3">
+                <label class="form-label">Objective</label>
+                <textarea class="form-control" rows="2" @bind="_quest_objective" placeholder="What must the party accomplish?"></textarea>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Reward</label>
+                <input class="form-control" @bind="_quest_reward" placeholder="What do they earn?" />
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Complications</label>
+                <textarea class="form-control" rows="3" @bind="_quest_complications" placeholder="What could go wrong?"></textarea>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Notes</label>
+                <textarea class="form-control" rows="3" @bind="_notes" placeholder="Additional notes..."></textarea>
+            </div>
+        }
+        else if (_category == "lore")
+        {
+            <div class="mb-3">
+                <label class="form-label">Lore Type</label>
+                <input class="form-control" @bind="_lore_type" placeholder="e.g. History, Religion, Faction, Legend..." />
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Content</label>
+                <textarea class="form-control" rows="8" @bind="_lore_content" placeholder="Write the lore entry..."></textarea>
+            </div>
+        }
+
+        @if (!string.IsNullOrEmpty(_error))
+        {
+            <div class="mb-3" style="color: var(--accent-danger, #e06c75);">@_error</div>
+        }
+
+        <div class="d-flex gap-2">
+            <button class="btn-primary" @onclick="SaveAsync" disabled="@_saving">
+                @(_saving ? "Saving..." : "Save")
+            </button>
+            <button class="btn-secondary" @onclick="OnCancelled">Cancel</button>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public string CampaignId { get; set; } = "";
+    [Parameter] public DocumentResource? Document { get; set; }
+    [Parameter] public EventCallback OnSaved { get; set; }
+    [Parameter] public EventCallback OnCancelled { get; set; }
+
+    private int _step = 1;
+    private string _category = "";
+    private string _title = "";
+    private string _notes = "";
+    private string _error = "";
+    private bool _saving;
+
+    // NPC fields
+    private string _npc_race = "";
+    private string _npc_class = "";
+    private string _npc_motivation = "";
+    private string _npc_secret = "";
+
+    // Location fields
+    private string _location_type = "";
+    private string _location_description = "";
+    private string _location_features = "";
+    private string _location_dangers = "";
+
+    // Quest fields
+    private string _quest_objective = "";
+    private string _quest_reward = "";
+    private string _quest_complications = "";
+
+    // Lore fields
+    private string _lore_type = "";
+    private string _lore_content = "";
+
+    private record CategoryMeta(string Label, string Icon);
+
+    private readonly Dictionary<string, CategoryMeta> _categories = new()
+    {
+        ["npc"]      = new("NPC",      "👤"),
+        ["location"] = new("Location", "🏰"),
+        ["quest"]    = new("Quest",    "⚔️"),
+        ["lore"]     = new("Lore",     "📜"),
+    };
+
+    protected override void OnParametersSet()
+    {
+        if (Document != null)
+        {
+            _category = Document.Data.TryGetProperty("category", out var c) ? c.GetString() ?? "" : "";
+            _title    = Document.Data.TryGetProperty("title",    out var t) ? t.GetString() ?? "" : Document.EntityId ?? "";
+            _notes    = Document.Data.TryGetProperty("notes",    out var n) ? n.GetString() ?? "" : "";
+
+            if (_category == "npc")
+            {
+                _npc_race       = GetStr(Document.Data, "race");
+                _npc_class      = GetStr(Document.Data, "class");
+                _npc_motivation = GetStr(Document.Data, "motivation");
+                _npc_secret     = GetStr(Document.Data, "secret");
+            }
+            else if (_category == "location")
+            {
+                _location_type        = GetStr(Document.Data, "type");
+                _location_description = GetStr(Document.Data, "description");
+                _location_features    = GetStr(Document.Data, "notableFeatures");
+                _location_dangers     = GetStr(Document.Data, "dangers");
+            }
+            else if (_category == "quest")
+            {
+                _quest_objective     = GetStr(Document.Data, "objective");
+                _quest_reward        = GetStr(Document.Data, "reward");
+                _quest_complications = GetStr(Document.Data, "complications");
+            }
+            else if (_category == "lore")
+            {
+                _lore_type    = GetStr(Document.Data, "loreType");
+                _lore_content = GetStr(Document.Data, "content");
+            }
+
+            _step = 2; // go straight to fields when editing
+        }
+    }
+
+    private string GetStr(JsonElement el, string key) =>
+        el.TryGetProperty(key, out var v) ? v.GetString() ?? "" : "";
+
+    private void SelectCategory(string category)
+    {
+        _category = category;
+        _step = 2;
+    }
+
+    private async Task SaveAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_title))
+        {
+            _error = "Title is required.";
+            return;
+        }
+
+        _error = "";
+        _saving = true;
+
+        try
+        {
+            var payload = BuildPayload();
+            var resource = (Document ?? new DocumentResource()) with
+            {
+                CampaignId = CampaignId,
+                EntityId = _title,
+                Data = JsonSerializer.SerializeToElement(payload)
+            };
+
+            if (Document == null)
+                await DocumentClient.CreateAsync(resource);
+            else
+                await DocumentClient.UpdateAsync(resource);
+
+            await OnSaved.InvokeAsync();
+        }
+        catch
+        {
+            _error = "Failed to save. Please try again.";
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+
+    private object BuildPayload() => _category switch
+    {
+        "npc" => new
+        {
+            category = "npc", title = _title,
+            race = _npc_race, @class = _npc_class,
+            motivation = _npc_motivation, secret = _npc_secret, notes = _notes
+        },
+        "location" => new
+        {
+            category = "location", title = _title,
+            type = _location_type, description = _location_description,
+            notableFeatures = _location_features, dangers = _location_dangers, notes = _notes
+        },
+        "quest" => new
+        {
+            category = "quest", title = _title,
+            objective = _quest_objective, reward = _quest_reward,
+            complications = _quest_complications, notes = _notes
+        },
+        "lore" => new
+        {
+            category = "lore", title = _title,
+            loreType = _lore_type, content = _lore_content
+        },
+        _ => new { category = _category, title = _title, notes = _notes }
+    };
+}

@@ -13,6 +13,7 @@ using Models.Common;
 
 using API.Services.Campaign;
 using API.Services.Character;
+using API.Services.Document;
 using API.Services.Narration;
 using API.Services.Session;
 using Models.Interfaces;
@@ -63,6 +64,7 @@ public static class DIConfiguration
         {
             services.AddScoped<ICampaignService, JsonCampaignService>();
             services.AddScoped<ICharacterService, JsonCharacterService>();
+            services.AddScoped<IDocumentService, JsonDocumentService>();
         }
 
         services.AddSingleton<ISessionStore, SessionStore>();

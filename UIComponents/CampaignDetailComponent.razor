@@ -2,6 +2,7 @@
 @using Models.Common
 @inject ICampaignClient CampaignClient
 @inject ICharacterClient CharacterClient
+@inject IDocumentClient DocumentClient
 
 <div class="container py-4">
     @if (_campaign == null)
@@ -32,7 +33,7 @@
             </div>
         </div>
 
-        <h3 class="mb-3 glow">Characters</h3>
+        <h3 class="mb-3 glow" style="margin-top: 2rem;">Characters</h3>
         @if (_characters == null)
         {
             <div class="text-center py-4">
@@ -65,6 +66,9 @@
                 }
             </div>
         }
+        <div class="mt-5">
+            <DocumentsComponent CampaignId="@CampaignId" />
+        </div>
     }
 </div>
 

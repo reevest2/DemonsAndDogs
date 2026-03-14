@@ -1,0 +1,165 @@
+@using API.Client.Abstraction
+@using Models.Common
+@using System.Text.Json
+@inject IDocumentClient DocumentClient
+
+@if (_showForm)
+{
+    <DocumentFormComponent
+        CampaignId="@CampaignId"
+        Document="@_editingDocument"
+        OnSaved="HandleSaved"
+        OnCancelled="HandleCancelled" />
+}
+
+@if (!_showForm || _editingDocument != null)
+{
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3 class="glow mb-0">Documents</h3>
+        @if (!_showForm)
+        {
+            <button class="btn-secondary btn-sm" @onclick="ShowCreate">+ New Document</button>
+        }
+    </div>
+}
+
+@if (_documents == null)
+{
+    <div class="text-center py-4">
+        <p class="glow">Loading documents...</p>
+    </div>
+}
+else if (!_documents.Any())
+{
+    <div class="card text-center py-4 mb-4">
+        <p class="mb-0 italic">No documents yet. Create NPCs, locations, quests, and lore to prepare for your session.</p>
+    </div>
+}
+else
+{
+    <div class="mb-4">
+        @foreach (var doc in _documents)
+        {
+            var category = GetStr(doc.Data, "category");
+            var icon = CategoryIcon(category);
+            var badge = CategoryLabel(category);
+
+            <div class="card mb-2">
+                <div class="card-body py-2 px-3 d-flex align-items-center justify-content-between">
+                    <div class="d-flex align-items-center gap-2">
+                        <span style="font-size:1.25rem;">@icon</span>
+                        <div>
+                            <span class="fw-semibold">@doc.EntityId</span>
+                            <span class="ms-2 small" style="color: var(--text-muted, #888); text-transform: uppercase; font-size: 0.7rem; letter-spacing: 0.05em;">@badge</span>
+                        </div>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button class="btn-secondary btn-sm" @onclick="() => ShowEdit(doc)">Edit</button>
+                        <button class="btn-secondary btn-sm" style="color: var(--accent-danger, #e06c75);" @onclick="() => ConfirmDelete(doc)">Delete</button>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@if (_deleteTarget != null)
+{
+    <div class="card p-3 mb-4" style="border-color: var(--accent-danger, #e06c75);">
+        <p>Delete <strong>@_deleteTarget.EntityId</strong>? This cannot be undone.</p>
+        <div class="d-flex gap-2">
+            <button class="btn-primary" style="background: var(--accent-danger, #e06c75);" @onclick="DeleteConfirmed">Delete</button>
+            <button class="btn-secondary" @onclick="() => _deleteTarget = null">Cancel</button>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public string CampaignId { get; set; } = "";
+
+    private IEnumerable<DocumentResource>? _documents;
+    private bool _showForm;
+    private DocumentResource? _editingDocument;
+    private DocumentResource? _deleteTarget;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (!string.IsNullOrEmpty(CampaignId))
+            await LoadDocumentsAsync();
+    }
+
+    private async Task LoadDocumentsAsync()
+    {
+        try
+        {
+            _documents = await DocumentClient.GetByCampaignAsync(CampaignId);
+        }
+        catch
+        {
+            _documents = Array.Empty<DocumentResource>();
+        }
+    }
+
+    private void ShowCreate()
+    {
+        _editingDocument = null;
+        _showForm = true;
+    }
+
+    private void ShowEdit(DocumentResource doc)
+    {
+        _editingDocument = doc;
+        _showForm = true;
+    }
+
+    private void HandleCancelled()
+    {
+        _showForm = false;
+        _editingDocument = null;
+    }
+
+    private async Task HandleSaved()
+    {
+        _showForm = false;
+        _editingDocument = null;
+        await LoadDocumentsAsync();
+    }
+
+    private void ConfirmDelete(DocumentResource doc)
+    {
+        _deleteTarget = doc;
+    }
+
+    private async Task DeleteConfirmed()
+    {
+        if (_deleteTarget == null) return;
+        try
+        {
+            await DocumentClient.DeleteAsync(_deleteTarget.Id);
+        }
+        catch { /* best effort */ }
+        _deleteTarget = null;
+        await LoadDocumentsAsync();
+    }
+
+    private string GetStr(JsonElement el, string key) =>
+        el.TryGetProperty(key, out var v) ? v.GetString() ?? "" : "";
+
+    private static string CategoryIcon(string category) => category switch
+    {
+        "npc"      => "👤",
+        "location" => "🏰",
+        "quest"    => "⚔️",
+        "lore"     => "📜",
+        _          => "📄"
+    };
+
+    private static string CategoryLabel(string category) => category switch
+    {
+        "npc"      => "NPC",
+        "location" => "Location",
+        "quest"    => "Quest",
+        "lore"     => "Lore",
+        _          => "Note"
+    };
+}
