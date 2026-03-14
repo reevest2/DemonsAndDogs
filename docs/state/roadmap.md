@@ -1,4 +1,4 @@
-﻿# Roadmap
+# Roadmap
 
 Update this doc when a feature moves to Done.
 

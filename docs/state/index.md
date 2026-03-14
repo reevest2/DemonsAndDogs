@@ -1,4 +1,4 @@
-﻿# Demons and Dogs — Master Index
+# Demons and Dogs — Master Index
 
 Demons and Dogs is a high-performance, multi-system TTRPG engine built with Blazor WASM and .NET 10. It features AI-powered narration and a flexible game system architecture that allows for rapid integration of different rulebooks like D&D 5e, Call of Cthulhu, and Pathfinder. The core goal is to provide a unified platform for digital TTRPG sessions with rich, dynamic character sheets and immersive AI storytelling.
 
