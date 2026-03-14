@@ -12,6 +12,7 @@ using Microsoft.Extensions.Options;
 using Models.Common;
 
 using API.Services.Narration;
+using API.Services.Session;
 using Models.Interfaces;
 
 namespace API.Configuration;
@@ -62,6 +63,7 @@ public static class DIConfiguration
         }
 
         services.AddSingleton<ISessionStore, SessionStore>();
+        services.AddScoped<ISessionPersistence, JsonSessionPersistence>();
         services.AddSingleton<IGameSystemRegistry, GameSystemRegistry>();
         services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(MediatorAssemblyMarker).Assembly));
     }
