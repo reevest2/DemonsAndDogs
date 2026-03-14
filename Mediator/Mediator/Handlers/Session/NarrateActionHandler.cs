@@ -33,7 +33,7 @@ public class NarrateActionHandler(INarrator narrator, ISessionStore sessionStore
             Metadata: BuildMetadata(lastEvent)
         );
 
-        return await narrator.NarrateAsync(gameEvent, NarrationTones.Dramatic);
+        return await narrator.NarrateAsync(gameEvent, NarrationTones.Dramatic, cancellationToken);
     }
 
     private Dictionary<string, string> BuildMetadata(SessionEvent sessionEvent)

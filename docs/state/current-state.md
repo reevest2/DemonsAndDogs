@@ -32,9 +32,7 @@ This document provides the authoritative source on what features are currently i
 - **Cloud Narrator Provider**: Integration with Azure OpenAI or Anthropic API.
 
 ## Known Issues
-- **Magic Strings**: Some narration code still uses hardcoded strings instead of `AppConstants`.
-- **Async Patterns**: `CancellationToken` is missing from several async method signatures.
-- **SessionStore Design**: ~~Resolved~~ — `SessionStore` is now an `ISessionStore` singleton, injected via DI.
+- No known issues. (All Milestone 1–4 items resolved.)
 
 ## Configuration Notes
 - **LM Studio**: Must be running locally for narration to work.

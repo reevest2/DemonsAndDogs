@@ -1,3 +1,4 @@
+using AppConstants;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -21,12 +22,12 @@ public class DbContext(DbContextOptions<DbContext> options)
             b.Property<int>("Version").HasDefaultValue(1);
 
             b.HasDiscriminator<string>("Kind")
-                .HasValue<CampaignResource>("campaign")
-                .HasValue<GameResource>("game")
-                .HasValue<SchemaResource>("schema")
-                .HasValue<DocumentDefinitionResource>("document_definition")
-                .HasValue<DocumentResource>("document")
-                .HasValue<CharacterResource>("character");
+                .HasValue<CampaignResource>(ResourceKinds.Campaign)
+                .HasValue<GameResource>(ResourceKinds.Game)
+                .HasValue<SchemaResource>(ResourceKinds.Schema)
+                .HasValue<DocumentDefinitionResource>(ResourceKinds.DocumentDefinition)
+                .HasValue<DocumentResource>(ResourceKinds.Document)
+                .HasValue<CharacterResource>(ResourceKinds.Character);
             
             b.HasQueryFilter(r => !EF.Property<bool>(r, "IsDeleted"));
         });

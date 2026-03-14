@@ -29,7 +29,9 @@ public class MockCampaignService : ICampaignService
         }
     };
 
-    public Task<IEnumerable<CampaignResource>> GetAllAsync() => Task.FromResult<IEnumerable<CampaignResource>>(_campaigns);
+    public Task<IEnumerable<CampaignResource>> GetAllAsync(CancellationToken cancellationToken = default) =>
+        Task.FromResult<IEnumerable<CampaignResource>>(_campaigns);
 
-    public Task<CampaignResource?> GetByIdAsync(string id) => Task.FromResult(_campaigns.FirstOrDefault(c => c.Id == id));
+    public Task<CampaignResource?> GetByIdAsync(string id, CancellationToken cancellationToken = default) =>
+        Task.FromResult(_campaigns.FirstOrDefault(c => c.Id == id));
 }

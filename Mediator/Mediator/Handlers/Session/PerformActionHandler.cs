@@ -1,3 +1,4 @@
+using AppConstants;
 using MediatR;
 using API.Services.Abstraction;
 using Mediator.Mediator.Contracts.Session;
@@ -29,7 +30,7 @@ public class PerformActionHandler(IGameSystemRegistry registry, ISessionStore se
 
             var result = ruleBook.ResolveSkillCheck(request.SkillCheckContext);
             sessionEvent = new SessionEvent(
-                "SkillCheck",
+                ActionEventTypes.SkillCheck,
                 $"Performed {request.SkillCheckContext.SkillId} check: {result.Message}",
                 DateTime.UtcNow,
                 CheckResult: result);
@@ -43,7 +44,7 @@ public class PerformActionHandler(IGameSystemRegistry registry, ISessionStore se
 
             var result = ruleBook.ResolveAttack(request.AttackContext);
             sessionEvent = new SessionEvent(
-                "Attack",
+                ActionEventTypes.Attack,
                 $"Performed attack with {request.AttackContext.WeaponId}: {result.Message}",
                 DateTime.UtcNow,
                 AttackResult: result);

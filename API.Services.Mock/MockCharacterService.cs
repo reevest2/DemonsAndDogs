@@ -37,10 +37,12 @@ public class MockCharacterService : ICharacterService
         }
     };
 
-    public Task<IEnumerable<CharacterResource>> GetAllAsync() => Task.FromResult<IEnumerable<CharacterResource>>(_characters);
+    public Task<IEnumerable<CharacterResource>> GetAllAsync(CancellationToken cancellationToken = default) =>
+        Task.FromResult<IEnumerable<CharacterResource>>(_characters);
 
-    public Task<CharacterResource?> GetByIdAsync(string id) => Task.FromResult(_characters.FirstOrDefault(c => c.Id == id));
+    public Task<CharacterResource?> GetByIdAsync(string id, CancellationToken cancellationToken = default) =>
+        Task.FromResult(_characters.FirstOrDefault(c => c.Id == id));
 
-    public Task<IEnumerable<CharacterResource>> GetBySystemIdAsync(string systemId) =>
+    public Task<IEnumerable<CharacterResource>> GetBySystemIdAsync(string systemId, CancellationToken cancellationToken = default) =>
         Task.FromResult(_characters.Where(c => c.GameId == systemId));
 }

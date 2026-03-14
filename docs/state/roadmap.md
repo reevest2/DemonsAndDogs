@@ -42,9 +42,9 @@ Update this doc when a feature moves to Done.
 
 | Feature | Status | Notes |
 |---|---|---|
-| Narration magic strings | Planned | Finish magic strings in narration logic |
-| `Check-MagicStrings.ps1` | Planned | Linting tool for magic strings |
-| CancellationToken audit | Planned | Ensure all async methods are cancelable |
+| Narration magic strings | Done | `ActionEventTypes`, `LmStudioApiEndpoints`, SSE constants; `DataAccess` uses `ResourceKinds` |
+| `Check-MagicStrings.ps1` | Done | `scripts/Check-MagicStrings.ps1` — reports strings matching existing constants |
+| CancellationToken audit | Done | Added to `INarrator`, service interfaces, mocks, all controllers |
 
 ## Milestone 5 — Real Data
 

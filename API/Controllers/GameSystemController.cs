@@ -10,14 +10,14 @@ namespace API.Controllers;
 public class GameSystemController(IMediator mediator) : ControllerBase
 {
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<GameSystemDescriptor>>> GetAll()
+    public async Task<ActionResult<IEnumerable<GameSystemDescriptor>>> GetAll(CancellationToken cancellationToken)
     {
-        return Ok(await mediator.Send(new GetGameSystemsRequest()));
+        return Ok(await mediator.Send(new GetGameSystemsRequest(), cancellationToken));
     }
 
     [HttpGet("{systemId}/schema")]
-    public async Task<ActionResult<CharacterSheetSchema>> GetSchema(string systemId)
+    public async Task<ActionResult<CharacterSheetSchema>> GetSchema(string systemId, CancellationToken cancellationToken)
     {
-        return Ok(await mediator.Send(new GetCharacterSheetSchemaRequest(systemId)));
+        return Ok(await mediator.Send(new GetCharacterSheetSchemaRequest(systemId), cancellationToken));
     }
 }

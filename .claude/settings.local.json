@@ -22,7 +22,9 @@
       "Bash(mv \"Jarvis2.0.slnx\" \"reCurse.slnx\")",
       "Bash(mv \"src/Jarvis2.0.Core.csproj\" \"src/reCurse.Core.csproj\")",
       "Bash(mv \"tests/Jarvis2.0.Tests.csproj\" \"tests/reCurse.Tests.csproj\")",
-      "Bash(grep -E \"\\\\.\\(ts|js|json\\)$\")"
+      "Bash(grep -E \"\\\\.\\(ts|js|json\\)$\")",
+      "Bash(pwsh -File scripts/Check-MagicStrings.ps1 -SolutionRoot .)",
+      "Bash(powershell -File D:/Repos/DemonsAndDogs/scripts/Check-MagicStrings.ps1 -SolutionRoot D:/Repos/DemonsAndDogs)"
     ]
   }
 }
