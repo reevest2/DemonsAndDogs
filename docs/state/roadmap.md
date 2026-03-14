@@ -9,7 +9,7 @@ Update this doc when a feature moves to Done.
 - **No Magic Strings**: All constants belong in the `AppConstants` project.
 - **Always Read Relevant Docs**: Call `GetStarted` and read spec docs before coding.
 
-## Milestone 1 — AI Context Foundation
+## Milestone 1 â€” AI Context Foundation
 
 | Feature | Status | Notes |
 |---|---|---|
@@ -18,9 +18,9 @@ Update this doc when a feature moves to Done.
 | `docs/roadmap.md` | Done | This document |
 | Update `.junie/guidelines.md` | Done | Always call GetStarted before coding |
 | GetStarted MCP tool | Done | Returns `index.md` + doc list in one call |
-| `Sync-Docs.ps1` | Removed | Not needed — Documentation.csproj uses wildcard glob to embed docs directly from docs/ folder |
+| `Sync-Docs.ps1` | Removed | Not needed â€” Documentation.csproj uses wildcard glob to embed docs directly from docs/ folder |
 
-## Milestone 2 — Spec-Driven Workflow
+## Milestone 2 â€” Spec-Driven Workflow
 
 | Feature | Status | Notes |
 |---|---|---|
@@ -28,7 +28,7 @@ Update this doc when a feature moves to Done.
 | Spec template | Done | `docs/templates/spec-template.md` |
 | Update `testing.md` | Done | Spec-first workflow section added |
 
-## Milestone 3 — TDD Foundation
+## Milestone 3 â€” TDD Foundation
 
 | Feature | Status | Notes |
 |---|---|---|
@@ -38,15 +38,15 @@ Update this doc when a feature moves to Done.
 | `Run-Tests.ps1` | Done | `scripts/Run-Tests.ps1` with project filter and verbose flag |
 | DnD5e RuleBook Unit Tests spec | Done | See docs/features/dnd5e-rulebook-tests.md |
 
-## Milestone 4 — Clean Code
+## Milestone 4 â€” Clean Code
 
 | Feature | Status | Notes |
 |---|---|---|
 | Narration magic strings | Done | `ActionEventTypes`, `LmStudioApiEndpoints`, SSE constants; `DataAccess` uses `ResourceKinds` |
-| `Check-MagicStrings.ps1` | Done | `scripts/Check-MagicStrings.ps1` — reports strings matching existing constants |
+| `Check-MagicStrings.ps1` | Done | `scripts/Check-MagicStrings.ps1` â€” reports strings matching existing constants |
 | CancellationToken audit | Done | Added to `INarrator`, service interfaces, mocks, all controllers |
 
-## Milestone 5 — Real Data
+## Milestone 5 â€” Real Data
 
 | Feature | Status | Notes |
 |---|---|---|
@@ -54,3 +54,9 @@ Update this doc when a feature moves to Done.
 | Session Persistence | Done | ISessionPersistence + JsonSessionPersistence + handler wiring |
 | Real persistence | Planned | Using hybrid JSON model from `data-model.md` |
 | Flip `UseMockData` flag | Planned | Switch to real repositories |
+
+## Milestone 5 — Real Data
+
+| Feature | Status | Notes |
+|---|---|---|
+| Real Campaign and Character Services spec | Planned | See docs/features/real-campaign-character-services.md |

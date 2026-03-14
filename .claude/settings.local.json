@@ -29,7 +29,18 @@
       "Bash(pwsh ./scripts/New-Spec.ps1 -Name \"session-persistence\" -Title \"Session Persistence\" -Milestone \"Milestone 5 — Real Data\")",
       "Bash(powershell.exe ./scripts/New-Spec.ps1 -Name \"session-persistence\" -Title \"Session Persistence\" -Milestone \"Milestone 5 — Real Data\")",
       "Bash(powershell.exe \"./scripts/New-Spec.ps1\" -Name \"session-persistence\" -Title \"Session Persistence\" -Milestone \"Milestone 5 - Real Data\")",
-      "Bash(powershell.exe -Command \"& ''./scripts/Run-Tests.ps1''\")"
+      "Bash(powershell.exe -Command \"& ''./scripts/Run-Tests.ps1''\")",
+      "Bash(powershell.exe -Command \"Select-String -Pattern ''ProjectReference'' -Path ''D:/Repos/DemonsAndDogs/API.Services/API.Services.csproj'',''D:/Repos/DemonsAndDogs/Mediator/Mediator.csproj'',''D:/Repos/DemonsAndDogs/DemonsAndDogs.API.Tests/DemonsAndDogs.API.Tests.csproj'' | Select-Object Filename,Line\")",
+      "Bash(powershell.exe -Command \"Select-String -Pattern ''ProjectReference'' -Path ''D:/Repos/DemonsAndDogs/API/API.csproj'' | Select-Object Line\")",
+      "Bash(powershell.exe -Command \"Select-String -Pattern ''ProjectReference'' -Path ''D:/Repos/DemonsAndDogs/Models/Models.csproj'' | Select-Object Line\")",
+      "Bash(git add:*)",
+      "Bash(git push:*)",
+      "Bash(gh pr:*)",
+      "Bash(powershell.exe -Command \"gh pr create --title ''Milestone 5: Session Persistence'' --body ''See branch claude/mar14. Adds ISessionPersistence + JsonSessionPersistence, wires all session handlers to persist to DB, 56 tests passing.''\")",
+      "Bash(git commit:*)",
+      "Bash(find /d/Repos/DemonsAndDogs -type f -name *CampaignService* -o -name *CharacterService*)",
+      "Bash(xargs ls:*)",
+      "Bash(powershell -Command \".\\\\scripts\\\\New-Spec.ps1 -Name ''real-campaign-character-services'' -Title ''Real Campaign and Character Services'' -Milestone ''Milestone 5 — Real Data''\")"
     ]
   }
 }
