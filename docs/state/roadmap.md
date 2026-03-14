@@ -50,7 +50,7 @@ Update this doc when a feature moves to Done.
 
 | Feature | Status | Notes |
 |---|---|---|
-| `docs/session-persistence.md` | Planned | Persistence specification |
+| `docs/session-persistence.md` | Done | Persistence specification |
+| Session Persistence | Done | ISessionPersistence + JsonSessionPersistence + handler wiring |
 | Real persistence | Planned | Using hybrid JSON model from `data-model.md` |
 | Flip `UseMockData` flag | Planned | Switch to real repositories |
-| Session Persistence spec | Planned | See docs/features/session-persistence.md |

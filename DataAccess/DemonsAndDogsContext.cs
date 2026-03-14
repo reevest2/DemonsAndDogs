@@ -27,7 +27,8 @@ public class DbContext(DbContextOptions<DbContext> options)
                 .HasValue<SchemaResource>(ResourceKinds.Schema)
                 .HasValue<DocumentDefinitionResource>(ResourceKinds.DocumentDefinition)
                 .HasValue<DocumentResource>(ResourceKinds.Document)
-                .HasValue<CharacterResource>(ResourceKinds.Character);
+                .HasValue<CharacterResource>(ResourceKinds.Character)
+                .HasValue<SessionResource>(ResourceKinds.Session);
             
             b.HasQueryFilter(r => !EF.Property<bool>(r, "IsDeleted"));
         });

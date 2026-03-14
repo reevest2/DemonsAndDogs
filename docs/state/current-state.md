@@ -11,6 +11,7 @@ This document provides the authoritative source on what features are currently i
 - **Action Log**: Real-time display of game events and narration.
 - **Documentation MCP Tools**: `GetStarted`, `ListDocs`, `GetDoc`, and `GetAllDocs` tools available for AI context.
 - **Test Infrastructure**: Unit tests and data builders for DnD5e mechanics.
+- **Session Persistence**: `ISessionPersistence` + `JsonSessionPersistence` wired into all session handlers. Sessions written to DB on start/action, loaded from DB on cache miss.
 
 ## Mocked / Stub
 - **ICampaignService**: Returns hardcoded campaign lists.
@@ -19,12 +20,10 @@ This document provides the authoritative source on what features are currently i
 - **Character Stats**: All characters currently default to stats of 10.
 - **Game Systems List**: Hardcoded to only show D&D 5e.
 
-## In-Memory Only (Not Persisted)
-- **SessionStore**: `ISessionStore` singleton with `ConcurrentDictionary` backing. DI-injected into all handlers.
-- **Wiped on API Restart**: All session progress is lost when the API project restarts.
+## In-Memory Cache (Write-Through to DB)
+- **SessionStore**: `ISessionStore` singleton with `ConcurrentDictionary` backing acts as a write-through cache. Sessions are persisted to the DB via `ISessionPersistence` on every write and reloaded from DB on cache miss.
 
 ## Not Started
-- **Session Persistence**: Saving sessions to a database (EF Core).
 - **Real Character Stats**: System-specific stat generation and storage.
 - **Art Generation**: AI-generated portraits and scene backgrounds.
 - **Rulebook Upload**: PDF/Text parsing for new game systems.

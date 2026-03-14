@@ -7,6 +7,7 @@ namespace Models.Common;
 [JsonPolymorphic(TypeDiscriminatorPropertyName = "Kind")]
 [JsonDerivedType(typeof(CampaignResource), ResourceKinds.Campaign)]
 [JsonDerivedType(typeof(CharacterResource), ResourceKinds.Character)]
+[JsonDerivedType(typeof(SessionResource), ResourceKinds.Session)]
 [JsonDerivedType(typeof(DocumentDefinitionResource), ResourceKinds.DocumentDefinition)]
 [JsonDerivedType(typeof(DocumentResource), ResourceKinds.Document)]
 [JsonDerivedType(typeof(GameResource), ResourceKinds.Game)]

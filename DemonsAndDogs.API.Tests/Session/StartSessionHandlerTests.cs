@@ -1,5 +1,6 @@
 using API.Services.Abstraction;
 using API.Services.GameSystems.DnD5e;
+using DemonsAndDogs.API.Tests.Fakes;
 using Mediator.Mediator.Contracts.Session;
 using Mediator.Mediator.Handlers.Session;
 using Models.Interfaces;
@@ -23,7 +24,7 @@ public class StartSessionHandlerTests
         // Arrange
         var registry = new FakeRegistry();
         var store = new SessionStore();
-        var handler = new StartSessionHandler(registry, store);
+        var handler = new StartSessionHandler(registry, store, new NullSessionPersistence());
         var request = new StartSessionRequest("Hero", DnD5eSystemId);
 
         // Act
@@ -39,7 +40,7 @@ public class StartSessionHandlerTests
         // Arrange
         var registry = new FakeRegistry();
         var store = new SessionStore();
-        var handler = new StartSessionHandler(registry, store);
+        var handler = new StartSessionHandler(registry, store, new NullSessionPersistence());
         var request = new StartSessionRequest("Hero", DnD5eSystemId);
 
         // Act
@@ -55,7 +56,7 @@ public class StartSessionHandlerTests
         // Arrange
         var registry = new FakeRegistry();
         var store = new SessionStore();
-        var handler = new StartSessionHandler(registry, store);
+        var handler = new StartSessionHandler(registry, store, new NullSessionPersistence());
         var request = new StartSessionRequest("Hero", DnD5eSystemId);
 
         // Act
@@ -71,7 +72,7 @@ public class StartSessionHandlerTests
         // Arrange
         var registry = new FakeRegistry();
         var store = new SessionStore();
-        var handler = new StartSessionHandler(registry, store);
+        var handler = new StartSessionHandler(registry, store, new NullSessionPersistence());
         var request = new StartSessionRequest("Hero", DnD5eSystemId);
 
         // Act
@@ -88,7 +89,7 @@ public class StartSessionHandlerTests
         // Arrange
         var registry = new FakeRegistry();
         var store = new SessionStore();
-        var handler = new StartSessionHandler(registry, store);
+        var handler = new StartSessionHandler(registry, store, new NullSessionPersistence());
         var request = new StartSessionRequest("Hero", DnD5eSystemId);
 
         // Act

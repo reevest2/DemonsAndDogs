@@ -1,5 +1,6 @@
 using API.Services.Abstraction;
 using API.Services.GameSystems.DnD5e;
+using DemonsAndDogs.API.Tests.Fakes;
 using Mediator.Mediator.Contracts.Session;
 using Mediator.Mediator.Handlers.Session;
 using Models.GameSystems;
@@ -37,7 +38,7 @@ public class PerformActionHandlerTests
         var store = new SessionStore();
         store.Set(sessionId, CreateInitialState(sessionId));
         var registry = new FakeRegistry();
-        var handler = new PerformActionHandler(registry, store);
+        var handler = new PerformActionHandler(registry, store, new NullSessionPersistence());
         var context = new SkillCheckContext("char1", "stealth", 0, 0, 10);
         var request = new PerformActionRequest(sessionId, ActionType.SkillCheck, context);
 
@@ -57,7 +58,7 @@ public class PerformActionHandlerTests
         var store = new SessionStore();
         store.Set(sessionId, CreateInitialState(sessionId));
         var registry = new FakeRegistry();
-        var handler = new PerformActionHandler(registry, store);
+        var handler = new PerformActionHandler(registry, store, new NullSessionPersistence());
         var context = new AttackContext("sword", 0, 10);
         var request = new PerformActionRequest(sessionId, ActionType.Attack, null, context);
 
@@ -75,7 +76,7 @@ public class PerformActionHandlerTests
         // Arrange
         var store = new SessionStore();
         var registry = new FakeRegistry();
-        var handler = new PerformActionHandler(registry, store);
+        var handler = new PerformActionHandler(registry, store, new NullSessionPersistence());
         var request = new PerformActionRequest("unknown", ActionType.SkillCheck, new SkillCheckContext("c", "s", 0, 0));
 
         // Act & Assert
