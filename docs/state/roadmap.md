@@ -53,4 +53,4 @@ Update this doc when a feature moves to Done.
 | `docs/session-persistence.md` | Planned | Persistence specification |
 | Real persistence | Planned | Using hybrid JSON model from `data-model.md` |
 | Flip `UseMockData` flag | Planned | Switch to real repositories |
-
+| Session Persistence spec | Planned | See docs/features/session-persistence.md |

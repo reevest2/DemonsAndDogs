@@ -25,7 +25,11 @@
       "Bash(grep -E \"\\\\.\\(ts|js|json\\)$\")",
       "Bash(pwsh -File scripts/Check-MagicStrings.ps1 -SolutionRoot .)",
       "Bash(powershell -File D:/Repos/DemonsAndDogs/scripts/Check-MagicStrings.ps1 -SolutionRoot D:/Repos/DemonsAndDogs)",
-      "Bash(xargs -I {} head -30 {})"
+      "Bash(xargs -I {} head -30 {})",
+      "Bash(pwsh ./scripts/New-Spec.ps1 -Name \"session-persistence\" -Title \"Session Persistence\" -Milestone \"Milestone 5 — Real Data\")",
+      "Bash(powershell.exe ./scripts/New-Spec.ps1 -Name \"session-persistence\" -Title \"Session Persistence\" -Milestone \"Milestone 5 — Real Data\")",
+      "Bash(powershell.exe \"./scripts/New-Spec.ps1\" -Name \"session-persistence\" -Title \"Session Persistence\" -Milestone \"Milestone 5 - Real Data\")",
+      "Bash(powershell.exe -Command \"& ''./scripts/Run-Tests.ps1''\")"
     ]
   }
 }
