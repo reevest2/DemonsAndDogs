@@ -24,9 +24,9 @@ Update this doc when a feature moves to Done.
 
 | Feature | Status | Notes |
 |---|---|---|
-| `New-Spec.ps1` scaffold script | In Progress | Automated spec creation |
-| Spec template | Planned | Template with required sections including Test Cases |
-| Update `testing.md` | Planned | Document spec-first workflow |
+| `New-Spec.ps1` scaffold script | Done | Automated spec creation |
+| Spec template | Done | `docs/templates/spec-template.md` |
+| Update `testing.md` | Done | Spec-first workflow section added |
 
 ## Milestone 3 — TDD Foundation
 
@@ -34,8 +34,8 @@ Update this doc when a feature moves to Done.
 |---|---|---|
 | Test data builders | Done | Builders for `SkillCheckContext`, `AttackContext`, `SessionState` |
 | `DnD5eRuleBook` Unit tests | Done | Full coverage for 5e mechanics |
-| Scoped `SessionStore` | Planned | Replace static `SessionStore` with scoped service |
-| `Run-Tests.ps1` | Planned | Rider External Tool for quick test runs |
+| Scoped `SessionStore` | Done | `ISessionStore` interface + DI singleton, all handlers injected |
+| `Run-Tests.ps1` | Done | `scripts/Run-Tests.ps1` with project filter and verbose flag |
 | DnD5e RuleBook Unit Tests spec | Done | See docs/features/dnd5e-rulebook-tests.md |
 
 ## Milestone 4 — Clean Code

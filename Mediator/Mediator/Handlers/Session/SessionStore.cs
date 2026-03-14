@@ -1,12 +1,19 @@
 using System.Collections.Concurrent;
+using Models.Interfaces;
 using Models.Session;
 
 namespace Mediator.Mediator.Handlers.Session;
 
 /// <summary>
-/// Simple in-memory session store for MVP.
+/// In-memory session store for MVP. Register as Singleton in DI.
 /// </summary>
-public static class SessionStore
+public class SessionStore : ISessionStore
 {
-    public static ConcurrentDictionary<string, SessionState> Sessions { get; } = new();
+    private readonly ConcurrentDictionary<string, SessionState> _sessions = new();
+
+    public bool TryGet(string sessionId, out SessionState? state) =>
+        _sessions.TryGetValue(sessionId, out state);
+
+    public void Set(string sessionId, SessionState state) =>
+        _sessions[sessionId] = state;
 }

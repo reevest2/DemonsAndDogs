@@ -1,5 +1,29 @@
 # Testing Guidelines
 
+## Spec-First Workflow
+
+Every feature starts with a spec, and every spec includes test cases before any code is written.
+
+### Steps
+
+1. **Create a spec** using `New-Spec.ps1`:
+   ```powershell
+   scripts\New-Spec.ps1 -Name "session-persistence" -Title "Session Persistence" -Milestone "Milestone 5 — Real Data"
+   ```
+   This creates `docs/features/session-persistence.md`, registers it in `docs/state/index.md`, and adds a row to `docs/state/roadmap.md`.
+
+2. **Fill in the spec** — especially the **Test Cases** section. Test cases must be defined before any implementation begins.
+
+3. **Write the tests** — implement the test cases from the spec in the appropriate test project (see below). Use builders from `DemonsAndDogs.API.Tests/GameSystems/Builders/` where applicable.
+
+4. **Implement the feature** — make the tests pass.
+
+5. **Update the roadmap** — mark the spec and feature items as `Done` in `docs/state/roadmap.md`.
+
+The template for specs lives at `docs/templates/spec-template.md`.
+
+---
+
 ## Test Projects
 
 | Project | Purpose | Framework |

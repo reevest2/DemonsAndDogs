@@ -20,7 +20,7 @@ This document provides the authoritative source on what features are currently i
 - **Game Systems List**: Hardcoded to only show D&D 5e.
 
 ## In-Memory Only (Not Persisted)
-- **SessionStore**: Uses a static `ConcurrentDictionary` to store active sessions. 
+- **SessionStore**: `ISessionStore` singleton with `ConcurrentDictionary` backing. DI-injected into all handlers.
 - **Wiped on API Restart**: All session progress is lost when the API project restarts.
 
 ## Not Started
@@ -34,7 +34,7 @@ This document provides the authoritative source on what features are currently i
 ## Known Issues
 - **Magic Strings**: Some narration code still uses hardcoded strings instead of `AppConstants`.
 - **Async Patterns**: `CancellationToken` is missing from several async method signatures.
-- **SessionStore Design**: `SessionStore` is a static class, making it difficult to test and not DI-friendly.
+- **SessionStore Design**: ~~Resolved~~ — `SessionStore` is now an `ISessionStore` singleton, injected via DI.
 
 ## Configuration Notes
 - **LM Studio**: Must be running locally for narration to work.

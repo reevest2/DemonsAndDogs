@@ -22,7 +22,8 @@ public class StartSessionHandlerTests
     {
         // Arrange
         var registry = new FakeRegistry();
-        var handler = new StartSessionHandler(registry);
+        var store = new SessionStore();
+        var handler = new StartSessionHandler(registry, store);
         var request = new StartSessionRequest("Hero", DnD5eSystemId);
 
         // Act
@@ -37,7 +38,8 @@ public class StartSessionHandlerTests
     {
         // Arrange
         var registry = new FakeRegistry();
-        var handler = new StartSessionHandler(registry);
+        var store = new SessionStore();
+        var handler = new StartSessionHandler(registry, store);
         var request = new StartSessionRequest("Hero", DnD5eSystemId);
 
         // Act
@@ -52,7 +54,8 @@ public class StartSessionHandlerTests
     {
         // Arrange
         var registry = new FakeRegistry();
-        var handler = new StartSessionHandler(registry);
+        var store = new SessionStore();
+        var handler = new StartSessionHandler(registry, store);
         var request = new StartSessionRequest("Hero", DnD5eSystemId);
 
         // Act
@@ -67,7 +70,8 @@ public class StartSessionHandlerTests
     {
         // Arrange
         var registry = new FakeRegistry();
-        var handler = new StartSessionHandler(registry);
+        var store = new SessionStore();
+        var handler = new StartSessionHandler(registry, store);
         var request = new StartSessionRequest("Hero", DnD5eSystemId);
 
         // Act
@@ -76,5 +80,22 @@ public class StartSessionHandlerTests
         // Assert
         Assert.NotNull(state.CharacterSheetSchema);
         Assert.Equal(DnD5eSystemId, state.CharacterSheetSchema.SystemId);
+    }
+
+    [Fact]
+    public async Task Handle_StartSession_StoresSessionInStore()
+    {
+        // Arrange
+        var registry = new FakeRegistry();
+        var store = new SessionStore();
+        var handler = new StartSessionHandler(registry, store);
+        var request = new StartSessionRequest("Hero", DnD5eSystemId);
+
+        // Act
+        var state = await handler.Handle(request, default);
+
+        // Assert
+        Assert.True(store.TryGet(state.SessionId, out var stored));
+        Assert.Equal(state, stored);
     }
 }

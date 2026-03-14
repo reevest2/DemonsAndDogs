@@ -1,22 +1,23 @@
 using MediatR;
 using API.Services.Abstraction;
 using Mediator.Mediator.Contracts.Session;
+using Models.Interfaces;
 using Models.Session;
 using Models.GameSystems;
 
 namespace Mediator.Mediator.Handlers.Session;
 
-public class PerformActionHandler(IGameSystemRegistry registry)
+public class PerformActionHandler(IGameSystemRegistry registry, ISessionStore sessionStore)
     : IRequestHandler<PerformActionRequest, SessionEvent>
 {
     public Task<SessionEvent> Handle(PerformActionRequest request, CancellationToken cancellationToken)
     {
-        if (!SessionStore.Sessions.TryGetValue(request.SessionId, out var state))
+        if (!sessionStore.TryGet(request.SessionId, out var state))
         {
             throw new KeyNotFoundException($"Session {request.SessionId} not found.");
         }
 
-        var ruleBook = registry.Get(state.SystemId);
+        var ruleBook = registry.Get(state!.SystemId);
         SessionEvent sessionEvent;
 
         if (request.ActionType == ActionType.SkillCheck)
@@ -25,7 +26,7 @@ public class PerformActionHandler(IGameSystemRegistry registry)
             {
                 throw new ArgumentException("SkillCheckContext is required for SkillCheck action.");
             }
-            
+
             var result = ruleBook.ResolveSkillCheck(request.SkillCheckContext);
             sessionEvent = new SessionEvent(
                 "SkillCheck",
@@ -39,7 +40,7 @@ public class PerformActionHandler(IGameSystemRegistry registry)
             {
                 throw new ArgumentException("AttackContext is required for Attack action.");
             }
-            
+
             var result = ruleBook.ResolveAttack(request.AttackContext);
             sessionEvent = new SessionEvent(
                 "Attack",
@@ -51,7 +52,7 @@ public class PerformActionHandler(IGameSystemRegistry registry)
         // Update session state
         var newEventLog = new List<SessionEvent>(state.EventLog) { sessionEvent };
         var newState = state with { EventLog = newEventLog };
-        SessionStore.Sessions[request.SessionId] = newState;
+        sessionStore.Set(request.SessionId, newState);
 
         return Task.FromResult(sessionEvent);
     }

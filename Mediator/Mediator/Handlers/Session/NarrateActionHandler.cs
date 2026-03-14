@@ -8,16 +8,17 @@ using System.Linq;
 
 namespace Mediator.Mediator.Handlers.Session;
 
-public class NarrateActionHandler(INarrator narrator) : IRequestHandler<NarrateActionRequest, NarrationResult>
+public class NarrateActionHandler(INarrator narrator, ISessionStore sessionStore)
+    : IRequestHandler<NarrateActionRequest, NarrationResult>
 {
     public async Task<NarrationResult> Handle(NarrateActionRequest request, CancellationToken cancellationToken)
     {
-        if (!SessionStore.Sessions.TryGetValue(request.SessionId, out var session))
+        if (!sessionStore.TryGet(request.SessionId, out var session))
         {
             throw new KeyNotFoundException($"Session {request.SessionId} not found.");
         }
 
-        var lastEvent = session.EventLog.LastOrDefault();
+        var lastEvent = session!.EventLog.LastOrDefault();
         if (lastEvent == null)
         {
             return new NarrationResult("No events to narrate yet.", TokenStream: null);
@@ -38,7 +39,7 @@ public class NarrateActionHandler(INarrator narrator) : IRequestHandler<NarrateA
     private Dictionary<string, string> BuildMetadata(SessionEvent sessionEvent)
     {
         var metadata = new Dictionary<string, string>();
-        
+
         if (sessionEvent.CheckResult != null)
         {
             metadata["Success"] = sessionEvent.CheckResult.IsSuccess.ToString();
@@ -50,7 +51,7 @@ public class NarrateActionHandler(INarrator narrator) : IRequestHandler<NarrateA
             metadata["Roll"] = sessionEvent.AttackResult.TotalAttackResult.ToString();
             metadata["Critical"] = sessionEvent.AttackResult.IsCriticalHit.ToString();
         }
-        
+
         return metadata;
     }
 }

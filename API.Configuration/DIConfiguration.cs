@@ -5,6 +5,7 @@ using API.Services.Mock;
 using DataAccess;
 using DataAccess.Abstraction;
 using Mediator;
+using Mediator.Mediator.Handlers.Session;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -60,6 +61,7 @@ public static class DIConfiguration
             // Real implementations will be registered here when they exist
         }
 
+        services.AddSingleton<ISessionStore, SessionStore>();
         services.AddSingleton<IGameSystemRegistry, GameSystemRegistry>();
         services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(MediatorAssemblyMarker).Assembly));
     }

@@ -34,9 +34,10 @@ public class PerformActionHandlerTests
     {
         // Arrange
         var sessionId = Guid.NewGuid().ToString();
-        SessionStore.Sessions[sessionId] = CreateInitialState(sessionId);
+        var store = new SessionStore();
+        store.Set(sessionId, CreateInitialState(sessionId));
         var registry = new FakeRegistry();
-        var handler = new PerformActionHandler(registry);
+        var handler = new PerformActionHandler(registry, store);
         var context = new SkillCheckContext("char1", "stealth", 0, 0, 10);
         var request = new PerformActionRequest(sessionId, ActionType.SkillCheck, context);
 
@@ -53,9 +54,10 @@ public class PerformActionHandlerTests
     {
         // Arrange
         var sessionId = Guid.NewGuid().ToString();
-        SessionStore.Sessions[sessionId] = CreateInitialState(sessionId);
+        var store = new SessionStore();
+        store.Set(sessionId, CreateInitialState(sessionId));
         var registry = new FakeRegistry();
-        var handler = new PerformActionHandler(registry);
+        var handler = new PerformActionHandler(registry, store);
         var context = new AttackContext("sword", 0, 10);
         var request = new PerformActionRequest(sessionId, ActionType.Attack, null, context);
 
@@ -71,8 +73,9 @@ public class PerformActionHandlerTests
     public async Task Handle_UnknownSessionId_ThrowsKeyNotFoundException()
     {
         // Arrange
+        var store = new SessionStore();
         var registry = new FakeRegistry();
-        var handler = new PerformActionHandler(registry);
+        var handler = new PerformActionHandler(registry, store);
         var request = new PerformActionRequest("unknown", ActionType.SkillCheck, new SkillCheckContext("c", "s", 0, 0));
 
         // Act & Assert
