@@ -9,7 +9,9 @@
       "Bash(grep -E \"\\\\.\\(json|yml|yaml|config|xml|ps1\\)$\")",
       "Bash(ls -la /d/Repos/DemonsAndDogs/*.sln)",
       "Bash(xargs wc:*)",
-      "Bash(wc -l /d/Repos/DemonsAndDogs/DemonsAndDogs.Tests/Components/*.cs)"
+      "Bash(wc -l /d/Repos/DemonsAndDogs/DemonsAndDogs.Tests/Components/*.cs)",
+      "Bash(grep -E \"^d|\\\\.cs$|\\\\.csproj$\")",
+      "Bash(find D:ReposDemonsAndDogs -name *migration* -o -name *init*)"
     ]
   }
 }

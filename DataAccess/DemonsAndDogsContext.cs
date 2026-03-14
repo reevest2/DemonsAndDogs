@@ -21,7 +21,7 @@ public class DbContext(DbContextOptions<DbContext> options)
             b.Property<bool>("IsDeleted").HasDefaultValue(false);
             b.Property<int>("Version").HasDefaultValue(1);
 
-            b.HasDiscriminator<string>("Kind")
+            b.HasDiscriminator(r => r.ResourceKind)
                 .HasValue<CampaignResource>(ResourceKinds.Campaign)
                 .HasValue<GameResource>(ResourceKinds.Game)
                 .HasValue<SchemaResource>(ResourceKinds.Schema)

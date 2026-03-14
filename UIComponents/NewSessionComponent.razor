@@ -95,11 +95,11 @@
             
             if (character == null) return;
 
-            // Set the theme based on campaign before navigating
-            if (campaign != null)
-            {
-                ThemeService.SetTheme(campaign.Theme);
-            }
+            // // Set the theme based on campaign before navigating
+            // if (campaign != null)
+            // {
+            //     ThemeService.SetTheme(campaign.);
+            // }
 
             var request = new StartSessionRequest(character.Id, character.EntityId ?? "Unknown", character.GameId ?? "dnd5e");
             var sessionState = await SessionClient.StartSessionAsync(request);

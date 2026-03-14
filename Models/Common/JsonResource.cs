@@ -4,7 +4,7 @@ using AppConstants;
 
 namespace Models.Common;
 
-[JsonPolymorphic(TypeDiscriminatorPropertyName = "Kind")]
+[JsonPolymorphic(TypeDiscriminatorPropertyName = "ResourceKind")]
 [JsonDerivedType(typeof(CampaignResource), ResourceKinds.Campaign)]
 [JsonDerivedType(typeof(CharacterResource), ResourceKinds.Character)]
 [JsonDerivedType(typeof(SessionResource), ResourceKinds.Session)]
@@ -14,9 +14,6 @@ namespace Models.Common;
 [JsonDerivedType(typeof(SchemaResource), ResourceKinds.Schema)]
 public abstract record JsonResource
 {
-    [JsonPropertyName("Kind")]
-    public virtual string Kind { get; init; } = string.Empty;
-
     public string Id { get; init; } = Guid.NewGuid().ToString();
     public string? EntityId { get; init; }
     public string? OwnerId { get; init; }
@@ -25,7 +22,6 @@ public abstract record JsonResource
     public string? RulesetId { get; init; }
     public string? GameId { get; init; }
     public string? SchemaVersion { get; init; }
-    public string? Schema { get; init; }
-    public string? ResourceKind { get; init; }
+    public virtual string? ResourceKind { get; init; }
     public JsonElement Data { get; init; }
 }

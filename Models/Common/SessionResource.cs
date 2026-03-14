@@ -4,5 +4,5 @@ namespace Models.Common;
 
 public record SessionResource : JsonResource
 {
-    public override string Kind { get; init; } = ResourceKinds.Session;
+    public override string? ResourceKind { get; init; } = ResourceKinds.Session;
 }

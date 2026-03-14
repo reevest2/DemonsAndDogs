@@ -135,7 +135,7 @@ public class SessionPersistenceTests
         // Assert
         var saved = (await repo.GetAllAsync()).Single();
         Assert.IsType<SessionResource>(saved);
-        Assert.Equal(ResourceKinds.Session, saved.Kind);
+        Assert.Equal(ResourceKinds.Session, saved.ResourceKind);
     }
 
     [Fact]

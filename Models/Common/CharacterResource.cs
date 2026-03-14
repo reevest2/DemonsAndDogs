@@ -4,5 +4,5 @@ namespace Models.Common;
 
 public record CharacterResource : JsonResource
 {
-    public override string Kind { get; init; } = ResourceKinds.Character;
+    public override string? ResourceKind { get; init; } = ResourceKinds.Character;
 }

@@ -15,7 +15,6 @@ public class MockCampaignService : ICampaignService
             EntityId = "Lost Mine of Phandelver",
             GameId = "dnd5e",
             ResourceKind = ResourceKinds.Campaign,
-            Theme = "fantasy",
             Data = JsonSerializer.Deserialize<JsonElement>(@"{ ""name"": ""Lost Mine of Phandelver"", ""description"": ""A classic D&D 5e starter adventure."" }")
         },
         new()
@@ -24,7 +23,6 @@ public class MockCampaignService : ICampaignService
             EntityId = "Curse of Strahd",
             GameId = "dnd5e",
             ResourceKind = ResourceKinds.Campaign,
-            Theme = "steampunk",
             Data = JsonSerializer.Deserialize<JsonElement>(@"{ ""name"": ""Curse of Strahd"", ""description"": ""A gothic horror adventure in Barovia."" }")
         }
     };

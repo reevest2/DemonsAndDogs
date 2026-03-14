@@ -19,7 +19,6 @@ public static class DbSeeder
                 EntityId = "Lost Mine of Phandelver",
                 GameId = GameSystemIds.DnD5e,
                 ResourceKind = ResourceKinds.Campaign,
-                Theme = "fantasy",
                 Data = JsonSerializer.Deserialize<JsonElement>(
                     """{ "name": "Lost Mine of Phandelver", "description": "A classic D&D 5e starter adventure." }""")
             },
