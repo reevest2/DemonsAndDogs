@@ -43,7 +43,9 @@
       "Bash(powershell -Command \".\\\\scripts\\\\New-Spec.ps1 -Name ''real-campaign-character-services'' -Title ''Real Campaign and Character Services'' -Milestone ''Milestone 5 — Real Data''\")",
       "Bash(powershell -File scripts/Run-Tests.ps1)",
       "Bash(powershell -File scripts/Validate-Docs.ps1)",
-      "Bash(powershell.exe -ExecutionPolicy Bypass -File scripts/Run-Tests.ps1)"
+      "Bash(powershell.exe -ExecutionPolicy Bypass -File scripts/Run-Tests.ps1)",
+      "Bash(powershell.exe -ExecutionPolicy Bypass -File scripts/Validate-Docs.ps1)",
+      "Bash(git config:*)"
     ]
   }
 }
