@@ -52,11 +52,11 @@ Update this doc when a feature moves to Done.
 |---|---|---|
 | `docs/session-persistence.md` | Done | Persistence specification |
 | Session Persistence | Done | ISessionPersistence + JsonSessionPersistence + handler wiring |
-| Real persistence | Planned | Using hybrid JSON model from `data-model.md` |
-| Flip `UseMockData` flag | Planned | Switch to real repositories |
+| Real Campaign and Character Services | Done | JsonCampaignService + JsonCharacterService backed by IJsonResourceRepository |
+| Flip `UseMockData` flag | Done | UseMockData=false; DbSeeder seeds 1 campaign + 2 characters on startup; GameSystemIds constant added |
 
-## Milestone 5 — Real Data
+## Milestone 6 â€" Character Stats
 
 | Feature | Status | Notes |
 |---|---|---|
-| Real Campaign and Character Services spec | Planned | See docs/features/real-campaign-character-services.md |
+| Real Character Stats | In Progress | System-specific stat generation and storage via CharacterResource.Data |

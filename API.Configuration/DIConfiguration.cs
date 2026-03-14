@@ -11,6 +11,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Models.Common;
 
+using API.Services.Campaign;
+using API.Services.Character;
 using API.Services.Narration;
 using API.Services.Session;
 using Models.Interfaces;
@@ -59,7 +61,8 @@ public static class DIConfiguration
         }
         else
         {
-            // Real implementations will be registered here when they exist
+            services.AddScoped<ICampaignService, JsonCampaignService>();
+            services.AddScoped<ICharacterService, JsonCharacterService>();
         }
 
         services.AddSingleton<ISessionStore, SessionStore>();

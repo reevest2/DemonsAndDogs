@@ -12,11 +12,10 @@ This document provides the authoritative source on what features are currently i
 - **Documentation MCP Tools**: `GetStarted`, `ListDocs`, `GetDoc`, and `GetAllDocs` tools available for AI context.
 - **Test Infrastructure**: Unit tests and data builders for DnD5e mechanics.
 - **Session Persistence**: `ISessionPersistence` + `JsonSessionPersistence` wired into all session handlers. Sessions written to DB on start/action, loaded from DB on cache miss.
+- **ICampaignService**: `JsonCampaignService` reads `CampaignResource` from DB via `IJsonResourceRepository`. Seeded with 1 campaign on startup.
+- **ICharacterService**: `JsonCharacterService` reads `CharacterResource` from DB via `IJsonResourceRepository`. Seeded with 2 characters on startup.
 
 ## Mocked / Stub
-- **ICampaignService**: Returns hardcoded campaign lists.
-- **ICharacterService**: Returns hardcoded character data.
-- **Data Access**: No real database; all persistence is currently mocked or in-memory.
 - **Character Stats**: All characters currently default to stats of 10.
 - **Game Systems List**: Hardcoded to only show D&D 5e.
 

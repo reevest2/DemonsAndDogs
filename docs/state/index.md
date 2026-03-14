@@ -62,6 +62,11 @@ For more details, see [../core/architecture.md](../core/architecture.md).
 | [features/session-persistence.md](../features/session-persistence.md) | Session Persistence feature spec |
 | [features/real-campaign-character-services.md](../features/real-campaign-character-services.md) | Real Campaign and Character Services feature spec |
 
+### Templates
+| Document | Description |
+|---|---|
+| [templates/spec-template.md](../templates/spec-template.md) | Scaffold template for new feature specs |
+
 ### State
 | Document | Description |
 |---|---|
