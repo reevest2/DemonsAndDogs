@@ -4,5 +4,5 @@ namespace Models.Common;
 
 public record DocumentResource : JsonResource
 {
-    public override string Kind => ResourceKinds.Document;
+    public override string Kind { get; init; } = ResourceKinds.Document;
 }

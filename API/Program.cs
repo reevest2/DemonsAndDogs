@@ -32,19 +32,27 @@ public class Program
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen();
         
-        var cs = builder.Configuration.GetConnectionString(AppConstants.Configuration.Default);
-        var dataSourceBuilder = new NpgsqlDataSourceBuilder(cs);
-        dataSourceBuilder.EnableDynamicJson();
-        var dataSource = dataSourceBuilder.Build();
-        builder.Services.AddDbContext<DbContext>(options =>
-            options.UseNpgsql(dataSource));
+        if (builder.Environment.IsEnvironment("Testing"))
+        {
+            builder.Services.AddDbContext<DbContext>(options =>
+                options.UseInMemoryDatabase("TestDb"));
+        }
+        else
+        {
+            var cs = builder.Configuration.GetConnectionString(AppConstants.Configuration.Default);
+            var dataSourceBuilder = new NpgsqlDataSourceBuilder(cs);
+            dataSourceBuilder.EnableDynamicJson();
+            var dataSource = dataSourceBuilder.Build();
+            builder.Services.AddDbContext<DbContext>(options =>
+                options.UseNpgsql(dataSource));
+        }
         builder.Services.ConfigureRepositories();
         builder.Services.ConfigureServices(builder.Configuration);
 
         var app = builder.Build();
         app.UseCors(AppConstants.Cors.PolicyName);
 
-        if (app.Environment.IsDevelopment())
+        if (app.Environment.IsDevelopment() || app.Environment.IsEnvironment("Testing"))
         {
             app.UseSwagger();
             app.UseSwaggerUI();

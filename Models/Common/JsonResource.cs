@@ -15,7 +15,7 @@ namespace Models.Common;
 public abstract record JsonResource
 {
     [JsonPropertyName("Kind")]
-    public abstract string Kind { get; }
+    public virtual string Kind { get; init; } = string.Empty;
 
     public string Id { get; init; } = Guid.NewGuid().ToString();
     public string? EntityId { get; init; }
