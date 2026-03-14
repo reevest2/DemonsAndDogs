@@ -1,4 +1,4 @@
-﻿# Demons and Dogs — Master Index
+﻿# Demons and Dogs â€” Master Index
 
 Demons and Dogs is a high-performance, multi-system TTRPG engine built with Blazor WASM and .NET 10. It features AI-powered narration and a flexible game system architecture that allows for rapid integration of different rulebooks like D&D 5e, Call of Cthulhu, and Pathfinder. The core goal is to provide a unified platform for digital TTRPG sessions with rich, dynamic character sheets and immersive AI storytelling.
 
@@ -60,6 +60,7 @@ For more details, see [../core/architecture.md](../core/architecture.md).
 |---|---|
 | [features/dnd5e-rulebook-tests.md](../features/dnd5e-rulebook-tests.md) | DnD5e RuleBook Unit Tests feature spec |
 | [features/session-persistence.md](../features/session-persistence.md) | Session Persistence feature spec |
+| [features/real-campaign-character-services.md](../features/real-campaign-character-services.md) | Real Campaign and Character Services feature spec |
 
 ### State
 | Document | Description |
@@ -80,5 +81,6 @@ When working on this project, AI assistants must adhere to these rules:
 - **Test First**: Write spec-driven test cases (xUnit or bUnit) before starting the implementation.
 - **Clean Controllers**: Controllers must remain one-line MediatR senders.
 - **Records Only**: Use C# records for all data transfer and domain models.
+
 
 

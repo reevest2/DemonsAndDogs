@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "state/roadmap.md",
+                "file": "core/best-practices.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "roadmap"
+              "title": "best-practices"
             }
           }
         ]
@@ -94,7 +94,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "state/roadmap.md",
+                "file": "core/best-practices.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -104,7 +104,7 @@
                 "unlinkedCollapsed": true
               },
               "icon": "links-coming-in",
-              "title": "Backlinks for roadmap"
+              "title": "Backlinks for best-practices"
             }
           },
           {
@@ -113,12 +113,12 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "state/roadmap.md",
+                "file": "core/best-practices.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               },
               "icon": "links-going-out",
-              "title": "Outgoing links from roadmap"
+              "title": "Outgoing links from best-practices"
             }
           },
           {
@@ -156,13 +156,13 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "state/roadmap.md",
+                "file": "core/best-practices.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
               },
               "icon": "lucide-list",
-              "title": "Outline of roadmap"
+              "title": "Outline of best-practices"
             }
           }
         ]
@@ -185,8 +185,14 @@
   },
   "active": "d55433c696e6827e",
   "lastOpenFiles": [
+    "features/real-campaign-character-services.md",
+    "features/real-campaign-character-services.md.tmp.50184.1773499391206",
+    "core/architecture.md",
+    "state/index.md",
+    "state/roadmap.md",
+    "state/current-state.md.tmp.35856.1773498033329",
+    "features/session-persistence.md",
     "features/session-persistence.md.tmp.35856.1773497019200",
-    "state/roadmap.md.tmp.35856.1773496982541",
-    "features/session-persistence.md"
+    "state/roadmap.md.tmp.35856.1773496982541"
   ]
 }
