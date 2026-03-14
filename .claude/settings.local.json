@@ -24,7 +24,8 @@
       "Bash(mv \"tests/Jarvis2.0.Tests.csproj\" \"tests/reCurse.Tests.csproj\")",
       "Bash(grep -E \"\\\\.\\(ts|js|json\\)$\")",
       "Bash(pwsh -File scripts/Check-MagicStrings.ps1 -SolutionRoot .)",
-      "Bash(powershell -File D:/Repos/DemonsAndDogs/scripts/Check-MagicStrings.ps1 -SolutionRoot D:/Repos/DemonsAndDogs)"
+      "Bash(powershell -File D:/Repos/DemonsAndDogs/scripts/Check-MagicStrings.ps1 -SolutionRoot D:/Repos/DemonsAndDogs)",
+      "Bash(xargs -I {} head -30 {})"
     ]
   }
 }
