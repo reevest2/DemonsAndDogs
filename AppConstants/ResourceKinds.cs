@@ -9,6 +9,7 @@ public static class ResourceKinds
     public const string DocumentDefinition = "document_definition";
     public const string Document = "document";
     public const string Campaign = "campaign";
+    public const string Session = "session";
 
     public static readonly string[] All =
     [
@@ -18,6 +19,7 @@ public static class ResourceKinds
         Game,
         DocumentDefinition,
         Document,
-        Campaign
+        Campaign,
+        Session
     ];
 }

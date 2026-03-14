@@ -5,15 +5,19 @@ using Models.Session;
 
 namespace Mediator.Mediator.Handlers.Session;
 
-public class GetSessionHandler(ISessionStore sessionStore) : IRequestHandler<GetSessionRequest, SessionState>
+public class GetSessionHandler(ISessionStore sessionStore, ISessionPersistence persistence)
+    : IRequestHandler<GetSessionRequest, SessionState>
 {
-    public Task<SessionState> Handle(GetSessionRequest request, CancellationToken cancellationToken)
+    public async Task<SessionState> Handle(GetSessionRequest request, CancellationToken cancellationToken)
     {
         if (sessionStore.TryGet(request.SessionId, out var session))
-        {
-            return Task.FromResult(session!);
-        }
+            return session!;
 
-        throw new KeyNotFoundException($"Session {request.SessionId} not found.");
+        var loaded = await persistence.LoadAsync(request.SessionId, cancellationToken);
+        if (loaded == null)
+            throw new KeyNotFoundException($"Session {request.SessionId} not found.");
+
+        sessionStore.Set(request.SessionId, loaded);
+        return loaded;
     }
 }

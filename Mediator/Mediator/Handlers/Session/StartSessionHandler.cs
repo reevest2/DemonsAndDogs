@@ -7,10 +7,10 @@ using Models.GameSystems;
 
 namespace Mediator.Mediator.Handlers.Session;
 
-public class StartSessionHandler(IGameSystemRegistry registry, ISessionStore sessionStore)
+public class StartSessionHandler(IGameSystemRegistry registry, ISessionStore sessionStore, ISessionPersistence persistence)
     : IRequestHandler<StartSessionRequest, SessionState>
 {
-    public Task<SessionState> Handle(StartSessionRequest request, CancellationToken cancellationToken)
+    public async Task<SessionState> Handle(StartSessionRequest request, CancellationToken cancellationToken)
     {
         var ruleBook = registry.Get(request.SystemId);
         var schema = ruleBook.GetCharacterSheetSchema();
@@ -24,7 +24,8 @@ public class StartSessionHandler(IGameSystemRegistry registry, ISessionStore ses
             new List<SessionEvent>());
 
         sessionStore.Set(sessionId, state);
+        await persistence.SaveAsync(state, cancellationToken);
 
-        return Task.FromResult(state);
+        return state;
     }
 }

@@ -8,10 +8,10 @@ using Models.GameSystems;
 
 namespace Mediator.Mediator.Handlers.Session;
 
-public class PerformActionHandler(IGameSystemRegistry registry, ISessionStore sessionStore)
+public class PerformActionHandler(IGameSystemRegistry registry, ISessionStore sessionStore, ISessionPersistence persistence)
     : IRequestHandler<PerformActionRequest, SessionEvent>
 {
-    public Task<SessionEvent> Handle(PerformActionRequest request, CancellationToken cancellationToken)
+    public async Task<SessionEvent> Handle(PerformActionRequest request, CancellationToken cancellationToken)
     {
         if (!sessionStore.TryGet(request.SessionId, out var state))
         {
@@ -50,11 +50,11 @@ public class PerformActionHandler(IGameSystemRegistry registry, ISessionStore se
                 AttackResult: result);
         }
 
-        // Update session state
         var newEventLog = new List<SessionEvent>(state.EventLog) { sessionEvent };
         var newState = state with { EventLog = newEventLog };
         sessionStore.Set(request.SessionId, newState);
+        await persistence.SaveAsync(newState, cancellationToken);
 
-        return Task.FromResult(sessionEvent);
+        return sessionEvent;
     }
 }
