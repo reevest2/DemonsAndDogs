@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls -la \"D:\\\\Repos\\\\DemonsAndDogs\\\\.claude\"\" 2>/dev/null || echo \"Directory does not exist or cannot be accessed \")",
+      "Bash(find /d/Repos/DemonsAndDogs/.claude -type f -name *)",
+      "Bash(find /d/Repos/DemonsAndDogs -maxdepth 1 -name *pipeline* -o -name *workflow*)",
+      "Bash(grep -r public.*Test /d/Repos/DemonsAndDogs/DemonsAndDogs.Tests --include=*.cs)",
+      "Bash(grep -r public.*Test /d/Repos/DemonsAndDogs/DemonsAndDogs.API.Tests --include=*.cs)",
+      "Bash(grep -E \"\\\\.\\(json|yml|yaml|config|xml|ps1\\)$\")",
+      "Bash(ls -la /d/Repos/DemonsAndDogs/*.sln)",
+      "Bash(xargs wc:*)",
+      "Bash(wc -l /d/Repos/DemonsAndDogs/DemonsAndDogs.Tests/Components/*.cs)"
+    ]
+  }
+}
