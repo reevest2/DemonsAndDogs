@@ -60,3 +60,9 @@ Update this doc when a feature moves to Done.
 | Feature | Status | Notes |
 |---|---|---|
 | Real Character Stats | Done | ExtractStats on IRuleBook, Stats on SessionState, GET /character/{id}/stats, CharacterSheetComponent renders real values |
+
+## Milestone 7 — Second Game System
+
+| Feature | Status | Notes |
+|---|---|---|
+| Call of Cthulhu RuleBook | In Progress | Implement IRuleBook for CoC — skill checks, sanity, character sheet schema |

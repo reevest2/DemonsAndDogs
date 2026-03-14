@@ -1,4 +1,4 @@
-﻿# Demons and Dogs â€” Master Index
+# Demons and Dogs — Master Index
 
 Demons and Dogs is a high-performance, multi-system TTRPG engine built with Blazor WASM and .NET 10. It features AI-powered narration and a flexible game system architecture that allows for rapid integration of different rulebooks like D&D 5e, Call of Cthulhu, and Pathfinder. The core goal is to provide a unified platform for digital TTRPG sessions with rich, dynamic character sheets and immersive AI storytelling.
 
@@ -30,53 +30,52 @@ The solution follows a clean architecture with MediatR-driven communication and 
     - **MCPServer**: MCP server exposing project documentation and state to AI tools.
 - **Tests/**: Various test projects using xUnit, bUnit, and Playwright.
 
-For more details, see [../core/architecture.md](../core/architecture.md).
+For more details, see [core/architecture.md](core/architecture.md).
 
 ## Documentation Index
 
 ### Core
 | Document | Description |
 |---|---|
-| [architecture.md](../core/architecture.md) | High-level system design, project structure, and key patterns. |
-| [best-practices.md](../core/best-practices.md) | Coding standards, Blazor patterns, and TTRPG-specific rules. |
-| [data-model.md](../core/data-model.md) | Hybrid relational/JSON schema for game system flexibility. |
-| [game-engine.md](../core/game-engine.md) | Game system extension points, `IRuleBook`, and system registry. |
-| [game-session.md](../core/game-session.md) | Session state management, event logging, and game flow. |
-| [testing.md](../core/testing.md) | Test project map, naming conventions, and bUnit/xUnit patterns. |
+| [core/architecture.md](core/architecture.md) | High-level system design, project structure, and key patterns. |
+| [core/best-practices.md](core/best-practices.md) | Coding standards, Blazor patterns, and TTRPG-specific rules. |
+| [core/data-model.md](core/data-model.md) | Hybrid relational/JSON schema for game system flexibility. |
+| [core/game-engine.md](core/game-engine.md) | Game system extension points, `IRuleBook`, and system registry. |
+| [core/game-session.md](core/game-session.md) | Session state management, event logging, and game flow. |
+| [core/testing.md](core/testing.md) | Test project map, naming conventions, and bUnit/xUnit patterns. |
 
 ### Integrations
 | Document | Description |
 |---|---|
-| [narration-lmstudio.md](../integrations/narration-lmstudio.md) | LM Studio local AI narration setup and troubleshooting. |
+| [integrations/narration-lmstudio.md](integrations/narration-lmstudio.md) | LM Studio local AI narration setup and troubleshooting. |
 
 ### UI
 | Document | Description |
 |---|---|
-| [ui-themes.md](../ui/ui-themes.md) | Design system, themes, and CSS architecture. |
-
+| [ui/ui-themes.md](ui/ui-themes.md) | Design system, themes, and CSS architecture. |
 
 ### Features
 | Document | Description |
 |---|---|
-| [features/dnd5e-rulebook-tests.md](../features/dnd5e-rulebook-tests.md) | DnD5e RuleBook Unit Tests feature spec |
-| [features/session-persistence.md](../features/session-persistence.md) | Session Persistence feature spec |
-| [features/real-campaign-character-services.md](../features/real-campaign-character-services.md) | Real Campaign and Character Services feature spec |
-| [features/real-character-stats.md](../features/real-character-stats.md) | Real Character Stats — load actual stats from CharacterResource.Data into session and character detail views |
+| [features/dnd5e-rulebook-tests.md](features/dnd5e-rulebook-tests.md) | DnD5e RuleBook Unit Tests feature spec |
+| [features/session-persistence.md](features/session-persistence.md) | Session Persistence feature spec |
+| [features/real-campaign-character-services.md](features/real-campaign-character-services.md) | Real Campaign and Character Services feature spec |
+| [features/real-character-stats.md](features/real-character-stats.md) | Real Character Stats — load actual stats from CharacterResource.Data into session and character detail views |
 
 ### Templates
 | Document | Description |
 |---|---|
-| [templates/spec-template.md](../templates/spec-template.md) | Scaffold template for new feature specs |
+| [templates/spec-template.md](templates/spec-template.md) | Scaffold template for new feature specs |
 
 ### State
 | Document | Description |
 |---|---|
-| [current-state.md](current-state.md) | Authoritative source on current implementation status. |
-| [roadmap.md](roadmap.md) | Feature roadmap with milestone status tracking. |
+| [state/current-state.md](state/current-state.md) | Authoritative source on current implementation status. |
+| [state/roadmap.md](state/roadmap.md) | Feature roadmap with milestone status tracking. |
 
 ## Current State
 
-For the authoritative source on what features are currently implemented, what is mocked, and what's next on the roadmap, see [current-state.md](current-state.md).
+For the authoritative source on what features are currently implemented, what is mocked, and what's next on the roadmap, see [state/current-state.md](state/current-state.md).
 
 ## Working With AI
 
@@ -87,6 +86,3 @@ When working on this project, AI assistants must adhere to these rules:
 - **Test First**: Write spec-driven test cases (xUnit or bUnit) before starting the implementation.
 - **Clean Controllers**: Controllers must remain one-line MediatR senders.
 - **Records Only**: Use C# records for all data transfer and domain models.
-
-
-

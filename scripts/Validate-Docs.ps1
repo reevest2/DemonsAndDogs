@@ -3,7 +3,7 @@ param(
 )
 
 $DocsFolder = Join-Path $SolutionRoot "docs"
-$IndexFile = Join-Path $DocsFolder "state\index.md"
+$IndexFile = Join-Path $DocsFolder "index.md"
 $CurrentStateFile = Join-Path $DocsFolder "state\current-state.md"
 $RoadmapFile = Join-Path $DocsFolder "state\roadmap.md"
 
