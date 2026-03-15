@@ -1,5 +1,6 @@
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using API.Extensions;
 using API.Services.Sessions.Contracts;
 using Models.Session;
 
@@ -13,20 +14,20 @@ public class SessionController(IMediator mediator) : ControllerBase
     public async Task<ActionResult<SessionState>> Start([FromBody] StartSessionRequest request, CancellationToken cancellationToken)
     {
         var result = await mediator.Send(request, cancellationToken);
-        return Ok(result);
+        return result.ToActionResult();
     }
 
     [HttpPost("action")]
     public async Task<ActionResult<SessionEvent>> Action([FromBody] PerformActionRequest request, CancellationToken cancellationToken)
     {
         var result = await mediator.Send(request, cancellationToken);
-        return Ok(result);
+        return result.ToActionResult();
     }
 
     [HttpGet("{sessionId}")]
     public async Task<ActionResult<SessionState>> GetSession(string sessionId, CancellationToken cancellationToken)
     {
         var result = await mediator.Send(new GetSessionRequest(sessionId), cancellationToken);
-        return Ok(result);
+        return result.ToActionResult();
     }
 }

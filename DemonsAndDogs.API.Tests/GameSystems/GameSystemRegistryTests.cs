@@ -1,5 +1,6 @@
 using API.Services.GameSystems;
 using API.Services.GameSystems.DnD5e;
+using Models;
 using Xunit;
 
 namespace DemonsAndDogs.API.Tests.GameSystems;
@@ -11,35 +12,32 @@ public class GameSystemRegistryTests
     [Fact]
     public void GameSystemRegistry_DiscoversDnD5eRuleBook_ViaReflection()
     {
-        // Arrange & Act
         var registry = new GameSystemRegistry();
         var systems = registry.GetAll();
 
-        // Assert
         Assert.Contains(systems, s => s is DnD5eRuleBook);
     }
 
     [Fact]
-    public void GameSystemRegistry_UnknownSystemId_ThrowsKeyNotFoundException()
+    public void GameSystemRegistry_UnknownSystemId_ReturnsNotFound()
     {
-        // Arrange
         var registry = new GameSystemRegistry();
 
-        // Act & Assert
-        Assert.Throws<KeyNotFoundException>(() => registry.Get("unknown-system-id"));
+        var result = registry.Get("unknown-system-id");
+
+        Assert.False(result.IsSuccess);
+        Assert.Equal(ErrorCodes.NotFound, result.Error!.Code);
     }
 
     [Fact]
     public void Get_DnD5e_ReturnsDnD5eRuleBook()
     {
-        // Arrange
         var registry = new GameSystemRegistry();
 
-        // Act
-        var system = registry.Get(DnD5eSystemId);
+        var result = registry.Get(DnD5eSystemId);
 
-        // Assert
-        Assert.IsType<DnD5eRuleBook>(system);
-        Assert.Equal(DnD5eSystemId, system.SystemId);
+        Assert.True(result.IsSuccess);
+        Assert.IsType<DnD5eRuleBook>(result.Value);
+        Assert.Equal(DnD5eSystemId, result.Value!.SystemId);
     }
 }

@@ -4,6 +4,7 @@ using API.Services.Characters;
 using API.Services.GameSystems;
 using API.Services.GameSystems.DnD5e;
 using Microsoft.AspNetCore.Mvc;
+using Models;
 using Models.Common;
 using Models.Interfaces;
 
@@ -29,7 +30,7 @@ file class FakeCharacterService : ICharacterService
 
 file class FakeRegistry : IGameSystemRegistry
 {
-    public IRuleBook Get(string systemId) => new DnD5eRuleBook();
+    public Result<IRuleBook> Get(string systemId) => Result<IRuleBook>.Ok(new DnD5eRuleBook());
     public IEnumerable<IRuleBook> GetAll() => [new DnD5eRuleBook()];
 }
 
@@ -37,15 +38,8 @@ file class FakeRegistry : IGameSystemRegistry
 // Tests
 // ---------------------------------------------------------------------------
 
-/// <summary>
-/// Unit tests for CharacterController.GetStats endpoint.
-/// </summary>
 public class CharacterHandlersTests
 {
-    // -----------------------------------------------------------------------
-    // CharacterController.GetStats
-    // -----------------------------------------------------------------------
-
     [Fact]
     public async Task GetCharacterStats_ValidCharacterWithData_ReturnsExtractedStats()
     {

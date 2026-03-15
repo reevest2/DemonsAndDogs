@@ -1,4 +1,5 @@
 using DataAccess.Abstraction;
+using Models;
 using Models.Common;
 
 namespace API.Services.Documents;
@@ -24,12 +25,14 @@ public class JsonDocumentService(IJsonResourceRepository repository) : IDocument
         return (DocumentResource)created;
     }
 
-    public async Task<DocumentResource> UpdateAsync(DocumentResource resource, CancellationToken cancellationToken = default)
+    public async Task<Result<DocumentResource>> UpdateAsync(DocumentResource resource, CancellationToken cancellationToken = default)
     {
-        var updated = await repository.UpdateAsync(resource);
-        return (DocumentResource)updated;
+        var result = await repository.UpdateAsync(resource);
+        if (!result.IsSuccess)
+            return Result<DocumentResource>.Fail(result.Error!);
+        return Result<DocumentResource>.Ok((DocumentResource)result.Value!);
     }
 
-    public Task DeleteAsync(string id, CancellationToken cancellationToken = default) =>
+    public Task<Result> DeleteAsync(string id, CancellationToken cancellationToken = default) =>
         repository.DeleteAsync(id);
 }

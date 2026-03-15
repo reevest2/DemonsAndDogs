@@ -3,6 +3,7 @@ using MediatR;
 using API.Services.GameSystems;
 using API.Services.Sessions;
 using API.Services.Sessions.Contracts;
+using Models;
 using Models.Interfaces;
 using Models.Session;
 using Models.GameSystems;
@@ -10,24 +11,24 @@ using Models.GameSystems;
 namespace API.Services.Sessions.Handlers;
 
 public class PerformActionHandler(IGameSystemRegistry registry, ISessionStore sessionStore, ISessionPersistence persistence)
-    : IRequestHandler<PerformActionRequest, SessionEvent>
+    : IRequestHandler<PerformActionRequest, Result<SessionEvent>>
 {
-    public async Task<SessionEvent> Handle(PerformActionRequest request, CancellationToken cancellationToken)
+    public async Task<Result<SessionEvent>> Handle(PerformActionRequest request, CancellationToken cancellationToken)
     {
         if (!sessionStore.TryGet(request.SessionId, out var state))
-        {
-            throw new KeyNotFoundException($"Session {request.SessionId} not found.");
-        }
+            return Result<SessionEvent>.NotFound("Session", request.SessionId);
 
-        var ruleBook = registry.Get(state!.SystemId);
+        var ruleBookResult = registry.Get(state!.SystemId);
+        if (!ruleBookResult.IsSuccess)
+            return Result<SessionEvent>.Fail(ruleBookResult.Error!);
+
+        var ruleBook = ruleBookResult.Value!;
         SessionEvent sessionEvent;
 
         if (request.ActionType == ActionType.SkillCheck)
         {
             if (request.SkillCheckContext == null)
-            {
-                throw new ArgumentException("SkillCheckContext is required for SkillCheck action.");
-            }
+                return Result<SessionEvent>.InvalidInput("SkillCheckContext is required for SkillCheck action.");
 
             var result = ruleBook.ResolveSkillCheck(request.SkillCheckContext);
             sessionEvent = new SessionEvent(
@@ -39,9 +40,7 @@ public class PerformActionHandler(IGameSystemRegistry registry, ISessionStore se
         else // Attack
         {
             if (request.AttackContext == null)
-            {
-                throw new ArgumentException("AttackContext is required for Attack action.");
-            }
+                return Result<SessionEvent>.InvalidInput("AttackContext is required for Attack action.");
 
             var result = ruleBook.ResolveAttack(request.AttackContext);
             sessionEvent = new SessionEvent(
@@ -56,6 +55,6 @@ public class PerformActionHandler(IGameSystemRegistry registry, ISessionStore se
         sessionStore.Set(request.SessionId, newState);
         await persistence.SaveAsync(newState, cancellationToken);
 
-        return sessionEvent;
+        return Result<SessionEvent>.Ok(sessionEvent);
     }
 }

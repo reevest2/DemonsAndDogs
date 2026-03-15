@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using API.Extensions;
 using API.Services.GameSystems;
 using Models.GameSystems;
 
@@ -18,7 +19,10 @@ public class GameSystemController(IGameSystemRegistry registry) : ControllerBase
     [HttpGet("{systemId}/schema")]
     public ActionResult<CharacterSheetSchema> GetSchema(string systemId)
     {
-        var ruleBook = registry.Get(systemId);
-        return Ok(ruleBook.GetCharacterSheetSchema());
+        var ruleBookResult = registry.Get(systemId);
+        if (!ruleBookResult.IsSuccess)
+            return ruleBookResult.ToActionResult<Models.Interfaces.IRuleBook, CharacterSheetSchema>();
+
+        return Ok(ruleBookResult.Value!.GetCharacterSheetSchema());
     }
 }

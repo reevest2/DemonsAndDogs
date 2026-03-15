@@ -1,4 +1,5 @@
 using MediatR;
+using Models;
 using Models.GameSystems;
 using Models.Session;
 
@@ -9,4 +10,4 @@ public record PerformActionRequest(
     ActionType ActionType,
     SkillCheckContext? SkillCheckContext = null,
     AttackContext? AttackContext = null)
-    : IRequest<SessionEvent>;
+    : IRequest<Result<SessionEvent>>;

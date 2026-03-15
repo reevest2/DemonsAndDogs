@@ -2,13 +2,14 @@ using System.Net.Http.Json;
 using System.Runtime.CompilerServices;
 using System.Text.Json.Nodes;
 using AppConstants;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Models.Interfaces;
 using Models.Narration;
 
 namespace API.Services.Narration;
 
-public class LocalLlmNarrator(HttpClient httpClient, IOptions<LocalLlmOptions> options) : INarrator
+public class LocalLlmNarrator(HttpClient httpClient, IOptions<LocalLlmOptions> options, ILogger<LocalLlmNarrator> logger) : INarrator
 {
     private readonly LocalLlmOptions _options = options.Value;
 
@@ -60,8 +61,9 @@ public class LocalLlmNarrator(HttpClient httpClient, IOptions<LocalLlmOptions> o
                 {
                     node = JsonNode.Parse(json);
                 }
-                catch
+                catch (Exception ex)
                 {
+                    logger.LogWarning(ex, "Failed to parse SSE JSON payload: {Json}", json);
                     continue;
                 }
 

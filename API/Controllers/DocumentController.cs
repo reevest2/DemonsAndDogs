@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using API.Extensions;
 using Models.Common;
 using API.Services.Documents;
 
@@ -32,14 +33,14 @@ public class DocumentController(IDocumentService service) : ControllerBase
     public async Task<ActionResult<DocumentResource>> Update(string id, [FromBody] DocumentResource resource, CancellationToken cancellationToken)
     {
         if (id != resource.Id) return BadRequest("Id mismatch");
-        var updated = await service.UpdateAsync(resource, cancellationToken);
-        return Ok(updated);
+        var result = await service.UpdateAsync(resource, cancellationToken);
+        return result.ToActionResult();
     }
 
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(string id, CancellationToken cancellationToken)
     {
-        await service.DeleteAsync(id, cancellationToken);
-        return NoContent();
+        var result = await service.DeleteAsync(id, cancellationToken);
+        return result.ToActionResult();
     }
 }

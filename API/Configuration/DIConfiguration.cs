@@ -11,6 +11,7 @@ using DataAccess;
 using DataAccess.Abstraction;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Models.Common;
 using Models.Interfaces;
@@ -43,12 +44,19 @@ public static class DIConfiguration
         {
             var client = sp.GetRequiredService<IHttpClientFactory>().CreateClient((string)key!);
             var options = sp.GetRequiredService<IOptions<LocalLlmOptions>>();
-            return new LocalLlmNarrator(client, options);
+            var logger = sp.GetRequiredService<ILogger<LocalLlmNarrator>>();
+            return new LocalLlmNarrator(client, options, logger);
         });
 
         // Register INarrator via NarratorFactory
         services.AddScoped<NarratorFactory>();
-        services.AddScoped<INarrator>(sp => sp.GetRequiredService<NarratorFactory>().Create());
+        services.AddScoped<INarrator>(sp =>
+        {
+            var result = sp.GetRequiredService<NarratorFactory>().Create();
+            if (!result.IsSuccess)
+                throw new InvalidOperationException($"Failed to create narrator: {result.Error!.Message}");
+            return result.Value!;
+        });
 
         var useMockData = configuration.GetValue<bool>("UseMockData");
 

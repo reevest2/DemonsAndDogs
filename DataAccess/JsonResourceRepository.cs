@@ -1,5 +1,6 @@
 using DataAccess.Abstraction;
 using Microsoft.EntityFrameworkCore;
+using Models;
 using Models.Common;
 
 namespace DataAccess;
@@ -36,27 +37,28 @@ public class JsonResourceRepository(DbContext context) : IJsonResourceRepository
         return resource;
     }
 
-    public async Task<JsonResource> UpdateAsync(JsonResource resource)
+    public async Task<Result<JsonResource>> UpdateAsync(JsonResource resource)
     {
         var existing = await context.JsonResources.FirstOrDefaultAsync(r => r.Id == resource.Id);
         if (existing == null)
-            throw new KeyNotFoundException($"JsonResource with Id '{resource.Id}' not found.");
+            return Result<JsonResource>.NotFound("JsonResource", resource.Id);
 
         context.Entry(existing).Property<DateTime?>("UpdatedAt").CurrentValue = DateTime.UtcNow;
         context.Entry(existing).CurrentValues.SetValues(resource);
         context.Entry(existing).Property(r => r.ResourceKind).IsModified = false;
         await context.SaveChangesAsync();
-        return existing;
+        return Result<JsonResource>.Ok(existing);
     }
 
-    public async Task DeleteAsync(string id)
+    public async Task<Result> DeleteAsync(string id)
     {
         var resource = await context.JsonResources.FirstOrDefaultAsync(r => r.Id == id);
         if (resource == null)
-            throw new KeyNotFoundException($"JsonResource with Id '{id}' not found.");
+            return Result.NotFound("JsonResource", id);
 
         context.Entry(resource).Property<bool>("IsDeleted").CurrentValue = true;
         context.Entry(resource).Property<DateTime?>("UpdatedAt").CurrentValue = DateTime.UtcNow;
         await context.SaveChangesAsync();
+        return Result.Ok();
     }
 }

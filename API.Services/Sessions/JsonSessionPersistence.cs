@@ -17,7 +17,9 @@ public class JsonSessionPersistence(IJsonResourceRepository repository) : ISessi
 
         if (existing != null)
         {
-            await repository.UpdateAsync(existing with { Data = data });
+            var result = await repository.UpdateAsync(existing with { Data = data });
+            if (!result.IsSuccess)
+                throw new InvalidOperationException($"Failed to persist session {state.SessionId}: {result.Error!.Message}");
         }
         else
         {

@@ -1,28 +1,24 @@
 using AppConstants;
 using MediatR;
 using API.Services.Sessions.Contracts;
+using Models;
 using Models.Interfaces;
 using Models.Narration;
 using Models.Session;
-using System.Linq;
 
 namespace API.Services.Sessions.Handlers;
 
 public class NarrateActionHandler(INarrator narrator, ISessionStore sessionStore)
-    : IRequestHandler<NarrateActionRequest, NarrationResult>
+    : IRequestHandler<NarrateActionRequest, Result<NarrationResult>>
 {
-    public async Task<NarrationResult> Handle(NarrateActionRequest request, CancellationToken cancellationToken)
+    public async Task<Result<NarrationResult>> Handle(NarrateActionRequest request, CancellationToken cancellationToken)
     {
         if (!sessionStore.TryGet(request.SessionId, out var session))
-        {
-            throw new KeyNotFoundException($"Session {request.SessionId} not found.");
-        }
+            return Result<NarrationResult>.NotFound("Session", request.SessionId);
 
         var lastEvent = session!.EventLog.LastOrDefault();
         if (lastEvent == null)
-        {
-            return new NarrationResult("No events to narrate yet.", TokenStream: null);
-        }
+            return Result<NarrationResult>.Ok(new NarrationResult("No events to narrate yet.", TokenStream: null));
 
         // Map SessionEvent to GameEvent for the narrator
         var gameEvent = new GameEvent(
@@ -33,7 +29,8 @@ public class NarrateActionHandler(INarrator narrator, ISessionStore sessionStore
             Metadata: BuildMetadata(lastEvent)
         );
 
-        return await narrator.NarrateAsync(gameEvent, NarrationTones.Dramatic, cancellationToken);
+        var narrationResult = await narrator.NarrateAsync(gameEvent, NarrationTones.Dramatic, cancellationToken);
+        return Result<NarrationResult>.Ok(narrationResult);
     }
 
     private Dictionary<string, string> BuildMetadata(SessionEvent sessionEvent)

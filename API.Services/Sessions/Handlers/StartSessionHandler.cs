@@ -3,6 +3,7 @@ using API.Services.Characters;
 using API.Services.GameSystems;
 using API.Services.Sessions;
 using API.Services.Sessions.Contracts;
+using Models;
 using Models.Interfaces;
 using Models.Session;
 using Models.GameSystems;
@@ -10,11 +11,15 @@ using Models.GameSystems;
 namespace API.Services.Sessions.Handlers;
 
 public class StartSessionHandler(IGameSystemRegistry registry, ISessionStore sessionStore, ISessionPersistence persistence, ICharacterService characterService)
-    : IRequestHandler<StartSessionRequest, SessionState>
+    : IRequestHandler<StartSessionRequest, Result<SessionState>>
 {
-    public async Task<SessionState> Handle(StartSessionRequest request, CancellationToken cancellationToken)
+    public async Task<Result<SessionState>> Handle(StartSessionRequest request, CancellationToken cancellationToken)
     {
-        var ruleBook = registry.Get(request.SystemId);
+        var ruleBookResult = registry.Get(request.SystemId);
+        if (!ruleBookResult.IsSuccess)
+            return Result<SessionState>.Fail(ruleBookResult.Error!);
+
+        var ruleBook = ruleBookResult.Value!;
         var schema = ruleBook.GetCharacterSheetSchema();
 
         var character = await characterService.GetByIdAsync(request.CharacterId, cancellationToken);
@@ -34,6 +39,6 @@ public class StartSessionHandler(IGameSystemRegistry registry, ISessionStore ses
         sessionStore.Set(sessionId, state);
         await persistence.SaveAsync(state, cancellationToken);
 
-        return state;
+        return Result<SessionState>.Ok(state);
     }
 }

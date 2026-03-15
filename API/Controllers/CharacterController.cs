@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using API.Extensions;
 using Models.Common;
 using API.Services.Characters;
 using API.Services.GameSystems;
@@ -35,7 +36,10 @@ public class CharacterController(ICharacterService service, IGameSystemRegistry 
         if (character == null || string.IsNullOrEmpty(character.GameId))
             return Ok(new Dictionary<string, int>());
 
-        var ruleBook = registry.Get(character.GameId);
-        return Ok(ruleBook.ExtractStats(character.Data));
+        var ruleBookResult = registry.Get(character.GameId);
+        if (!ruleBookResult.IsSuccess)
+            return ruleBookResult.ToActionResult<Models.Interfaces.IRuleBook, IReadOnlyDictionary<string, int>>();
+
+        return Ok(ruleBookResult.Value!.ExtractStats(character.Data));
     }
 }

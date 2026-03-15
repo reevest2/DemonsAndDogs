@@ -5,6 +5,7 @@ using API.Services.GameSystems;
 using API.Services.GameSystems.DnD5e;
 using AppConstants;
 using Microsoft.AspNetCore.Mvc;
+using Models;
 using Models.Common;
 using Models.Interfaces;
 using Xunit;
@@ -33,7 +34,7 @@ file class FakeCharacterService : ICharacterService
 
 file class FakeRegistry : IGameSystemRegistry
 {
-    public IRuleBook Get(string systemId) => new DnD5eRuleBook();
+    public Result<IRuleBook> Get(string systemId) => Result<IRuleBook>.Ok(new DnD5eRuleBook());
     public IEnumerable<IRuleBook> GetAll() => [new DnD5eRuleBook()];
 }
 
@@ -46,7 +47,6 @@ public class GetCharacterStatsHandlerTests
     [Fact]
     public async Task GetCharacterStats_KnownCharacterId_ReturnsExtractedStats()
     {
-        // Arrange
         var service = new FakeCharacterService();
         service.Seed(new CharacterResource
         {
@@ -58,10 +58,8 @@ public class GetCharacterStatsHandlerTests
 
         var controller = new CharacterController(service, new FakeRegistry());
 
-        // Act
         var result = await controller.GetStats("char-1", CancellationToken.None);
 
-        // Assert
         var okResult = result.Result as OkObjectResult;
         Assert.NotNull(okResult);
         var stats = okResult.Value as IReadOnlyDictionary<string, int>;
@@ -74,14 +72,11 @@ public class GetCharacterStatsHandlerTests
     [Fact]
     public async Task GetCharacterStats_UnknownCharacterId_ReturnsEmptyDictionary()
     {
-        // Arrange
         var service = new FakeCharacterService();
         var controller = new CharacterController(service, new FakeRegistry());
 
-        // Act
         var result = await controller.GetStats("does-not-exist", CancellationToken.None);
 
-        // Assert
         var okResult = result.Result as OkObjectResult;
         Assert.NotNull(okResult);
         var stats = okResult.Value as IReadOnlyDictionary<string, int>;

@@ -4,6 +4,7 @@ using API.Services.GameSystems;
 using Microsoft.AspNetCore.Mvc;
 using API.Services.GameSystems.Contracts;
 using API.Services.GameSystems.Handlers;
+using Models;
 using Models.GameSystems;
 using Models.Interfaces;
 
@@ -35,8 +36,10 @@ file class FakeRegistry : IGameSystemRegistry
 {
     private readonly FakeRuleBook _ruleBook = new();
 
-    public IRuleBook Get(string systemId) =>
-        systemId == "test-system" ? _ruleBook : throw new KeyNotFoundException(systemId);
+    public Result<IRuleBook> Get(string systemId) =>
+        systemId == "test-system"
+            ? Result<IRuleBook>.Ok(_ruleBook)
+            : Result<IRuleBook>.NotFound("GameSystem", systemId);
 
     public IEnumerable<IRuleBook> GetAll() => [_ruleBook];
 }
@@ -45,17 +48,8 @@ file class FakeRegistry : IGameSystemRegistry
 // Tests
 // ---------------------------------------------------------------------------
 
-/// <summary>
-/// Unit tests for game system controller endpoints and remaining MediatR handlers.
-/// GetAll and GetSchema test the controller directly.
-/// ResolveSkillCheck and ResolveAttack test the MediatR handlers (still in use).
-/// </summary>
 public class GameSystemHandlersTests
 {
-    // -----------------------------------------------------------------------
-    // GameSystemController.GetAll
-    // -----------------------------------------------------------------------
-
     [Fact]
     public void GetGameSystems_ReturnsDescriptorsFromRegistry()
     {
@@ -70,10 +64,6 @@ public class GameSystemHandlersTests
         Assert.Equal("test-system", systems[0].SystemId);
         Assert.Equal("Test System", systems[0].DisplayName);
     }
-
-    // -----------------------------------------------------------------------
-    // GameSystemController.GetSchema
-    // -----------------------------------------------------------------------
 
     [Fact]
     public void GetCharacterSheetSchema_ValidSystemId_ReturnsSchemaFromRuleBook()
@@ -91,16 +81,16 @@ public class GameSystemHandlersTests
     }
 
     [Fact]
-    public void GetCharacterSheetSchema_UnknownSystemId_Throws()
+    public void GetCharacterSheetSchema_UnknownSystemId_ReturnsNotFound()
     {
         var controller = new GameSystemController(new FakeRegistry());
 
-        Assert.Throws<KeyNotFoundException>(() => controller.GetSchema("unknown"));
-    }
+        var result = controller.GetSchema("unknown");
 
-    // -----------------------------------------------------------------------
-    // ResolveSkillCheckHandler
-    // -----------------------------------------------------------------------
+        var objectResult = result.Result as ObjectResult;
+        Assert.NotNull(objectResult);
+        Assert.Equal(404, objectResult.StatusCode);
+    }
 
     [Fact]
     public async Task ResolveSkillCheck_ValidContext_ReturnsCheckResult()
@@ -111,11 +101,8 @@ public class GameSystemHandlersTests
         var result = await handler.Handle(new ResolveSkillCheckRequest("test-system", context), default);
 
         Assert.True(result.IsSuccess);
+        Assert.True(result.Value!.IsSuccess);
     }
-
-    // -----------------------------------------------------------------------
-    // ResolveAttackHandler
-    // -----------------------------------------------------------------------
 
     [Fact]
     public async Task ResolveAttack_ValidContext_ReturnsAttackResult()
@@ -125,6 +112,7 @@ public class GameSystemHandlersTests
 
         var result = await handler.Handle(new ResolveAttackRequest("test-system", context), default);
 
-        Assert.True(result.IsHit);
+        Assert.True(result.IsSuccess);
+        Assert.True(result.Value!.IsHit);
     }
 }

@@ -12,9 +12,9 @@ public class GameSystemsTests
     {
         var ruleBook = new DnD5eRuleBook();
         var context = new SkillCheckContext("test-char", "stealth", 3, 2, 15);
-        
+
         var result = ruleBook.ResolveSkillCheck(context);
-        
+
         Assert.InRange(result.RollValue, 1, 20);
         Assert.Equal(result.RollValue + 3 + 2, result.TotalResult);
         Assert.Equal(result.TotalResult >= 15, result.IsSuccess);
@@ -25,9 +25,9 @@ public class GameSystemsTests
     {
         var ruleBook = new DnD5eRuleBook();
         var context = new AttackContext("longsword", 5, 14);
-        
+
         var result = ruleBook.ResolveAttack(context);
-        
+
         Assert.InRange(result.AttackRoll, 1, 20);
         Assert.Equal(result.AttackRoll + 5, result.TotalAttackResult);
         if (result.AttackRoll == 20) Assert.True(result.IsCriticalHit);
@@ -39,10 +39,11 @@ public class GameSystemsTests
     public void GameSystemRegistry_DiscoversDnD5e()
     {
         var registry = new GameSystemRegistry();
-        var ruleBook = registry.Get("dnd5e");
-        
-        Assert.NotNull(ruleBook);
-        Assert.IsType<DnD5eRuleBook>(ruleBook);
-        Assert.Equal("dnd5e", ruleBook.SystemId);
+        var result = registry.Get("dnd5e");
+
+        Assert.True(result.IsSuccess);
+        Assert.NotNull(result.Value);
+        Assert.IsType<DnD5eRuleBook>(result.Value);
+        Assert.Equal("dnd5e", result.Value!.SystemId);
     }
 }

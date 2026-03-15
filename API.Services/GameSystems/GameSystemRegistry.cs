@@ -1,4 +1,5 @@
 using System.Reflection;
+using Models;
 using Models.Attributes;
 using Models.Interfaces;
 
@@ -16,8 +17,8 @@ public class GameSystemRegistry : IGameSystemRegistry
     private void DiscoverSystems()
     {
         var types = typeof(GameSystemRegistry).Assembly.GetTypes()
-            .Where(t => t.GetCustomAttribute<GameSystemAttribute>() != null && 
-                        typeof(IRuleBook).IsAssignableFrom(t) && 
+            .Where(t => t.GetCustomAttribute<GameSystemAttribute>() != null &&
+                        typeof(IRuleBook).IsAssignableFrom(t) &&
                         !t.IsInterface && !t.IsAbstract);
 
         foreach (var type in types)
@@ -28,13 +29,12 @@ public class GameSystemRegistry : IGameSystemRegistry
         }
     }
 
-    public IRuleBook Get(string systemId)
+    public Result<IRuleBook> Get(string systemId)
     {
         if (!_systems.TryGetValue(systemId, out var system))
-        {
-            throw new KeyNotFoundException($"Game system '{systemId}' not found.");
-        }
-        return system;
+            return Result<IRuleBook>.NotFound("GameSystem", systemId);
+
+        return Result<IRuleBook>.Ok(system);
     }
 
     public IEnumerable<IRuleBook> GetAll()

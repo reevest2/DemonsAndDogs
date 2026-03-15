@@ -1,6 +1,7 @@
 using AppConstants;
 using API.Services.Sessions.Contracts;
 using API.Services.Sessions.Handlers;
+using Models;
 using Models.GameSystems;
 using Models.Interfaces;
 using Models.Narration;
@@ -62,17 +63,8 @@ file static class TestData
 // Tests
 // ---------------------------------------------------------------------------
 
-/// <summary>
-/// Unit tests for NarrateActionHandler.
-/// This handler maps the last SessionEvent to a GameEvent with metadata,
-/// then delegates to INarrator for dramatic narration.
-/// </summary>
 public class NarrateActionHandlerTests
 {
-    // -----------------------------------------------------------------------
-    // Happy Path
-    // -----------------------------------------------------------------------
-
     [Fact]
     public async Task Handle_SessionWithSkillCheck_PassesGameEventToNarrator()
     {
@@ -81,8 +73,9 @@ public class NarrateActionHandlerTests
         store.Set("s1", TestData.SessionWithSkillCheck("s1"));
         var handler = new NarrateActionHandler(narrator, store);
 
-        await handler.Handle(new NarrateActionRequest("s1"), default);
+        var result = await handler.Handle(new NarrateActionRequest("s1"), default);
 
+        Assert.True(result.IsSuccess);
         Assert.NotNull(narrator.LastGameEvent);
         Assert.Equal("SkillCheck", narrator.LastGameEvent.EventType);
         Assert.Equal("Gimli", narrator.LastGameEvent.SubjectId);
@@ -131,10 +124,6 @@ public class NarrateActionHandlerTests
         Assert.Equal(NarrationTones.Dramatic, narrator.LastTone);
     }
 
-    // -----------------------------------------------------------------------
-    // Edge Cases
-    // -----------------------------------------------------------------------
-
     [Fact]
     public async Task Handle_SessionWithNoEvents_ReturnsNoEventsMessage()
     {
@@ -145,20 +134,19 @@ public class NarrateActionHandlerTests
 
         var result = await handler.Handle(new NarrateActionRequest("s1"), default);
 
-        Assert.Equal("No events to narrate yet.", result.Text);
-        Assert.Null(result.TokenStream);
+        Assert.True(result.IsSuccess);
+        Assert.Equal("No events to narrate yet.", result.Value!.Text);
+        Assert.Null(result.Value.TokenStream);
     }
 
-    // -----------------------------------------------------------------------
-    // Error Cases
-    // -----------------------------------------------------------------------
-
     [Fact]
-    public async Task Handle_UnknownSessionId_ThrowsKeyNotFoundException()
+    public async Task Handle_UnknownSessionId_ReturnsNotFound()
     {
         var handler = new NarrateActionHandler(new FakeNarrator(), new FakeSessionStore());
 
-        await Assert.ThrowsAsync<KeyNotFoundException>(() =>
-            handler.Handle(new NarrateActionRequest("unknown"), default));
+        var result = await handler.Handle(new NarrateActionRequest("unknown"), default);
+
+        Assert.False(result.IsSuccess);
+        Assert.Equal(ErrorCodes.NotFound, result.Error!.Code);
     }
 }
