@@ -19,6 +19,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\API.Configuration\API.Configuration.csproj" />
+      <ProjectReference Include="..\API.Services\API.Services.csproj" />
       <ProjectReference Include="..\AppConstants\AppConstants.csproj" />
       <ProjectReference Include="..\DataAccess\DataAccess.csproj" />
       <ProjectReference Include="..\Mediator\Mediator.csproj" />
