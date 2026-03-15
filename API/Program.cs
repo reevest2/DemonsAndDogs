@@ -1,4 +1,5 @@
 using API.Configuration;
+using API.Middleware;
 using DataAccess;
 using Microsoft.EntityFrameworkCore;
 using AppConstants;
@@ -27,6 +28,8 @@ public class Program
 
         // Add services to the container.
 
+        builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+        builder.Services.AddProblemDetails();
         builder.Services.AddControllers();
         // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
         builder.Services.AddEndpointsApiExplorer();
@@ -61,8 +64,8 @@ public class Program
         {
             app.UseHttpsRedirection();
         }
+        app.UseExceptionHandler();
         app.UseAuthorization();
-
 
         app.MapControllers();
 

@@ -1,5 +1,5 @@
 using API.Client.Abstraction;
-using Mediator.Mediator.Contracts.Session;
+using API.Services.Sessions.Contracts;
 using Models.Session;
 
 namespace API.Client;

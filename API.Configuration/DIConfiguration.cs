@@ -1,21 +1,18 @@
 using AppConstants;
 using API.Services;
-using API.Services.Abstraction;
+using API.Services.Campaigns;
+using API.Services.Characters;
+using API.Services.Documents;
+using API.Services.GameSystems;
 using API.Services.Mock;
+using API.Services.Narration;
+using API.Services.Sessions;
 using DataAccess;
 using DataAccess.Abstraction;
-using Mediator;
-using Mediator.Mediator.Handlers.Session;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Models.Common;
-
-using API.Services.Campaign;
-using API.Services.Character;
-using API.Services.Document;
-using API.Services.Narration;
-using API.Services.Session;
 using Models.Interfaces;
 
 namespace API.Configuration;
@@ -70,6 +67,6 @@ public static class DIConfiguration
         services.AddSingleton<ISessionStore, SessionStore>();
         services.AddScoped<ISessionPersistence, JsonSessionPersistence>();
         services.AddSingleton<IGameSystemRegistry, GameSystemRegistry>();
-        services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(MediatorAssemblyMarker).Assembly));
+        services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(SessionStore).Assembly));
     }
 }

@@ -1,23 +1,28 @@
-using MediatR;
 using Microsoft.AspNetCore.Mvc;
-using Mediator.Mediator.Contracts.GameSystems;
+using API.Extensions;
+using API.Services.GameSystems;
 using Models.GameSystems;
 
 namespace API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class GameSystemController(IMediator mediator) : ControllerBase
+public class GameSystemController(IGameSystemRegistry registry) : ControllerBase
 {
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<GameSystemDescriptor>>> GetAll(CancellationToken cancellationToken)
+    public ActionResult<IEnumerable<GameSystemDescriptor>> GetAll()
     {
-        return Ok(await mediator.Send(new GetGameSystemsRequest(), cancellationToken));
+        var systems = registry.GetAll().Select(s => new GameSystemDescriptor(s.SystemId, s.DisplayName));
+        return Ok(systems);
     }
 
     [HttpGet("{systemId}/schema")]
-    public async Task<ActionResult<CharacterSheetSchema>> GetSchema(string systemId, CancellationToken cancellationToken)
+    public ActionResult<CharacterSheetSchema> GetSchema(string systemId)
     {
-        return Ok(await mediator.Send(new GetCharacterSheetSchemaRequest(systemId), cancellationToken));
+        var ruleBookResult = registry.Get(systemId);
+        if (!ruleBookResult.IsSuccess)
+            return ruleBookResult.ToActionResult<Models.Interfaces.IRuleBook, CharacterSheetSchema>();
+
+        return Ok(ruleBookResult.Value!.GetCharacterSheetSchema());
     }
 }

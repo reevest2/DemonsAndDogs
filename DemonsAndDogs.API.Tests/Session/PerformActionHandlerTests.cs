@@ -1,8 +1,10 @@
-using API.Services.Abstraction;
+using API.Services.GameSystems;
+using API.Services.Sessions;
 using API.Services.GameSystems.DnD5e;
 using DemonsAndDogs.API.Tests.Fakes;
-using Mediator.Mediator.Contracts.Session;
-using Mediator.Mediator.Handlers.Session;
+using API.Services.Sessions.Contracts;
+using API.Services.Sessions.Handlers;
+using Models;
 using Models.GameSystems;
 using Models.Interfaces;
 using Models.Session;
@@ -16,7 +18,7 @@ public class PerformActionHandlerTests
 
     private class FakeRegistry : IGameSystemRegistry
     {
-        public IRuleBook Get(string systemId) => new DnD5eRuleBook();
+        public Result<IRuleBook> Get(string systemId) => Result<IRuleBook>.Ok(new DnD5eRuleBook());
         public IEnumerable<IRuleBook> GetAll() => new[] { new DnD5eRuleBook() };
     }
 
@@ -34,7 +36,6 @@ public class PerformActionHandlerTests
     [Fact]
     public async Task Handle_SkillCheckAction_ReturnsCorrectEventType()
     {
-        // Arrange
         var sessionId = Guid.NewGuid().ToString();
         var store = new SessionStore();
         store.Set(sessionId, CreateInitialState(sessionId));
@@ -43,10 +44,10 @@ public class PerformActionHandlerTests
         var context = new SkillCheckContext("char1", "stealth", 0, 0, 10);
         var request = new PerformActionRequest(sessionId, ActionType.SkillCheck, context);
 
-        // Act
-        var sessionEvent = await handler.Handle(request, default);
+        var result = await handler.Handle(request, default);
 
-        // Assert
+        Assert.True(result.IsSuccess);
+        var sessionEvent = result.Value!;
         Assert.Equal("SkillCheck", sessionEvent.EventType);
         Assert.NotNull(sessionEvent.CheckResult);
     }
@@ -54,7 +55,6 @@ public class PerformActionHandlerTests
     [Fact]
     public async Task Handle_AttackAction_ReturnsCorrectEventType()
     {
-        // Arrange
         var sessionId = Guid.NewGuid().ToString();
         var store = new SessionStore();
         store.Set(sessionId, CreateInitialState(sessionId));
@@ -63,24 +63,25 @@ public class PerformActionHandlerTests
         var context = new AttackContext("sword", 0, 10);
         var request = new PerformActionRequest(sessionId, ActionType.Attack, null, context);
 
-        // Act
-        var sessionEvent = await handler.Handle(request, default);
+        var result = await handler.Handle(request, default);
 
-        // Assert
+        Assert.True(result.IsSuccess);
+        var sessionEvent = result.Value!;
         Assert.Equal("Attack", sessionEvent.EventType);
         Assert.NotNull(sessionEvent.AttackResult);
     }
 
     [Fact]
-    public async Task Handle_UnknownSessionId_ThrowsKeyNotFoundException()
+    public async Task Handle_UnknownSessionId_ReturnsNotFound()
     {
-        // Arrange
         var store = new SessionStore();
         var registry = new FakeRegistry();
         var handler = new PerformActionHandler(registry, store, new NullSessionPersistence());
         var request = new PerformActionRequest("unknown", ActionType.SkillCheck, new SkillCheckContext("c", "s", 0, 0));
 
-        // Act & Assert
-        await Assert.ThrowsAsync<KeyNotFoundException>(() => handler.Handle(request, default));
+        var result = await handler.Handle(request, default);
+
+        Assert.False(result.IsSuccess);
+        Assert.Equal(ErrorCodes.NotFound, result.Error!.Code);
     }
 }

@@ -1,4 +1,4 @@
-using API.Services.Abstraction;
+using API.Services.Characters;
 using Models.Common;
 
 namespace DemonsAndDogs.API.Tests.Fakes;

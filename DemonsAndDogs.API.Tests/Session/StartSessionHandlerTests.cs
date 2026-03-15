@@ -1,10 +1,13 @@
 using System.Text.Json;
-using API.Services.Abstraction;
+using API.Services.Characters;
+using API.Services.GameSystems;
+using API.Services.Sessions;
 using API.Services.GameSystems.DnD5e;
 using AppConstants;
 using DemonsAndDogs.API.Tests.Fakes;
-using Mediator.Mediator.Contracts.Session;
-using Mediator.Mediator.Handlers.Session;
+using API.Services.Sessions.Contracts;
+using API.Services.Sessions.Handlers;
+using Models;
 using Models.Common;
 using Models.Interfaces;
 using Xunit;
@@ -18,7 +21,7 @@ public class StartSessionHandlerTests
 
     private class FakeRegistry : IGameSystemRegistry
     {
-        public IRuleBook Get(string systemId) => new DnD5eRuleBook();
+        public Result<IRuleBook> Get(string systemId) => Result<IRuleBook>.Ok(new DnD5eRuleBook());
         public IEnumerable<IRuleBook> GetAll() => new[] { new DnD5eRuleBook() };
     }
 
@@ -44,33 +47,37 @@ public class StartSessionHandlerTests
     public async Task Handle_StartSession_CreatesSessionWithCorrectSystemId()
     {
         var request = new StartSessionRequest(FakeCharId, "Hero", DnD5eSystemId);
-        var state = await BuildHandler().Handle(request, default);
-        Assert.Equal(DnD5eSystemId, state.SystemId);
+        var result = await BuildHandler().Handle(request, default);
+        Assert.True(result.IsSuccess);
+        Assert.Equal(DnD5eSystemId, result.Value!.SystemId);
     }
 
     [Fact]
     public async Task Handle_StartSession_CreatesSessionWithCorrectCharacterName()
     {
         var request = new StartSessionRequest(FakeCharId, "Hero", DnD5eSystemId);
-        var state = await BuildHandler().Handle(request, default);
-        Assert.Equal("Hero", state.CharacterName);
+        var result = await BuildHandler().Handle(request, default);
+        Assert.True(result.IsSuccess);
+        Assert.Equal("Hero", result.Value!.CharacterName);
     }
 
     [Fact]
     public async Task Handle_StartSession_HasNonEmptySessionId()
     {
         var request = new StartSessionRequest(FakeCharId, "Hero", DnD5eSystemId);
-        var state = await BuildHandler().Handle(request, default);
-        Assert.False(string.IsNullOrEmpty(state.SessionId));
+        var result = await BuildHandler().Handle(request, default);
+        Assert.True(result.IsSuccess);
+        Assert.False(string.IsNullOrEmpty(result.Value!.SessionId));
     }
 
     [Fact]
     public async Task Handle_StartSession_SchemaMatchesGameSystem()
     {
         var request = new StartSessionRequest(FakeCharId, "Hero", DnD5eSystemId);
-        var state = await BuildHandler().Handle(request, default);
-        Assert.NotNull(state.CharacterSheetSchema);
-        Assert.Equal(DnD5eSystemId, state.CharacterSheetSchema.SystemId);
+        var result = await BuildHandler().Handle(request, default);
+        Assert.True(result.IsSuccess);
+        Assert.NotNull(result.Value!.CharacterSheetSchema);
+        Assert.Equal(DnD5eSystemId, result.Value.CharacterSheetSchema.SystemId);
     }
 
     [Fact]
@@ -79,15 +86,15 @@ public class StartSessionHandlerTests
         var store = new SessionStore();
         var handler = new StartSessionHandler(new FakeRegistry(), store, new NullSessionPersistence(), new NullCharacterService());
         var request = new StartSessionRequest(FakeCharId, "Hero", DnD5eSystemId);
-        var state = await handler.Handle(request, default);
-        Assert.True(store.TryGet(state.SessionId, out var stored));
-        Assert.Equal(state, stored);
+        var result = await handler.Handle(request, default);
+        Assert.True(result.IsSuccess);
+        Assert.True(store.TryGet(result.Value!.SessionId, out var stored));
+        Assert.Equal(result.Value, stored);
     }
 
     [Fact]
     public async Task Handle_StartSession_WithValidCharacterId_SessionStateStatsMatchCharacterData()
     {
-        // Arrange
         var character = new CharacterResource
         {
             Id = FakeCharId,
@@ -98,20 +105,20 @@ public class StartSessionHandlerTests
         var handler = BuildHandler(new FakeCharacterService(character));
         var request = new StartSessionRequest(FakeCharId, "Gimli", DnD5eSystemId);
 
-        // Act
-        var state = await handler.Handle(request, default);
+        var result = await handler.Handle(request, default);
 
-        // Assert
-        Assert.Equal(18, state.Stats["strength"]);
-        Assert.Equal(14, state.Stats["dexterity"]);
-        Assert.Equal(45, state.Stats["hp"]);
+        Assert.True(result.IsSuccess);
+        Assert.Equal(18, result.Value!.Stats["strength"]);
+        Assert.Equal(14, result.Value.Stats["dexterity"]);
+        Assert.Equal(45, result.Value.Stats["hp"]);
     }
 
     [Fact]
     public async Task Handle_StartSession_CharacterNotFound_StatsAreAllDefaults()
     {
         var request = new StartSessionRequest("unknown-id", "Hero", DnD5eSystemId);
-        var state = await BuildHandler(new NullCharacterService()).Handle(request, default);
-        Assert.Empty(state.Stats);
+        var result = await BuildHandler(new NullCharacterService()).Handle(request, default);
+        Assert.True(result.IsSuccess);
+        Assert.Empty(result.Value!.Stats);
     }
 }
