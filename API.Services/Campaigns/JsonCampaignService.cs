@@ -1,8 +1,7 @@
-using API.Services.Abstraction;
 using DataAccess.Abstraction;
 using Models.Common;
 
-namespace API.Services.Campaign;
+namespace API.Services.Campaigns;
 
 public class JsonCampaignService(IJsonResourceRepository repository) : ICampaignService
 {

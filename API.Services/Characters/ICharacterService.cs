@@ -1,6 +1,6 @@
 using Models.Common;
 
-namespace API.Services.Abstraction;
+namespace API.Services.Characters;
 
 public interface ICharacterService
 {

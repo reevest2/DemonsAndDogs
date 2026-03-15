@@ -1,8 +1,7 @@
-using API.Services.Abstraction;
 using DataAccess.Abstraction;
 using Models.Common;
 
-namespace API.Services.Document;
+namespace API.Services.Documents;
 
 public class JsonDocumentService(IJsonResourceRepository repository) : IDocumentService
 {

@@ -1,8 +1,7 @@
-using API.Services.Abstraction;
 using DataAccess.Abstraction;
 using Models.Common;
 
-namespace API.Services.Character;
+namespace API.Services.Characters;
 
 public class JsonCharacterService(IJsonResourceRepository repository) : ICharacterService
 {

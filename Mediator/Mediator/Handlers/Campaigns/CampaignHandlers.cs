@@ -1,5 +1,5 @@
 using MediatR;
-using API.Services.Abstraction;
+using API.Services.Campaigns;
 using Models.Common;
 using Mediator.Mediator.Contracts.Campaigns;
 

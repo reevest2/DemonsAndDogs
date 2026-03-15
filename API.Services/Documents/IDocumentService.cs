@@ -1,6 +1,6 @@
 using Models.Common;
 
-namespace API.Services.Abstraction;
+namespace API.Services.Documents;
 
 public interface IDocumentService
 {

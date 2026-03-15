@@ -4,7 +4,7 @@ using Models.Common;
 using Models.Interfaces;
 using Models.Session;
 
-namespace API.Services.Session;
+namespace API.Services.Sessions;
 
 public class JsonSessionPersistence(IJsonResourceRepository repository) : ISessionPersistence
 {

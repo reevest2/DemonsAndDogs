@@ -1,6 +1,6 @@
 using Models.Interfaces;
 
-namespace API.Services.Abstraction;
+namespace API.Services.GameSystems;
 
 public interface IGameSystemRegistry
 {

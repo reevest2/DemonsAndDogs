@@ -1,4 +1,4 @@
-using API.Services.Document;
+using API.Services.Documents;
 using DataAccess.Abstraction;
 using Models.Common;
 using Xunit;

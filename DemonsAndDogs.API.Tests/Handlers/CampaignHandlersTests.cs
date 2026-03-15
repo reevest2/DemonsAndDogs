@@ -1,4 +1,4 @@
-using API.Services.Abstraction;
+using API.Services.Campaigns;
 using Mediator.Mediator.Contracts.Campaigns;
 using Mediator.Mediator.Handlers.Campaigns;
 using Models.Common;

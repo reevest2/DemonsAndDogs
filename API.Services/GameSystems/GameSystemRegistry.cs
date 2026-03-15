@@ -1,9 +1,8 @@
 using System.Reflection;
-using API.Services.Abstraction;
 using Models.Attributes;
 using Models.Interfaces;
 
-namespace API.Services;
+namespace API.Services.GameSystems;
 
 public class GameSystemRegistry : IGameSystemRegistry
 {
