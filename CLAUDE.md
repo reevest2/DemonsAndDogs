@@ -8,19 +8,28 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Workflow
 
-This project uses spec-driven TDD, managed entirely by Claude. Start every session with `/session`.
+Start every session with `/session` to check build/test health and current state.
 
 | Command | Purpose |
 |---------|---------|
 | `/session` | Resume — reads state, health-checks, reports next action |
-| `/new-feature [hint]` | Interview → write spec → create branch |
-| `/implement` | TDD: failing tests → implement → refactor → commit |
-| `/ship` | Final quality gate → PR → update memory |
+| `/ship` | Final quality gate → PR to develop → update memory |
 
-**Specs:** `docs/specs/{feature}.md` — source of truth for each feature.
-**Branches:** `feature/{spec-name}` off `master`.
-**Commits:** Conventional (`feat:`, `fix:`, `spec:`, `test:`, `refactor:`).
+**Branch naming:** `feature/{name}` off `develop`.
+**Commits:** Conventional (`feat:`, `fix:`, `test:`, `refactor:`, `docs:`, `chore:`).
 **Context management:** Use subagents for exploration. Run `/clear` between unrelated tasks.
+
+## Git Rules
+
+- **Never commit directly to `master` or `develop`.** Always create a feature branch first.
+- **Branch base:** `feature/{name}` off `develop` (not master).
+- **PR target:** Always PR to `develop` using `gh pr create --base develop`, never to `master`.
+- **Before every commit:** Run `dotnet test DemonsAndDogs.sln` — do not commit if any test fails.
+- **Commit messages:** Conventional commits only.
+  - Format: `type: short description`
+  - Types: `feat:`, `fix:`, `test:`, `refactor:`, `docs:`, `chore:`
+  - No WIP commits. Each commit should be a coherent, passing unit of work.
+- **PR creation:** When feature is complete (all tests green), push branch and create PR to `develop`.
 
 ## Commands
 

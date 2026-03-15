@@ -1,6 +1,6 @@
 ---
 name: ship
-description: Ship current feature — final test run, create PR, update memory
+description: Ship current feature — final test run, create PR to develop, update memory
 disable-model-invocation: true
 ---
 
@@ -8,7 +8,7 @@ Ship the current feature for DemonsAndDogs.
 
 ## Step 1 — Load Context
 
-Read `C:\Users\Trevor\.claude\projects\D--Repos-DemonsAndDogs\memory\current-session.md` to get active feature and spec.
+Read `C:\Users\Trevor\.claude\projects\D--Repos-DemonsAndDogs\memory\current-session.md` to get active feature.
 
 ## Step 2 — Quality Gate
 
@@ -21,19 +21,19 @@ Run in sequence. If EITHER fails, stop and report what broke. Do NOT create the 
 
 ```bash
 git push -u origin HEAD
-gh pr create --title "feat: {feature-name}" --body "$(cat <<'EOF'
+gh pr create --base develop --title "feat: {feature-name}" --body "$(cat <<'EOF'
 ## Summary
-{1-3 bullet points from spec}
+{1-3 bullet points summarizing the changes from commits and conversation}
 
 ## Test plan
-{Key test cases from spec}
+{Key test cases and how to verify}
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 EOF
 )"
 ```
 
-Keep PR body concise (~15 lines max). Summarize the spec, don't paste it verbatim.
+Keep PR body concise (~15 lines max).
 
 ## Step 4 — Update Memory
 

@@ -12,8 +12,6 @@ Read these files directly (do NOT use subagents):
 - `C:\Users\Trevor\.claude\projects\D--Repos-DemonsAndDogs\memory\current-session.md`
 - `C:\Users\Trevor\.claude\projects\D--Repos-DemonsAndDogs\memory\project_milestone_state.md`
 
-If `current-session.md` lists an active spec file, read that too.
-
 ## Step 2 — Health Check
 
 Run sequentially:
@@ -28,7 +26,7 @@ Output a concise status block:
 - **Build:** PASS or FAIL (error summary if fail)
 - **Tests:** X/Y passing (list failures if any)
 - **Branch:** current branch
-- **Active feature:** name + phase (spec/red/green/refactor/shipped) or "none"
+- **Active feature:** name or "none"
 - **Next action:** one sentence — what to do next
 
 Do NOT begin implementing anything. Wait for user direction.
