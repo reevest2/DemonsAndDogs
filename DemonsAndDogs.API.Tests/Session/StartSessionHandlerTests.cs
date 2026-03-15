@@ -1,10 +1,12 @@
 using System.Text.Json;
-using API.Services.Abstraction;
+using API.Services.Characters;
+using API.Services.GameSystems;
+using API.Services.Sessions;
 using API.Services.GameSystems.DnD5e;
 using AppConstants;
 using DemonsAndDogs.API.Tests.Fakes;
-using Mediator.Mediator.Contracts.Session;
-using Mediator.Mediator.Handlers.Session;
+using API.Services.Sessions.Contracts;
+using API.Services.Sessions.Handlers;
 using Models.Common;
 using Models.Interfaces;
 using Xunit;

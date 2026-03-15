@@ -1,5 +1,5 @@
-using API.Services.Campaign;
-using API.Services.Character;
+using API.Services.Campaigns;
+using API.Services.Characters;
 using DataAccess.Abstraction;
 using Models.Common;
 using Xunit;
