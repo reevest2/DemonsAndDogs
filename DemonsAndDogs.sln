@@ -36,6 +36,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DemonsAndDogs.Builder", "De
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DemonsAndDogs.Player", "DemonsAndDogs.Player\DemonsAndDogs.Player.csproj", "{0C61C608-F738-4F1D-95C5-140CDC146A94}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DemonsAndDogs.E2E.Tests", "DemonsAndDogs.E2E.Tests\DemonsAndDogs.E2E.Tests.csproj", "{09F918D9-8DC0-48AD-AD75-B128F89D03DB}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -214,6 +216,18 @@ Global
 		{0C61C608-F738-4F1D-95C5-140CDC146A94}.Release|x64.Build.0 = Release|Any CPU
 		{0C61C608-F738-4F1D-95C5-140CDC146A94}.Release|x86.ActiveCfg = Release|Any CPU
 		{0C61C608-F738-4F1D-95C5-140CDC146A94}.Release|x86.Build.0 = Release|Any CPU
+		{09F918D9-8DC0-48AD-AD75-B128F89D03DB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{09F918D9-8DC0-48AD-AD75-B128F89D03DB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{09F918D9-8DC0-48AD-AD75-B128F89D03DB}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{09F918D9-8DC0-48AD-AD75-B128F89D03DB}.Debug|x64.Build.0 = Debug|Any CPU
+		{09F918D9-8DC0-48AD-AD75-B128F89D03DB}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{09F918D9-8DC0-48AD-AD75-B128F89D03DB}.Debug|x86.Build.0 = Debug|Any CPU
+		{09F918D9-8DC0-48AD-AD75-B128F89D03DB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{09F918D9-8DC0-48AD-AD75-B128F89D03DB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{09F918D9-8DC0-48AD-AD75-B128F89D03DB}.Release|x64.ActiveCfg = Release|Any CPU
+		{09F918D9-8DC0-48AD-AD75-B128F89D03DB}.Release|x64.Build.0 = Release|Any CPU
+		{09F918D9-8DC0-48AD-AD75-B128F89D03DB}.Release|x86.ActiveCfg = Release|Any CPU
+		{09F918D9-8DC0-48AD-AD75-B128F89D03DB}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
