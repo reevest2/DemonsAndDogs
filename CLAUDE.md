@@ -80,15 +80,29 @@ scripts/sync-develop.ps1
 | `DemonsAndDogs.Builder/` | Blazor WASM — campaign management (port 5150) |
 | `DemonsAndDogs.Player/` | Blazor WASM — session play (port 5160) |
 | `UIComponents/` | Shared Razor component library (Radzen.Blazor) |
-| `API/` | ASP.NET Core REST API — delegates to services via MediatR |
-| `API.Configuration/` | DI registration for all services and infrastructure |
-| `API.Services/` | Core game logic, game system implementations, LLM narration |
+| `API/` | ASP.NET Core REST API — controllers inject services directly; DI config in `API/Configuration/` |
+| `API.Services/` | Core game logic organized by vertical slice (Campaigns/, Characters/, Documents/, Sessions/, GameSystems/, Narration/) |
 | `API.Services.Mock/` | Mock implementations for tests and dev without DB |
-| `Mediator/` | MediatR command/query handlers and contracts |
 | `DataAccess/` | EF Core + PostgreSQL with pgvector, JSON document storage |
 | `API.Client/` | Typed HTTP client abstractions for Blazor frontends |
 | `Models/` | Domain models shared across layers |
 | `AppConstants/` | Global constants (GameSystemIds, ResourceKinds, etc.) |
+
+### Vertical Slice Organization (API.Services)
+
+Each feature folder contains its interface, implementation, and (for Sessions) MediatR handlers:
+
+```
+API.Services/
+├── Campaigns/       ICampaignService + JsonCampaignService
+├── Characters/      ICharacterService + JsonCharacterService
+├── Documents/       IDocumentService + JsonDocumentService
+├── Sessions/        SessionStore, Contracts/, Handlers/ (MediatR for orchestration)
+├── GameSystems/     IGameSystemRegistry, GameSystemRegistry, DnD5e/, Contracts/, Handlers/
+└── Narration/       INarrator, LocalLlmNarrator, NarratorFactory
+```
+
+Controllers call services directly for simple CRUD. MediatR is used only for Session orchestration (StartSession, PerformAction, NarrateAction, GetSession).
 
 ### Data Model Pattern
 
