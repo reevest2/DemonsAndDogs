@@ -1,6 +1,6 @@
 using AppConstants;
-using Mediator.Mediator.Contracts.Session;
-using Mediator.Mediator.Handlers.Session;
+using API.Services.Sessions.Contracts;
+using API.Services.Sessions.Handlers;
 using Models.GameSystems;
 using Models.Interfaces;
 using Models.Narration;

@@ -2,8 +2,8 @@ using System.Text.Json;
 using API.Controllers;
 using API.Services.GameSystems;
 using Microsoft.AspNetCore.Mvc;
-using Mediator.Mediator.Contracts.GameSystems;
-using Mediator.Mediator.Handlers.GameSystems;
+using API.Services.GameSystems.Contracts;
+using API.Services.GameSystems.Handlers;
 using Models.GameSystems;
 using Models.Interfaces;
 

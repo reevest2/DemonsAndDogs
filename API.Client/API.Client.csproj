@@ -8,7 +8,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\Models\Models.csproj" />
-      <ProjectReference Include="..\Mediator\Mediator.csproj" />
+      <ProjectReference Include="..\API.Services\API.Services.csproj" />
     </ItemGroup>
 
 </Project>

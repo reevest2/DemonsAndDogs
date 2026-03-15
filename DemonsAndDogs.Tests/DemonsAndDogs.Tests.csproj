@@ -26,7 +26,6 @@
     <ProjectReference Include="..\API.Services\API.Services.csproj" />
     <ProjectReference Include="..\Models\Models.csproj" />
     <ProjectReference Include="..\AppConstants\AppConstants.csproj" />
-    <ProjectReference Include="..\Mediator\Mediator.csproj" />
     <ProjectReference Include="..\API.Client\API.Client.csproj" />
     <ProjectReference Include="..\UIComponents\UIComponents.csproj" />
     <ProjectReference Include="..\DemonsAndDogs.Builder\DemonsAndDogs.Builder.csproj" />

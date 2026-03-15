@@ -2,7 +2,7 @@ using System.Net;
 using System.Net.Http.Json;
 using AppConstants;
 using DemonsAndDogs.API.Tests.Startup;
-using Mediator.Mediator.Contracts.Session;
+using API.Services.Sessions.Contracts;
 using Models.GameSystems;
 using Models.Session;
 

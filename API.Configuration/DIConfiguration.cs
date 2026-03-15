@@ -9,8 +9,6 @@ using API.Services.Narration;
 using API.Services.Sessions;
 using DataAccess;
 using DataAccess.Abstraction;
-using Mediator;
-using Mediator.Mediator.Handlers.Session;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -69,6 +67,6 @@ public static class DIConfiguration
         services.AddSingleton<ISessionStore, SessionStore>();
         services.AddScoped<ISessionPersistence, JsonSessionPersistence>();
         services.AddSingleton<IGameSystemRegistry, GameSystemRegistry>();
-        services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(MediatorAssemblyMarker).Assembly));
+        services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(SessionStore).Assembly));
     }
 }

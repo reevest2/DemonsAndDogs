@@ -1,6 +1,6 @@
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
-using Mediator.Mediator.Contracts.Session;
+using API.Services.Sessions.Contracts;
 
 namespace API.Controllers;
 
